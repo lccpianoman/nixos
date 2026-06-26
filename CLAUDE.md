@@ -96,7 +96,7 @@ Note: the rebuild script only works locally. To deploy nixvps, SSH in and run ni
 
 ## Git Config (home-manager managed, nixnotdix)
 - Name: Luke
-- Email: lccpianoman@gmail.com
+- Email: luke@collins.rocks
 
 ## Weather Widget
 `hosts/nixnotdix/assets/polybar/weather/main.py` — Python script called by polybar every 30 minutes.

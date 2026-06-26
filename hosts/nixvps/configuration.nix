@@ -13,7 +13,7 @@
   networking.interfaces.eth0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 ];
+  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
 
   time.timeZone = "America/Chicago";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -49,6 +49,36 @@
     };
   };
 
+  services.vaultwarden = {
+    enable = true;
+    dbBackend = "sqlite";
+    # Secrets (ADMIN_TOKEN, SMTP_PASSWORD) live here — not in the Nix store
+    environmentFile = "/var/lib/vaultwarden/vaultwarden.env";
+    config = {
+      DOMAIN = "https://vault.jukeluke.com";
+      ROCKET_ADDRESS = "127.0.0.1";
+      ROCKET_PORT = 8222;
+      SIGNUPS_ALLOWED = false;
+      ADMIN_PANEL_ENABLED = true;
+
+      SMTP_HOST = "smtp.migadu.com";
+      SMTP_FROM = "shared@jukeluke.com";
+      SMTP_FROM_NAME = "Vaultwarden";
+      SMTP_PORT = 465;
+      SMTP_SECURITY = "force_tls";
+      SMTP_USERNAME = "shared@collins.rocks";
+    };
+  };
+
+  services.caddy = {
+    enable = true;
+    virtualHosts."vault.jukeluke.com" = {
+      extraConfig = ''
+        reverse_proxy localhost:8222
+      '';
+    };
+  };
+
   programs.git = {
     enable = true;
     config = {
@@ -67,6 +97,13 @@
     dates = "weekly";
     options = "--delete-older-than 14d";
   };
+
+  nix.optimise = {
+    automatic = true;
+    dates = "weekly";
+  };
+
+  boot.tmp.cleanOnBoot = true;
 
   environment.systemPackages = with pkgs; [
     # network / diagnostics
