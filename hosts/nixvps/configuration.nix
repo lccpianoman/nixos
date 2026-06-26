@@ -15,7 +15,7 @@
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 22 80 443 ];
 
-  time.timeZone = "America/Chicago";
+  time.timeZone = "America/Denver";
   i18n.defaultLocale = "en_US.UTF-8";
 
   users.users.luke = {
@@ -60,6 +60,7 @@
       ROCKET_PORT = 8222;
       SIGNUPS_ALLOWED = false;
       ADMIN_PANEL_ENABLED = true;
+      IP_HEADER = "X-Forwarded-For";
 
       SMTP_HOST = "smtp.migadu.com";
       SMTP_FROM = "shared@jukeluke.com";
