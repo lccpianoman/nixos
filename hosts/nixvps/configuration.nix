@@ -49,6 +49,14 @@
     };
   };
 
+  programs.git = {
+    enable = true;
+    config = {
+      user.name = "Luke Collins";
+      user.email = "luke@collins.rocks";
+    };
+  };
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.settings.trusted-users = [ "luke" ];
   nix.gc = {

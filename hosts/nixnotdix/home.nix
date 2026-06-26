@@ -164,8 +164,8 @@
   programs.git = {
     enable = true;
     settings = {
-      user.name = "Luke";
-      user.email = "lccpianoman@gmail.com";
+      user.name = "Luke Collins";
+      user.email = "luke@collins.rocks";
       init.defaultBranch = "master";
     };
   };
