@@ -78,6 +78,7 @@
     unzip
     btop
     ncdu
+    nh
   ];
 
   system.stateVersion = "26.05";
