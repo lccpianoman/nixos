@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+BOOT_ONLY=false
+TARGET_HOST=""
+
+for arg in "$@"; do
+    case "$arg" in
+        --boot) BOOT_ONLY=true ;;
+        *) TARGET_HOST="$arg" ;;
+    esac
+done
+
+TARGET_HOST="${TARGET_HOST:-$(hostname)}"
+
+if $BOOT_ONLY; then
+    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${YELLOW} (boot only — reboot to activate)${NC}"
+else
+    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${NC}"
+fi
+
+if [ ! -d "hosts/$TARGET_HOST" ]; then
+    echo -e "${RED}Error: Configuration for host '$TARGET_HOST' not found${NC}"
+    echo -e "${YELLOW}Available hosts:${NC}"
+    ls -1 hosts/
+    exit 1
+fi
+
+if git diff --quiet && git diff --cached --quiet; then
+    echo -e "${YELLOW}No changes detected${NC}"
+    read -p "Continue anyway? (y/N) " -n 1 -r
+    echo
+    [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
+fi
+
+echo -e "\n${BLUE}Changes:${NC}"
+git diff HEAD
+
+echo -e "${YELLOW}Ready to rebuild. Continue? (Y/n)${NC}"
+read -n 1 -r
+echo
+[[ $REPLY =~ ^[Nn]$ ]] && { echo -e "${RED}Rebuild cancelled${NC}"; exit 0; }
+
+# Stage before rebuild so Nix can see uncommitted changes
+echo -e "\n${BLUE}Staging changes...${NC}"
+git add -A
+
+echo -e "\n${BLUE}Rebuilding system...${NC}"
+if $BOOT_ONLY; then
+    nh os boot . -H "${TARGET_HOST}"
+else
+    nh os switch . -H "${TARGET_HOST}"
+fi
+
+GENERATION=$(nh os info | grep current | awk '{print $1}')
+
+echo -e "\n${GREEN}Rebuild successful!${NC}"
+echo -e "${BLUE}Committing changes...${NC}"
+
+git commit -m "Rebuild ${TARGET_HOST} to generation ${GENERATION}" || \
+    echo -e "${YELLOW}No changes to commit${NC}"
+
+echo -e "${BLUE}Pushing changes...${NC}"
+git push || echo -e "${YELLOW}Push failed — push manually with: git push${NC}"
+
+echo -e "${GREEN}Done!${NC}"
