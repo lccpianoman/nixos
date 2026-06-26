@@ -180,10 +180,13 @@
 
   programs.ssh = {
     enable = true;
-    matchBlocks."nixvps" = {
-      hostname = "66.228.49.38";
-      user = "luke";
-      identityFile = "~/.ssh/id_ed25519";
+    enableDefaultConfig = false;
+    settings = {
+      "nixvps" = {
+        Hostname = "66.228.49.38";
+        User = "luke";
+        IdentityFile = "~/.ssh/id_ed25519";
+      };
     };
   };
 
