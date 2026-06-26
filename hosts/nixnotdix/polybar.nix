@@ -39,7 +39,7 @@ in
       #!/bin/sh
       keyfile="$HOME/.config/openweathermap/api_key"
       if [ -f "$keyfile" ]; then
-        export OPENWEATHER_API_KEY="$(cat "$keyfile")"
+        export OPENWEATHER_API_KEY="$(${pkgs.coreutils}/bin/cat "$keyfile")"
       fi
       exec ${weatherPy}/bin/python3 "${weatherDir}/main.py" \
         -u ${weatherConfig.units} \
