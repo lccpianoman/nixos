@@ -34,7 +34,7 @@
       KbdInteractiveAuthentication = false;
       MaxAuthTries = 3;
       LoginGraceTime = 20;
-      AllowUsers = "luke";
+      AllowUsers = [ "luke" ];
     };
   };
 
