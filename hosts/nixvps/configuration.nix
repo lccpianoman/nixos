@@ -59,6 +59,9 @@
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.settings.trusted-users = [ "luke" ];
+  nix.settings.warn-dirty = false;
+  nixpkgs.config.allowUnfree = true;
+
   nix.gc = {
     automatic = true;
     dates = "weekly";
@@ -87,6 +90,10 @@
     btop
     ncdu
     nh
+
+    # Applications
+    claude-code
+    github-copilot-cli
   ];
 
   system.stateVersion = "26.05";
