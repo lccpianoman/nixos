@@ -178,6 +178,15 @@
     };
   };
 
+  programs.ssh = {
+    enable = true;
+    matchBlocks."nixvps" = {
+      hostname = "66.228.49.38";
+      user = "luke";
+      identityFile = "~/.ssh/id_ed25519";
+    };
+  };
+
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
