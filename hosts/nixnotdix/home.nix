@@ -185,6 +185,7 @@
       "nixvps" = {
         Hostname = "66.228.49.38";
         User = "luke";
+        Port = 47291;
         IdentityFile = "~/.ssh/id_ed25519";
       };
     };

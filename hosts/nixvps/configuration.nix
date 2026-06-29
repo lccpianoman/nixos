@@ -13,7 +13,7 @@
   networking.interfaces.eth0.useDHCP = true;
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ 22 80 443 ];
+  networking.firewall.allowedTCPPorts = [ 47291 80 443 ];
 
   time.timeZone = "America/Denver";
   i18n.defaultLocale = "en_US.UTF-8";
@@ -28,6 +28,7 @@
 
   services.openssh = {
     enable = true;
+    ports = [ 47291 ];
     settings = {
       PermitRootLogin = "no";
       PasswordAuthentication = false;
