@@ -76,7 +76,6 @@ stdenv.mkDerivation (finalAttrs: {
     install -Dm644 "$desktopItem/share/applications/clonehero.desktop" "$out/share/applications/clonehero.desktop"
 
     mkdir -p "$out/bin" "$out/share/icons/hicolor/128x128/apps"
-    ln -s "$out/libexec/clonehero/clonehero" "$out/bin/clonehero"
     ln -s "$out/lib/clonehero/GameAssembly.so" "$out/libexec/clonehero/GameAssembly.so"
     ln -s "$out/lib/clonehero/UnityPlayer.so" "$out/libexec/clonehero/UnityPlayer.so"
     ln -s "$out/share/clonehero" "$out/libexec/clonehero/clonehero_Data"
@@ -86,12 +85,10 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   postFixup = ''
-    wrapProgram "$out/libexec/clonehero/clonehero" \
+    # Use makeWrapper to create the wrapper at bin/clonehero, leaving the real
+    # Unity binary untouched in libexec where clonehero_Data is symlinked next to it.
+    makeWrapper "$out/libexec/clonehero/clonehero" "$out/bin/clonehero" \
       --set SDL_VIDEODRIVER wayland
-
-    # wrapProgram renames the binary to .clonehero-wrapped; Unity looks for
-    # <binary_name>_Data next to the executable, so we need this symlink too.
-    ln -s "$out/share/clonehero" "$out/libexec/clonehero/.clonehero-wrapped_Data"
 
     patchelf \
       --add-needed libasound.so.2 \
