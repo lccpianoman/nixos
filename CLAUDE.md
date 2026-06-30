@@ -7,13 +7,16 @@ Multi-host NixOS flake. Pinned to `nixos-26.05` with `home-manager release-26.05
 | Host | Role |
 |---|---|
 | `nixnotdix` | Gaming/dev workstation (Sway, Kanagawa Wave, NVIDIA, Zen kernel) |
-| `nixvps` | Linode VPS (headless, SSH-only) |
+| `nixvps` | Linode VPS (headless; self-hosts Vaultwarden behind Caddy) |
 
 ## File Layout
 ```
 flake.nix                        # entry point, nixosConfigurations for each host
 flake.lock
 rebuild                          # custom rebuild script (see below)
+common/
+  default.nix                    # shared system settings (nix.gc, optimise, locale, allowUnfree, flakes)
+  identity.nix                   # shared git identity (name/email), imported by both hosts
 keys/
   luke.pub                       # SSH public key, referenced by host configs
 hosts/nixnotdix/
@@ -30,7 +33,8 @@ hosts/nixnotdix/
     clonehero.nix                # custom package override (v1.1.0.6142, until nixpkgs catches up)
   assets/
     wallpapers/
-      purple-simple.png          # active wallpaper
+      interestellar.jpg          # active wallpaper
+      purple-simple.png          # alternate wallpaper
       tokyo_night_1080.jpg       # alternate wallpaper
       galaxy-space.jpg           # alternate wallpaper
     weather/
@@ -62,11 +66,11 @@ hosts/nixvps/
 **Theme:** Kanagawa Wave throughout — alacritty, fuzzel, mako, sway borders, waybar, bash prompt, cursor (Bibata Modern Ice 22px).
 
 ## Key Packages — nixnotdix
-- **Gaming:** Steam + protontricks, gamemode, NoiseTorch, CloneHero, PrismLauncher
-- **Dev:** Claude Code CLI, VSCodium, Git, Vim (`$EDITOR`)
+- **Gaming:** Steam + protontricks, gamemode, NoiseTorch, CloneHero, PrismLauncher, Lunar Client
+- **Dev:** Claude Code CLI, GitHub Copilot CLI, VSCodium, Git, Vim (`$EDITOR`)
 - **Apps:** Firefox, VLC, Vesktop (Discord), Plex Desktop, Spotify, pavucontrol
 - **Wayland utils:** wl-clipboard, grimblast, swayidle, swaylock
-- **Utils:** btop, fastfetch, nh (Nix helper), tree, eza, killall
+- **Utils:** btop, fastfetch, nh (Nix helper), tree, eza, file, killall, ttyper
 
 ## Rules for Claude
 - **Never run `./rebuild` or `nix flake update`** — tell Luke when these should be done and let him run them.
@@ -90,14 +94,23 @@ Supports `--boot` flag to stage the config without activating (requires reboot).
 Note: the rebuild script only works locally. To deploy nixvps, SSH in and run nixos-rebuild directly.
 
 ## Nix Configuration
-- Flakes enabled on both hosts
-- Unfree packages allowed on nixnotdix (NVIDIA, Steam)
-- Weekly GC, keeps 14 days of generations on both hosts
+Shared settings live in `common/default.nix` (imported by both hosts):
+- Flakes + `nix-command` enabled
+- Unfree packages allowed (NVIDIA, Steam on workstation)
+- Weekly GC keeping 14 days of generations, plus weekly store optimise
+- Timezone `America/Denver`, locale `en_US.UTF-8`
+
+Host-specific:
+- nixnotdix: `permittedInsecurePackages`, clonehero overlay
+- nixvps: `nix.settings.trusted-users = [ "luke" ]`
 - `useGlobalPkgs` + `useUserPackages` enabled in home-manager (nixnotdix only)
 
 ## Git Config (home-manager managed, nixnotdix)
-- Name: Luke
+- Name: Luke Collins
 - Email: luke@collins.rocks
+- Default branch for new repos: `main`
+
+(nixvps configures the same name/email via the NixOS `programs.git` module.)
 
 ## Weather Widget
 `hosts/nixnotdix/assets/weather/main.py` — Python script called by Waybar every 30 minutes.
@@ -105,6 +118,15 @@ Note: the rebuild script only works locally. To deploy nixvps, SSH in and run ni
 - Also supports API key from `~/.config/openweathermap/api_key` via the Waybar wrapper script
 - Falls back to IP geolocation if no `-c` location flag passed
 - Location set to Aurora, US (Imperial units)
+
+## Services — nixvps
+- **Vaultwarden** (`services.vaultwarden`): self-hosted Bitwarden server, SQLite backend.
+  - Listens on `127.0.0.1:8222`; public at `https://vault.jukeluke.com`.
+  - Signups disabled; admin panel enabled.
+  - Secrets (`ADMIN_TOKEN`, `SMTP_PASSWORD`) come from `/var/lib/vaultwarden/vaultwarden.env` — **never** committed to the Nix store / repo.
+  - SMTP via Migadu (`smtp.migadu.com:465`, force TLS) for invite/notification mail.
+- **Caddy** (`services.caddy`): reverse proxy with automatic HTTPS, fronting Vaultwarden on `vault.jukeluke.com`.
+- **Firewall:** opens TCP 47291 (SSH), 80 and 443 (Caddy / ACME).
 
 ## Security Notes
 - BattlEye domains blocked in `/etc/hosts` on nixnotdix

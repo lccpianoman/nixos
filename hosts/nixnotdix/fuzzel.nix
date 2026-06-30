@@ -3,7 +3,6 @@
 let
   theme = import ./theme.nix;
   c = theme.colors;
-  font = theme.font;
   fontUI = theme.fontUI;
 
   hex = s: builtins.substring 1 6 s;

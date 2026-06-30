@@ -3,7 +3,6 @@
 let
   theme = import ./theme.nix;
   c = theme.colors;
-  font = theme.font;
   fontUI = theme.fontUI;
 
   mod = "Mod4";
@@ -89,6 +88,7 @@ in
 
       fonts = {
         names = [ fontUI.name ];
+        # * 1.0 coerces the integer size to a float (this option requires a float/string)
         size = fontUI.size * 1.0;
       };
 

@@ -35,7 +35,7 @@ if [ ! -d "hosts/$TARGET_HOST" ]; then
     exit 1
 fi
 
-if git diff --quiet && git diff --cached --quiet; then
+if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
     echo -e "${YELLOW}No changes detected${NC}"
     read -p "Continue anyway? (y/N) " -n 1 -r
     echo
@@ -44,6 +44,14 @@ fi
 
 echo -e "\n${BLUE}Changes:${NC}"
 git diff HEAD
+
+# Untracked files are picked up by `git add -A` below but don't show in
+# `git diff HEAD`, so list them explicitly in the preview.
+untracked=$(git ls-files --others --exclude-standard)
+if [ -n "$untracked" ]; then
+    echo -e "\n${YELLOW}New (untracked) files:${NC}"
+    echo "$untracked" | sed 's/^/  + /'
+fi
 
 echo -e "${YELLOW}Ready to rebuild. Continue? (Y/n)${NC}"
 read -n 1 -r

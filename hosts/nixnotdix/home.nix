@@ -5,6 +5,7 @@ let
   c = theme.colors;
   font = theme.font;
   fontUI = theme.fontUI;
+  identity = import ../../common/identity.nix;
 in
 
 {
@@ -152,9 +153,9 @@ in
   programs.git = {
     enable = true;
     settings = {
-      user.name         = "Luke Collins";
-      user.email        = "luke@collins.rocks";
-      init.defaultBranch = "master";
+      user.name         = identity.name;
+      user.email        = identity.email;
+      init.defaultBranch = "main";
     };
   };
 

@@ -1,11 +1,13 @@
 { pkgs, ... }:
 
 {
-  imports = [ ./hardware-configuration.nix ];
+  imports = [
+    ../../common
+    ./hardware-configuration.nix
+  ];
 
   # ===== System =====
 
-  nixpkgs.config.allowUnfree = true;
   nixpkgs.config.permittedInsecurePackages = [
     "pnpm-10.29.2" # build-time dep of claude-code; CVEs don't apply in Nix sandbox
   ];
@@ -17,13 +19,6 @@
         else prev.clonehero;
     })
   ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-  nix.settings.warn-dirty = false;
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
-  };
 
   system.stateVersion = "25.11";
 
@@ -51,8 +46,6 @@
 
   # ===== Localization =====
 
-  time.timeZone = "America/Denver";
-  i18n.defaultLocale = "en_US.UTF-8";
   console = {
     font = "Lat2-Terminus16";
     keyMap = "us";

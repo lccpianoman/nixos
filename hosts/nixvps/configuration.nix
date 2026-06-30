@@ -1,7 +1,12 @@
-{ config, lib, pkgs, ... }:
+{ pkgs, ... }:
+
+let
+  identity = import ../../common/identity.nix;
+in
 
 {
   imports = [
+    ../../common
     ./hardware-configuration.nix
   ];
 
@@ -14,9 +19,6 @@
 
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 47291 80 443 ];
-
-  time.timeZone = "America/Denver";
-  i18n.defaultLocale = "en_US.UTF-8";
 
   users.users.luke = {
     isNormalUser = true;
@@ -84,26 +86,12 @@
   programs.git = {
     enable = true;
     config = {
-      user.name = "Luke Collins";
-      user.email = "luke@collins.rocks";
+      user.name = identity.name;
+      user.email = identity.email;
     };
   };
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.settings.trusted-users = [ "luke" ];
-  nix.settings.warn-dirty = false;
-  nixpkgs.config.allowUnfree = true;
-
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 14d";
-  };
-
-  nix.optimise = {
-    automatic = true;
-    dates = "weekly";
-  };
 
   boot.tmp.cleanOnBoot = true;
 
