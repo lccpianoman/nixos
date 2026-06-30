@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, config, ... }:
 
 let
   theme = import ./theme.nix;
@@ -54,7 +54,6 @@ in
     swaylock
 
     # Applications
-    firefox
     vlc
     pavucontrol
     vesktop
@@ -174,5 +173,15 @@ in
   programs.direnv = {
     enable = true;
     nix-direnv.enable = true;
+  };
+
+  programs.firefox = {
+    enable = true;
+    configPath = "${config.xdg.configHome}/mozilla/firefox";
+    profiles.default = {
+      settings = {
+        "layout.css.devPixelsPerPx" = "1.0";
+      };
+    };
   };
 }
