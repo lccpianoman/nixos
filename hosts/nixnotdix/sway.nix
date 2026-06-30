@@ -4,6 +4,7 @@ let
   theme = import ./theme.nix;
   c = theme.colors;
   font = theme.font;
+  fontUI = theme.fontUI;
 
   mod = "Mod4";
 
@@ -87,8 +88,8 @@ in
       };
 
       fonts = {
-        names = [ font.name ];
-        size = font.size * 1.0;
+        names = [ fontUI.name ];
+        size = fontUI.size * 1.0;
       };
 
       colors = {

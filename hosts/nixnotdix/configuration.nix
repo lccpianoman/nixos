@@ -135,8 +135,8 @@
   # ===== Fonts =====
 
   fonts.packages = with pkgs; [
-    nerd-fonts.jetbrains-mono
-    dejavu_fonts
+    nerd-fonts.roboto-mono
+    inter
   ];
 
   # ===== Gaming =====

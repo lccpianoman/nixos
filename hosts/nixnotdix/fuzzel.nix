@@ -4,6 +4,7 @@ let
   theme = import ./theme.nix;
   c = theme.colors;
   font = theme.font;
+  fontUI = theme.fontUI;
 
   hex = s: builtins.substring 1 6 s;
 in
@@ -13,7 +14,7 @@ in
     enable = true;
     settings = {
       main = {
-        font              = "${font.name}:size=${toString font.size}";
+        font              = "${fontUI.name}:size=${toString fontUI.size}";
         dpi-aware         = "no";
         lines             = 10;
         width             = 40;

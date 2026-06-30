@@ -4,13 +4,14 @@ let
   theme = import ./theme.nix;
   c = theme.colors;
   font = theme.font;
+  fontUI = theme.fontUI;
 in
 
 {
   services.mako = {
     enable = true;
     settings = {
-      font             = "${font.name} ${toString font.size}";
+      font             = "${fontUI.name} ${toString fontUI.size}";
       background-color = c.surface;
       text-color       = c.text;
       border-color     = c.overlay;

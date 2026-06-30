@@ -4,6 +4,7 @@ let
   theme = import ./theme.nix;
   c = theme.colors;
   font = theme.font;
+  fontUI = theme.fontUI;
 
   weatherConfig = {
     location = "Aurora,US";
@@ -107,7 +108,7 @@ in
       @define-color orange  ${c.orange};
 
       * {
-        font-family: "${font.name}", monospace;
+        font-family: "${fontUI.name}", "${font.name}", monospace;
         font-size: ${toString font.sizeBar}pt;
         border: none;
         border-radius: 0;

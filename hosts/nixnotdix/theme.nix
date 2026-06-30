@@ -22,8 +22,13 @@
   };
 
   font = {
-    name = "JetBrainsMono Nerd Font";
+    name = "RobotoMono Nerd Font";
     size = 11;
     sizeBar = 10;
+  };
+
+  fontUI = {
+    name = "Inter";
+    size = 11;
   };
 }
