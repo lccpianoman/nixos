@@ -11,11 +11,13 @@ NixOS flake managing two machines. Pinned to `nixos-26.05` with `home-manager re
 
 ## Desktop (nixnotdix)
 
-- **WM:** BSPWM + sxhkd
-- **Bar:** Polybar (weather, workspaces, clock)
-- **Launcher:** Rofi
+- **WM:** Sway
+- **Display manager:** greetd + tuigreet
+- **Bar:** Waybar (weather, workspaces, clock)
+- **Launcher:** Fuzzel
+- **Notifications:** Mako
 - **Terminal:** Alacritty
-- **Theme:** Tokyo Night throughout
+- **Theme:** Kanagawa Wave throughout
 
 ## Rebuilding
 
@@ -40,7 +42,7 @@ rebuild
 hosts/
   nixnotdix/          # workstation — system + home-manager config
     pkgs/             # local package overrides
-    assets/           # wallpapers, polybar weather script
+    assets/           # wallpapers, waybar weather script
   nixvps/             # VPS — system config only
 keys/
   luke.pub            # SSH public key, referenced by host configs
@@ -48,4 +50,8 @@ keys/
 
 ## Weather widget
 
-Requires an [OpenWeatherMap](https://openweathermap.org/api) API key exported as `OPENWEATHER_API_KEY`.
+The weather module uses `hosts/nixnotdix/assets/weather/main.py`, called by Waybar every 30 minutes.
+
+API key sources (either works):
+- `OPENWEATHER_API_KEY` environment variable
+- `~/.config/openweathermap/api_key` (used by the Waybar wrapper script)
