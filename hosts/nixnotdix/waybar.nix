@@ -41,10 +41,13 @@ in
     enable = true;
 
     settings = [{
-      layer    = "bottom";
-      position = "bottom";
-      height   = 30;
-      spacing  = 0;
+      layer         = "bottom";
+      position      = "bottom";
+      height        = 30;
+      spacing       = 0;
+      margin-bottom = 4;
+      margin-left   = 6;
+      margin-right  = 6;
 
       "modules-left"   = [ "sway/workspaces" ];
       "modules-center" = [ "sway/window" ];
@@ -114,7 +117,8 @@ in
       }
 
       window#waybar {
-        background: transparent;
+        background: rgba(31, 31, 40, 0.85);
+        border-radius: 8px;
         color: @text;
       }
 
