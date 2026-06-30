@@ -73,7 +73,7 @@ in
         inner = 4;
         outer = 0;
         smartGaps = true;
-        smartBorders = "on";
+        smartBorders = "off";
       };
 
       window = {

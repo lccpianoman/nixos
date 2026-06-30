@@ -100,7 +100,7 @@ in
   programs.alacritty = {
     enable = true;
     settings = {
-      window.opacity = 0.15;
+      window.opacity = 0.85;
       font = {
         normal = { family = font.name; style = "Regular"; };
         bold   = { family = font.name; style = "Bold"; };
