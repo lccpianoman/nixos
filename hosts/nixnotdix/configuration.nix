@@ -8,8 +8,6 @@
   nixpkgs.config.allowUnfree = true;
   nixpkgs.overlays = [
     (final: prev: {
-      # Use locally-packaged clonehero until nixpkgs reaches 1.1.0.6142.
-      # Remove ./pkgs/clonehero.nix once this condition is no longer true.
       clonehero =
         if final.lib.versionOlder prev.clonehero.version "1.1.0.6142"
         then final.callPackage ./pkgs/clonehero.nix {}
@@ -33,6 +31,7 @@
     loader.systemd-boot.configurationLimit = 5;
     loader.efi.canTouchEfiVariables = true;
     kernelPackages = pkgs.linuxPackages_zen;
+    kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
   };
 
   # ===== Networking =====
@@ -60,26 +59,61 @@
 
   users.users.luke = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
   };
 
   # ===== Desktop Environment =====
 
-  services = {
-    xserver = {
-      enable = true;
-      videoDrivers = [ "nvidia" ];
-      windowManager.bspwm.enable = true;
-      displayManager.lightdm.enable = true;
-    };
-    displayManager.defaultSession = "none+bspwm";
-    pipewire = {
-      enable = true;
-      pulse.enable = true;
+  programs.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true;
+  };
+
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = let
+          theme = import ./theme.nix;
+          c = theme.colors;
+        in ''
+          ${pkgs.tuigreet}/bin/tuigreet \
+            --time \
+            --remember \
+            --cmd sway \
+            --theme "border=${builtins.substring 1 6 c.blue};text=${builtins.substring 1 6 c.text};prompt=${builtins.substring 1 6 c.gold};time=${builtins.substring 1 6 c.blueLight};action=${builtins.substring 1 6 c.purple};button=${builtins.substring 1 6 c.blue};container=${builtins.substring 1 6 c.surface};input=${builtins.substring 1 6 c.text}"
+        '';
+        user = "greeter";
+      };
     };
   };
 
+  security.pam.services.swaylock = {};
   security.rtkit.enable = true;
+  security.polkit.enable = true;
+
+  services.pipewire = {
+    enable = true;
+    pulse.enable = true;
+  };
+
+  xdg.portal = {
+    enable = true;
+    wlr.enable = true;
+    extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
+  };
+
+  # ===== Wayland / NVIDIA =====
+
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL    = "1";
+    GBM_BACKEND       = "nvidia-drm";
+    __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+    WLR_NO_HARDWARE_CURSORS   = "1";
+    MOZ_ENABLE_WAYLAND        = "1";
+  };
+
+  services.xserver.videoDrivers = [ "nvidia" ];
 
   # ===== Graphics =====
 
@@ -98,7 +132,7 @@
   # ===== Fonts =====
 
   fonts.packages = with pkgs; [
-    nerd-fonts.hack
+    nerd-fonts.caskaydia-cove
     dejavu_fonts
   ];
 

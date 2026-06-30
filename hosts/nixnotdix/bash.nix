@@ -1,43 +1,64 @@
 { pkgs, ... }:
 
+let
+  theme = import ./theme.nix;
+  c = theme.colors;
+
+  # Convert #rrggbb to r;g;b for ANSI escape codes
+  ansi = hex:
+    let
+      r = builtins.substring 1 2 hex;
+      g = builtins.substring 3 2 hex;
+      b = builtins.substring 5 2 hex;
+      toInt = s:
+        let
+          digits = { "0"=0;"1"=1;"2"=2;"3"=3;"4"=4;"5"=5;"6"=6;"7"=7;"8"=8;"9"=9;
+                     "a"=10;"b"=11;"c"=12;"d"=13;"e"=14;"f"=15;
+                     "A"=10;"B"=11;"C"=12;"D"=13;"E"=14;"F"=15; };
+          hi = digits.${builtins.substring 0 1 s};
+          lo = digits.${builtins.substring 1 1 s};
+        in hi * 16 + lo;
+    in "${toString (toInt r)};${toString (toInt g)};${toString (toInt b)}";
+in
+
 {
   programs.bash = {
     enable = true;
 
     # ===== History =====
 
-    historySize = 10000;
+    historySize     = 10000;
     historyFileSize = 20000;
-    historyControl = [ "ignoredups" "ignorespace" ];
+    historyControl  = [ "ignoredups" "ignorespace" ];
 
     # ===== Aliases =====
 
     shellAliases = {
-      ls = "eza --icons=auto";
-      ll = "eza -lh --icons=auto --git";
-      la = "eza -lah --icons=auto --git";
-      lt = "eza --tree --icons=auto";
-      grep = "grep --color=auto";
+      ls    = "eza --icons=auto";
+      ll    = "eza -lh --icons=auto --git";
+      la    = "eza -lah --icons=auto --git";
+      lt    = "eza --tree --icons=auto";
+      grep  = "grep --color=auto";
       fgrep = "fgrep --color=auto";
       egrep = "egrep --color=auto";
-      cp = "cp -i";
-      mv = "mv -i";
-      rm = "rm -i";
+      cp    = "cp -i";
+      mv    = "mv -i";
+      rm    = "rm -i";
       clear = "command clear; __FIRST_PROMPT=1";
     };
 
     # ===== Prompt =====
 
     initExtra = ''
-      C_CYAN="\e[38;2;125;207;255m"
-      C_FG="\e[38;2;192;202;245m"
-      C_ACCENT="\e[38;2;122;162;247m"
-      C_GREEN="\e[38;2;158;206;106m"
-      C_RED="\e[38;2;247;118;142m"
-      C_GRAY="\e[38;2;86;95;137m"
+      C_CYAN="\e[38;2;${ansi c.blueLight}m"
+      C_FG="\e[38;2;${ansi c.text}m"
+      C_ACCENT="\e[38;2;${ansi c.blue}m"
+      C_GREEN="\e[38;2;${ansi c.green}m"
+      C_RED="\e[38;2;${ansi c.red}m"
+      C_GRAY="\e[38;2;${ansi c.muted}m"
       C_RESET="\e[0m"
 
-      ICON_GIT=$''
+      ICON_GIT=$''
 
       __FIRST_PROMPT=1
 

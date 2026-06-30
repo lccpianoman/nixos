@@ -1,20 +1,25 @@
 { pkgs, ... }:
 
+let
+  theme = import ./theme.nix;
+  c = theme.colors;
+  font = theme.font;
+in
+
 {
   imports = [
     ./bash.nix
-    ./dunst.nix
-    ./picom.nix
-    ./polybar.nix
-    ./rofi.nix
-    ./thunderbird.nix
+    ./mako.nix
+    ./sway.nix
+    ./waybar.nix
+    ./fuzzel.nix
   ];
 
   # ===== User Profile =====
 
-  home.username = "luke";
+  home.username    = "luke";
   home.homeDirectory = "/home/luke";
-  home.stateVersion = "25.11";
+  home.stateVersion  = "25.11";
 
   home.sessionVariables.EDITOR = "vim";
 
@@ -36,15 +41,17 @@
   home.packages = with pkgs; [
     # Utilities
     eza
-    feh
     tree
     file
-    xclip
+    wl-clipboard
     btop
     nh
     killall
     fastfetch
     ttyper
+    grimblast
+    swayidle
+    swaylock
 
     # Applications
     firefox
@@ -65,97 +72,78 @@
     lunar-client
   ];
 
-  # ===== X Session =====
-
-  xsession.enable = true;
-  xsession.initExtra = ''
-    ${pkgs.xrandr}/bin/xrandr \
-      --output HDMI-0 --mode 1920x1080 --rate 60 --pos 0x0 --rotate normal \
-      --output DP-0 --off \
-      --output DP-1 --off \
-      --output DP-2 --off \
-      --output DP-3 --off \
-      --output DP-4 --primary --mode 1920x1080 --rate 144 --pos 1920x0 --rotate normal \
-      --output DP-5 --off
-    ${pkgs.feh}/bin/feh --bg-fill "$HOME/.background-image" &
-  '';
+  # ===== Wallpaper =====
 
   home.file.".background-image".source = ./assets/wallpapers/purple-simple.png;
-
-  # ===== Window Manager =====
-
-  xsession.windowManager.bspwm = {
-    enable = true;
-    monitors = {
-      HDMI-0 = [ "4" "5" "6" ];
-      DP-4 = [ "1" "2" "3" ];
-    };
-    settings = {
-      focus_follows_pointer = true;
-      border_width = 2;
-      window_gap = 4;
-      top_padding = 4;
-      bottom_padding = 4;
-      left_padding = 4;
-      right_padding = 4;
-      normal_border_color = "#414868";
-      focused_border_color = "#7aa2f7";
-      borderless_monocle = true;
-      gapless_monocle = true;
-    };
-  };
-
-  # ===== Hotkeys =====
-
-  services.sxhkd = {
-    enable = true;
-    keybindings = {
-      "super + Return" = "alacritty";
-      "super + @space" = "rofi -show drun";
-      "super + alt + {q,r}" = "bspc {quit,wm -r}";
-      "super + {_,shift + }BackSpace" = "bspc node -{c,k}";
-      "super + {t,shift + t,s,f}" = "bspc node -t {tiled,pseudo_tiled,floating,fullscreen}";
-      "super + {_,shift + }{h,j,k,l}" = "bspc node -{f,s} {west,south,north,east}";
-      "super + {_,shift + }{1-6}" = "bspc {desktop -f,node -d} '{1-6}'";
-      "Print" = "flameshot gui";
-    };
-  };
 
   # ===== Theme =====
 
   home.pointerCursor = {
-    x11.enable = true;
-    gtk.enable = true;
-    name = "Bibata-Modern-Ice";
+    gtk.enable  = true;
+    sway.enable = true;
+    name    = "Bibata-Modern-Ice";
     package = pkgs.bibata-cursors;
-    size = 22;
+    size    = 22;
+  };
+
+  gtk = {
+    enable = true;
+    font = {
+      name    = font.name;
+      size    = font.size;
+      package = pkgs.nerd-fonts.caskaydia-cove;
+    };
   };
 
   # ===== Applications =====
 
   programs.alacritty = {
     enable = true;
-    theme = "tokyo_night";
     settings = {
       window.opacity = 0.15;
       font = {
+        normal = { family = font.name; style = "Regular"; };
+        bold   = { family = font.name; style = "Bold"; };
+        italic = { family = font.name; style = "Italic"; };
+        size   = font.size;
+      };
+      colors = {
+        primary = {
+          background = c.base;
+          foreground = c.text;
+        };
         normal = {
-          family = "Hack Nerd Font";
-          style = "Regular";
+          black   = c.overlay;
+          red     = c.red;
+          green   = c.green;
+          yellow  = c.gold;
+          blue    = c.blue;
+          magenta = c.purple;
+          cyan    = c.teal;
+          white   = c.subtext;
         };
-        bold = {
-          family = "Hack Nerd Font";
-          style = "Bold";
+        bright = {
+          black   = c.muted;
+          red     = c.redLight;
+          green   = c.green;
+          yellow  = c.orange;
+          blue    = c.blueLight;
+          magenta = c.pink;
+          cyan    = c.teal;
+          white   = c.text;
         };
-        italic = {
-          family = "Hack Nerd Font";
-          style = "Italic";
+        cursor = {
+          text   = c.base;
+          cursor = c.blue;
         };
-        size = 12;
+        selection = {
+          text       = c.text;
+          background = c.overlay;
+        };
       };
       keyboard.bindings = [{
-        key = "Return";
-        mods = "Shift";
+        key   = "Return";
+        mods  = "Shift";
         chars = "\\n";
       }];
     };
@@ -164,17 +152,9 @@
   programs.git = {
     enable = true;
     settings = {
-      user.name = "Luke Collins";
-      user.email = "luke@collins.rocks";
+      user.name         = "Luke Collins";
+      user.email        = "luke@collins.rocks";
       init.defaultBranch = "master";
-    };
-  };
-
-  services.flameshot = {
-    enable = true;
-    settings.General = {
-      disabledTrayIcon = true;
-      showStartupLaunchMessage = false;
     };
   };
 
@@ -183,9 +163,9 @@
     enableDefaultConfig = false;
     settings = {
       "nixvps" = {
-        Hostname = "66.228.49.38";
-        User = "luke";
-        Port = 47291;
+        Hostname     = "66.228.49.38";
+        User         = "luke";
+        Port         = 47291;
         IdentityFile = "~/.ssh/id_ed25519";
       };
     };
