@@ -7,9 +7,10 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nur.url = "github:nix-community/NUR";
   };
 
-  outputs = { nixpkgs, home-manager, ... }: {
+  outputs = { nixpkgs, home-manager, nur, ... }: {
     nixosConfigurations.nixvps = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -20,6 +21,7 @@
     nixosConfigurations.nixnotdix = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
+        { nixpkgs.overlays = [ nur.overlays.default ]; }
         ./hosts/nixnotdix/configuration.nix
         home-manager.nixosModules.home-manager
         {
