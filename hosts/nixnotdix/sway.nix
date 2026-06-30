@@ -72,7 +72,7 @@ in
       gaps = {
         inner = 4;
         outer = 0;
-        smartGaps = true;
+        smartGaps = false;
         smartBorders = "off";
       };
 
