@@ -90,7 +90,7 @@ in
     font = {
       name    = font.name;
       size    = font.size;
-      package = pkgs.nerd-fonts.caskaydia-cove;
+      package = pkgs.nerd-fonts.jetbrains-mono;
     };
   };
 

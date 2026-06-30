@@ -22,7 +22,7 @@
   };
 
   font = {
-    name = "CaskaydiaCove Nerd Font";
+    name = "JetBrainsMono Nerd Font";
     size = 11;
     sizeBar = 10;
   };

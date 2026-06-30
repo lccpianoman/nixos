@@ -6,6 +6,9 @@
   # ===== System =====
 
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.permittedInsecurePackages = [
+    "pnpm-10.29.2" # build-time dep of claude-code; CVEs don't apply in Nix sandbox
+  ];
   nixpkgs.overlays = [
     (final: prev: {
       clonehero =
@@ -132,7 +135,7 @@
   # ===== Fonts =====
 
   fonts.packages = with pkgs; [
-    nerd-fonts.caskaydia-cove
+    nerd-fonts.jetbrains-mono
     dejavu_fonts
   ];
 
