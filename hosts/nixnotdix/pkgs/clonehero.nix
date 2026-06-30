@@ -89,6 +89,10 @@ stdenv.mkDerivation (finalAttrs: {
     wrapProgram "$out/libexec/clonehero/clonehero" \
       --set SDL_VIDEODRIVER wayland
 
+    # wrapProgram renames the binary to .clonehero-wrapped; Unity looks for
+    # <binary_name>_Data next to the executable, so we need this symlink too.
+    ln -s "$out/share/clonehero" "$out/libexec/clonehero/.clonehero-wrapped_Data"
+
     patchelf \
       --add-needed libasound.so.2 \
       --add-needed libdbus-1.so.3 \
