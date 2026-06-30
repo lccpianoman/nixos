@@ -3,6 +3,7 @@
   stdenv,
   fetchurl,
   autoPatchelfHook,
+  makeWrapper,
   gtk3,
   zlib,
   alsa-lib,
@@ -31,7 +32,7 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-Vylx2TCSKDxdDVIAaia1Krjo+xKNz7QqNJbeJsiqIx0=";
   };
 
-  nativeBuildInputs = [ autoPatchelfHook ];
+  nativeBuildInputs = [ autoPatchelfHook makeWrapper ];
 
   buildInputs = [
     alsa-lib
@@ -85,6 +86,9 @@ stdenv.mkDerivation (finalAttrs: {
   '';
 
   postFixup = ''
+    wrapProgram "$out/libexec/clonehero/clonehero" \
+      --set SDL_VIDEODRIVER wayland
+
     patchelf \
       --add-needed libasound.so.2 \
       --add-needed libdbus-1.so.3 \
