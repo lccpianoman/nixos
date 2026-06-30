@@ -49,7 +49,7 @@ in
           pos = "0 0";
           bg = "~/.background-image fill";
         };
-        "DP-4" = {
+        "DP-3" = {
           mode = "1920x1080@144Hz";
           pos = "1920 0";
           bg = "~/.background-image fill";
@@ -59,9 +59,9 @@ in
       # ===== Workspaces =====
 
       workspaceOutputAssign = [
-        { workspace = "1"; output = "DP-4"; }
-        { workspace = "2"; output = "DP-4"; }
-        { workspace = "3"; output = "DP-4"; }
+        { workspace = "1"; output = "DP-3"; }
+        { workspace = "2"; output = "DP-3"; }
+        { workspace = "3"; output = "DP-3"; }
         { workspace = "4"; output = "HDMI-A-1"; }
         { workspace = "5"; output = "HDMI-A-1"; }
         { workspace = "6"; output = "HDMI-A-1"; }
@@ -134,6 +134,7 @@ in
         "${mod}+ctrl+l"       = "exec ${swaylock-cmd}";
 
         # Kill / reload
+        "${mod}+BackSpace"    = "kill";
         "${mod}+Shift+q"      = "kill";
         "${mod}+Shift+r"      = "reload";
         "${mod}+Shift+e"      = "exec swaynag -t warning -m 'Exit sway?' -b 'Yes' 'swaymsg exit'";
