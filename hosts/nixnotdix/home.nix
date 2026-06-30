@@ -73,7 +73,7 @@ in
 
   # ===== Wallpaper =====
 
-  home.file.".background-image".source = ./assets/wallpapers/purple-simple.png;
+  home.file.".background-image".source = ./assets/wallpapers/interestellar.jpg;
 
   # ===== Theme =====
 
