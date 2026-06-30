@@ -80,8 +80,8 @@
           ${pkgs.tuigreet}/bin/tuigreet \
             --time \
             --remember \
-            --cmd sway \
-            --theme "border=${builtins.substring 1 6 c.blue};text=${builtins.substring 1 6 c.text};prompt=${builtins.substring 1 6 c.gold};time=${builtins.substring 1 6 c.blueLight};action=${builtins.substring 1 6 c.purple};button=${builtins.substring 1 6 c.blue};container=${builtins.substring 1 6 c.surface};input=${builtins.substring 1 6 c.text}"
+            --cmd "sway --unsupported-gpu" \
+            --theme "border=${c.blue};text=${c.text};prompt=${c.gold};time=${c.blueLight};action=${c.purple};button=${c.blue};container=${c.surface};input=${c.text}"
         '';
         user = "greeter";
       };
