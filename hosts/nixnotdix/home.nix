@@ -54,6 +54,7 @@ in
     grimblast
     swayidle
     swaylock
+    xeyes
 
     # Applications
     vlc
