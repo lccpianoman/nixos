@@ -180,7 +180,6 @@ in
       # ===== Startup =====
 
       startup = [
-        { command = "${pkgs.mako}/bin/mako"; }
         { command = "${pkgs.waybar}/bin/waybar"; }
         {
           command = ''
