@@ -99,8 +99,9 @@
     wlr.enable = true;
     # xdpw runs as a user service and does not see Home Manager's PATH.
     wlr.settings.screencast = {
+      max_fps = 60;
       chooser_type = "dmenu";
-      chooser_cmd = "${pkgs.fuzzel}/bin/fuzzel -d -l 10 -p 'Select a source to share:'";
+      chooser_cmd = "${pkgs.fuzzel}/bin/fuzzel -d -l 10 --minimal-lines --no-exit-on-keyboard-focus-loss -p 'Select a source to share:'";
     };
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.common = {

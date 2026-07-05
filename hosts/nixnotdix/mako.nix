@@ -17,10 +17,10 @@ in
       border-size      = 1;
       border-radius    = 8;
       padding          = "14,16";
-      margin           = "12";
+      outer-margin     = "9,12";
+      margin           = "3,0";
       width            = 340;
       max-visible      = 5;
-      gap              = 6;
       sort             = "-time";
       layer            = "overlay";
       anchor           = "top-right";
