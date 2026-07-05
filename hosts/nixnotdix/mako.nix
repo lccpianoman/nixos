@@ -27,21 +27,21 @@ in
       default-timeout  = 7000;
       ignore-timeout   = false;
 
-      "[urgency=low]" = {
+      "urgency=low" = {
         background-color = c.surface;
         text-color       = c.muted;
         border-color     = c.overlay;
         default-timeout  = 5000;
       };
 
-      "[urgency=normal]" = {
+      "urgency=normal" = {
         background-color = c.surface;
         text-color       = c.text;
         border-color     = c.overlay;
         default-timeout  = 7000;
       };
 
-      "[urgency=critical]" = {
+      "urgency=critical" = {
         background-color = c.surface;
         text-color       = c.red;
         border-color     = c.red;
