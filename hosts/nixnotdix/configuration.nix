@@ -97,6 +97,11 @@
   xdg.portal = {
     enable = true;
     wlr.enable = true;
+    # xdpw runs as a user service and does not see Home Manager's PATH.
+    wlr.settings.screencast = {
+      chooser_type = "dmenu";
+      chooser_cmd = "${pkgs.fuzzel}/bin/fuzzel -d -l 10 -p 'Select a source to share:'";
+    };
     extraPortals = [ pkgs.xdg-desktop-portal-gtk ];
     config.common = {
       default = [ "gtk" ];
