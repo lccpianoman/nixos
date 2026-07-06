@@ -50,11 +50,11 @@ in
     nh
     killall
     fastfetch
-    ttyper
     grimblast
     swayidle
     swaylock
     xeyes
+    glow
 
     # Applications
     vlc
@@ -71,7 +71,6 @@ in
     # Gaming
     clonehero
     prismlauncher
-    lunar-client
   ];
 
   # ===== Wallpaper =====
