@@ -11,15 +11,22 @@
   nixpkgs.config.permittedInsecurePackages = [
     "pnpm-10.29.2" # build-time dep of claude-code; CVEs don't apply in Nix sandbox
   ];
+  # Local Clone Hero build until nixpkgs catches up (still 1.1.0.6085 as of
+  # 2026-07). Version lives only in pkgs/clonehero.nix; once nixpkgs reaches
+  # it this overlay is a no-op — delete it and pkgs/clonehero.nix then.
   nixpkgs.overlays = [
     (final: prev: {
       clonehero =
-        if final.lib.versionOlder prev.clonehero.version "1.1.0.6142"
-        then final.callPackage ./pkgs/clonehero.nix {}
-        else prev.clonehero;
+        let custom = final.callPackage ./pkgs/clonehero.nix { };
+        in if final.lib.versionOlder prev.clonehero.version custom.version
+           then custom
+           else prev.clonehero;
     })
   ];
 
+  # Release this host was first installed with — pins on-disk data formats.
+  # Intentionally NOT bumped when nixpkgs moves (currently 26.05); only
+  # change after reading that release's stateVersion migration notes.
   system.stateVersion = "25.11";
 
   # ===== Boot =====
@@ -37,6 +44,9 @@
   networking = {
     hostName = "nixnotdix";
     networkmanager.enable = true;
+    # GTA V Online under Proton: blocking these BattlEye endpoints is what
+    # lets the game connect to Online without being kicked. Removing them
+    # breaks GTA Online on this box.
     hosts."0.0.0.0" = [
       "paradise-s1.battleye.com"
       "test-s1.battleye.com"

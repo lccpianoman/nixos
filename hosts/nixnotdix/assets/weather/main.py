@@ -1,21 +1,42 @@
+"""Waybar weather widget: print the current temperature for a city.
+
+Called by Waybar (via weather.sh) every 30 minutes with an explicit
+`-c` city, so the IP-geolocation lookup below only runs for ad-hoc CLI
+use without `-c` — and may pick the wrong city (VPN, ISP routing); it
+warns on stderr when it falls back. Prints `N/A` and exits non-zero on
+any failure so the bar shows something sensible.
+"""
+
 import argparse
 import os
 import sys
 
 import requests
 from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 URL = "https://api.openweathermap.org/data/2.5/weather"
 IP_LOOKUP_URL = "https://ipapi.co/json"
 DEFAULT_CITY = "london"
 TIMEOUT_SECONDS = 10
+# Printed on stdout when the lookup fails so Waybar shows something sensible
+FALLBACK_OUTPUT = "N/A"
 
 # Get your API key at https://openweathermap.org/api and export OPENWEATHER_API_KEY.
 API_KEY = os.environ.get("OPENWEATHER_API_KEY")
-HEADER = {"User-agent": "Mozilla/5.0"}
+HEADER = {"User-Agent": "waybar-weather-widget/1.0"}
+
+RETRIES = Retry(
+    total=5,
+    backoff_factor=1,
+    status_forcelist=(429, 500, 502, 503, 504),
+    allowed_methods=("GET",),
+)
 
 
 def get_city() -> str:
+    """Guess the city from the machine's public IP; warns and falls back
+    to DEFAULT_CITY when the lookup fails or returns nothing."""
     try:
         r = requests.get(IP_LOOKUP_URL, headers=HEADER, timeout=TIMEOUT_SECONDS)
         r.raise_for_status()
@@ -43,11 +64,12 @@ def unit_suffix(unit: str) -> str:
 
 def get_weather(city: str, lang: str, unit: str, api_key: str) -> dict[str, str] | None:
     s = requests.Session()
-    s.mount("https://", HTTPAdapter(max_retries=5))
+    s.mount("https://", HTTPAdapter(max_retries=RETRIES))
 
     try:
         r = s.get(
-            f"{URL}?q={city}&lang={lang}&units={unit}&appid={api_key}",
+            URL,
+            params={"q": city, "lang": lang, "units": unit, "appid": api_key},
             headers=HEADER,
             timeout=TIMEOUT_SECONDS,
         )
@@ -117,20 +139,24 @@ def main() -> None:
 
     api_key = args.api_key if args.api_key else API_KEY
     if not api_key:
-        print("E: set OPENWEATHER_API_KEY")
+        print("E: set OPENWEATHER_API_KEY", file=sys.stderr)
+        print(FALLBACK_OUTPUT)
         sys.exit(1)
     city = " ".join(args.city) if args.city else get_city()
     lang = args.lang
     unit = args.unit
 
     weather = get_weather(city, lang, unit, api_key)
-    if weather:
-        temp = weather["temp"]
-        desc = weather["desc"]
-        if args.verbose:
-            print(f"{temp}, {desc}")
-        else:
-            print(f"{temp}")
+    if weather is None:
+        print(FALLBACK_OUTPUT)
+        sys.exit(1)
+
+    temp = weather["temp"]
+    desc = weather["desc"]
+    if args.verbose:
+        print(f"{temp}, {desc}")
+    else:
+        print(f"{temp}")
 
 
 if __name__ == "__main__":

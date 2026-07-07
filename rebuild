@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
+
+for cmd in git nh grep awk hostname; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo -e "${RED}Error: required command '$cmd' not found in PATH${NC}" >&2
+        exit 1
+    fi
+done
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -22,10 +29,9 @@ done
 
 TARGET_HOST="${TARGET_HOST:-$(hostname)}"
 
-if $BOOT_ONLY; then
-    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${YELLOW} (boot only — reboot to activate)${NC}"
-else
-    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${NC}"
+if [[ ! "$TARGET_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9-]*$ ]]; then
+    echo -e "${RED}Error: '$TARGET_HOST' is not a valid hostname${NC}" >&2
+    exit 1
 fi
 
 if [ ! -d "hosts/$TARGET_HOST" ]; then
@@ -35,11 +41,27 @@ if [ ! -d "hosts/$TARGET_HOST" ]; then
     exit 1
 fi
 
+# nh activates the built config on THIS machine, so cross-building another
+# host's config here would switch this machine to it. Refuse.
+if [ "$TARGET_HOST" != "$(hostname)" ]; then
+    echo -e "${RED}Error: this machine is '$(hostname)', not '$TARGET_HOST'${NC}" >&2
+    echo -e "${YELLOW}SSH into $TARGET_HOST and run ./rebuild there instead${NC}" >&2
+    exit 1
+fi
+
+if $BOOT_ONLY; then
+    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${YELLOW} (boot only — reboot to activate)${NC}"
+else
+    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${NC}"
+fi
+
 if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --others --exclude-standard)" ]; then
     echo -e "${YELLOW}No changes detected${NC}"
     read -p "Continue anyway? (y/N) " -n 1 -r
     echo
-    [[ ! $REPLY =~ ^[Yy]$ ]] && exit 0
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        exit 0
+    fi
 fi
 
 echo -e "\n${BLUE}Changes:${NC}"
@@ -50,13 +72,16 @@ git diff HEAD
 untracked=$(git ls-files --others --exclude-standard)
 if [ -n "$untracked" ]; then
     echo -e "\n${YELLOW}New (untracked) files:${NC}"
-    echo "$untracked" | sed 's/^/  + /'
+    while IFS= read -r f; do echo "  + $f"; done <<< "$untracked"
 fi
 
 echo -e "${YELLOW}Ready to rebuild. Continue? (Y/n)${NC}"
 read -n 1 -r
 echo
-[[ $REPLY =~ ^[Nn]$ ]] && { echo -e "${RED}Rebuild cancelled${NC}"; exit 0; }
+if [[ $REPLY =~ ^[Nn]$ ]]; then
+    echo -e "${RED}Rebuild cancelled${NC}"
+    exit 0
+fi
 
 # Stage before rebuild so Nix can see uncommitted changes
 echo -e "\n${BLUE}Staging changes...${NC}"
@@ -64,18 +89,30 @@ git add -A
 
 echo -e "\n${BLUE}Rebuilding system...${NC}"
 if $BOOT_ONLY; then
-    nh os boot . -H "${TARGET_HOST}"
+    NH_CMD=(nh os boot)
 else
-    nh os switch . -H "${TARGET_HOST}"
+    NH_CMD=(nh os switch)
+fi
+if ! "${NH_CMD[@]}" . -H "${TARGET_HOST}"; then
+    echo -e "\n${RED}Rebuild failed — changes are staged but not committed${NC}" >&2
+    exit 1
 fi
 
-GENERATION=$(nh os info | grep current | awk '{print $1}')
+GENERATION=$(nh os info | awk '/\(current\)/ {print $1; exit}' || true)
+if [[ ! "$GENERATION" =~ ^[0-9]+$ ]]; then
+    echo -e "${RED}Error: could not determine current generation from 'nh os info'${NC}" >&2
+    echo -e "${YELLOW}Rebuild succeeded — commit and push manually${NC}" >&2
+    exit 1
+fi
 
 echo -e "\n${GREEN}Rebuild successful!${NC}"
 echo -e "${BLUE}Committing changes...${NC}"
 
-git commit -m "Rebuild ${TARGET_HOST} to generation ${GENERATION}" || \
+if git diff --cached --quiet; then
     echo -e "${YELLOW}No changes to commit${NC}"
+else
+    git commit -m "Rebuild ${TARGET_HOST} to generation ${GENERATION}"
+fi
 
 echo -e "${BLUE}Pushing changes...${NC}"
 git push || echo -e "${YELLOW}Push failed — push manually with: git push${NC}"

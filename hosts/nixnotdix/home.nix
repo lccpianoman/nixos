@@ -21,6 +21,8 @@ in
 
   home.username    = "luke";
   home.homeDirectory = "/home/luke";
+  # Intentionally pinned to the release this home was created with — do not
+  # bump to match nixpkgs (see system.stateVersion in configuration.nix).
   home.stateVersion  = "25.11";
 
   home.sessionVariables.EDITOR = "vim";
@@ -72,10 +74,6 @@ in
     clonehero
     prismlauncher
   ];
-
-  # ===== Wallpaper =====
-
-  home.file.".background-image".source = ./assets/wallpapers/interestellar.jpg;
 
   # ===== Theme =====
 
@@ -164,6 +162,9 @@ in
     enableDefaultConfig = false;
     settings = {
       "nixvps" = {
+        # Raw Linode IP on purpose: it's static, and the only public DNS for
+        # this box (vault.jukeluke.com) is Cloudflare-proxied — an unproxied
+        # record would advertise the origin IP that the proxy hides.
         Hostname     = "66.228.49.38";
         User         = "luke";
         Port         = 47291;

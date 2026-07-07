@@ -2,27 +2,34 @@
 
 let
   theme = import ./theme.nix;
+  constants = import ./constants.nix;
   c = theme.colors;
   fontUI = theme.fontUI;
+  monitors = constants.monitors;
+  hex = theme.lib.stripHash;
 
   mod = "Mod4";
 
+  # Store path (not ~/.background-image) so `checkConfig` can validate the
+  # config in the build sandbox, where $HOME does not exist.
+  wallpaper = ./assets/wallpapers/interestellar.jpg;
+
   swaylock-cmd = "${pkgs.swaylock}/bin/swaylock -f "
-    + "--color ${builtins.substring 1 6 c.base} "
-    + "--inside-color ${builtins.substring 1 6 c.surface} "
-    + "--inside-clear-color ${builtins.substring 1 6 c.surface} "
-    + "--inside-ver-color ${builtins.substring 1 6 c.surface} "
-    + "--inside-wrong-color ${builtins.substring 1 6 c.surface} "
-    + "--ring-color ${builtins.substring 1 6 c.blue} "
-    + "--ring-clear-color ${builtins.substring 1 6 c.teal} "
-    + "--ring-ver-color ${builtins.substring 1 6 c.purple} "
-    + "--ring-wrong-color ${builtins.substring 1 6 c.red} "
-    + "--key-hl-color ${builtins.substring 1 6 c.green} "
-    + "--bs-hl-color ${builtins.substring 1 6 c.redLight} "
-    + "--text-color ${builtins.substring 1 6 c.text} "
-    + "--text-clear-color ${builtins.substring 1 6 c.text} "
-    + "--text-ver-color ${builtins.substring 1 6 c.text} "
-    + "--text-wrong-color ${builtins.substring 1 6 c.red} "
+    + "--color ${hex c.base} "
+    + "--inside-color ${hex c.surface} "
+    + "--inside-clear-color ${hex c.surface} "
+    + "--inside-ver-color ${hex c.surface} "
+    + "--inside-wrong-color ${hex c.surface} "
+    + "--ring-color ${hex c.blue} "
+    + "--ring-clear-color ${hex c.teal} "
+    + "--ring-ver-color ${hex c.purple} "
+    + "--ring-wrong-color ${hex c.red} "
+    + "--key-hl-color ${hex c.green} "
+    + "--bs-hl-color ${hex c.redLight} "
+    + "--text-color ${hex c.text} "
+    + "--text-clear-color ${hex c.text} "
+    + "--text-ver-color ${hex c.text} "
+    + "--text-wrong-color ${hex c.red} "
     + "--separator-color 00000000 "
     + "--line-color 00000000 "
     + "--line-clear-color 00000000 "
@@ -34,7 +41,7 @@ in
   wayland.windowManager.sway = {
     enable = true;
     xwayland = true;
-    checkConfig = false;
+    checkConfig = true;
 
     config = {
       modifier = mod;
@@ -44,28 +51,23 @@ in
       # ===== Outputs =====
 
       output = {
-        "HDMI-A-1" = {
-          mode = "1920x1080@60Hz";
-          pos = "0 0";
-          bg = "~/.background-image fill";
+        ${monitors.secondary.name} = {
+          mode = monitors.secondary.mode;
+          pos = monitors.secondary.pos;
+          bg = "${wallpaper} fill";
         };
-        "DP-3" = {
-          mode = "1920x1080@144Hz";
-          pos = "1920 0";
-          bg = "~/.background-image fill";
+        ${monitors.primary.name} = {
+          mode = monitors.primary.mode;
+          pos = monitors.primary.pos;
+          bg = "${wallpaper} fill";
         };
       };
 
       # ===== Workspaces =====
 
-      workspaceOutputAssign = [
-        { workspace = "1"; output = "DP-3"; }
-        { workspace = "2"; output = "DP-3"; }
-        { workspace = "3"; output = "DP-3"; }
-        { workspace = "4"; output = "HDMI-A-1"; }
-        { workspace = "5"; output = "HDMI-A-1"; }
-        { workspace = "6"; output = "HDMI-A-1"; }
-      ];
+      workspaceOutputAssign = builtins.attrValues (builtins.mapAttrs
+        (workspace: output: { inherit workspace output; })
+        constants.workspaceOutputs);
 
       # ===== Appearance =====
 

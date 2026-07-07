@@ -5,7 +5,7 @@ let
   c = theme.colors;
   fontUI = theme.fontUI;
 
-  hex = s: builtins.substring 1 6 s;
+  hex = theme.lib.stripHash;
 in
 
 {

@@ -7,3 +7,17 @@ result-*
 # Python
 __pycache__/
 *.pyc
+
+# Secrets — never commit these
+.env
+.env.*
+*.key
+*.pem
+*.secret
+*.pass
+*.pw
+secrets/
+private/
+vaultwarden.env
+api_key
+openweathermap*

@@ -3,6 +3,10 @@
 ## Overview
 Multi-host NixOS flake. Pinned to `nixos-26.05` with `home-manager release-26.05`.
 
+`README.md` is the source of truth for human/operational docs (backups, restore,
+secret recovery, update cadence, checks). This file is for agent instructions and
+quick repo facts — when they disagree, trust README.md and fix the drift.
+
 ## Hosts
 | Host | Role |
 |---|---|
@@ -27,7 +31,8 @@ hosts/nixnotdix/
   fuzzel.nix                     # app launcher config
   mako.nix                       # notification daemon config
   sway.nix                       # sway WM config (outputs, keybinds, idle/lock)
-  theme.nix                      # shared colors/font values
+  constants.nix                  # host constants (monitors, workspace map, weather)
+  theme.nix                      # shared colors/font values + color helpers
   waybar.nix                     # status bar (workspaces, weather, clock, tray)
   pkgs/
     clonehero.nix                # custom package override (v1.1.0.6142, until nixpkgs catches up)
@@ -102,7 +107,6 @@ Shared settings live in `common/default.nix` (imported by both hosts):
 
 Host-specific:
 - nixnotdix: `permittedInsecurePackages`, clonehero overlay
-- nixvps: `nix.settings.trusted-users = [ "luke" ]`
 - `useGlobalPkgs` + `useUserPackages` enabled in home-manager (nixnotdix only)
 
 ## Git Config (home-manager managed, nixnotdix)
@@ -122,12 +126,13 @@ Host-specific:
 ## Services — nixvps
 - **Vaultwarden** (`services.vaultwarden`): self-hosted Bitwarden server, SQLite backend.
   - Listens on `127.0.0.1:8222`; public at `https://vault.jukeluke.com`.
-  - Signups disabled; admin panel enabled.
+  - Signups disabled; admin panel disabled (re-enable temporarily for one-off admin tasks; hash any new `ADMIN_TOKEN` with `vaultwarden hash` first).
   - Secrets (`ADMIN_TOKEN`, `SMTP_PASSWORD`) come from `/var/lib/vaultwarden/vaultwarden.env` — **never** committed to the Nix store / repo.
   - SMTP via Migadu (`smtp.migadu.com:465`, force TLS) for invite/notification mail.
-- **Caddy** (`services.caddy`): reverse proxy with automatic HTTPS, fronting Vaultwarden on `vault.jukeluke.com`.
+- **Caddy** (`services.caddy`): reverse proxy with automatic HTTPS + security headers, fronting Vaultwarden on `vault.jukeluke.com`; sets `X-Real-IP` (Vaultwarden's `IP_HEADER`).
+- **Restic backups** (`services.restic.backups.vaultwarden`): nightly encrypted backups to Backblaze B2; secrets in `/var/lib/restic/`. Restore procedure in README.md.
 - **Firewall:** opens TCP 47291 (SSH), 80 and 443 (Caddy / ACME).
 
 ## Security Notes
-- BattlEye domains blocked in `/etc/hosts` on nixnotdix
-- nixvps: root SSH disabled, password auth disabled, fail2ban enabled, SSH restricted to user `luke`
+- BattlEye domains blocked in `/etc/hosts` on nixnotdix (needed for GTA V Online under Proton)
+- nixvps: root SSH disabled, password auth disabled, sudo requires password, SSH forwarding disabled, fail2ban (sshd + vaultwarden jails), SSH restricted to user `luke`

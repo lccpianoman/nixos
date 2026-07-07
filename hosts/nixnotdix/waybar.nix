@@ -6,21 +6,21 @@ let
   font = theme.font;
   fontUI = theme.fontUI;
 
-  weatherConfig = {
-    location = "Aurora,US";
-    units = "imperial";
-    interval = 1800;
-  };
+  weatherConfig = (import ./constants.nix).weather;
 
-  weatherDir = "${config.xdg.configHome}/waybar/scripts/weather";
+  # Relative to ~/.config; Waybar's `exec` needs the absolute form.
+  weatherSubdir = "waybar/scripts/weather";
+  weatherDir = "${config.xdg.configHome}/${weatherSubdir}";
   weatherSh  = "${weatherDir}/weather.sh";
   weatherPy  = pkgs.python3.withPackages (ps: [ ps.requests ]);
 in
 
 {
   # ===== Weather Script =====
+  # The API key lives in ~/.config/openweathermap/api_key — outside the
+  # Nix store and outside git; it is read at runtime, never at build time.
 
-  home.file."${weatherDir}/weather.sh" = {
+  xdg.configFile."${weatherSubdir}/weather.sh" = {
     executable = true;
     text = ''
       #!/bin/sh
@@ -34,7 +34,7 @@ in
     '';
   };
 
-  home.file."${weatherDir}/main.py".source = ./assets/weather/main.py;
+  xdg.configFile."${weatherSubdir}/main.py".source = ./assets/weather/main.py;
 
   # ===== Waybar =====
 
