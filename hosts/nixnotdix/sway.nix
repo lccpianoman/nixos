@@ -180,9 +180,23 @@ in
       };
 
       # Daemons run as systemd user services, not sway startup execs:
-      # waybar via programs.waybar.systemd (waybar.nix), swayidle below.
+      # waybar via programs.waybar.systemd (waybar.nix), swayidle and
+      # autotiling below.
       bars = [];
     };
+  };
+
+  systemd.user.services.autotiling = {
+    Unit = {
+      Description = "Automatic tiling direction for sway";
+      PartOf = [ "sway-session.target" ];
+      After = [ "sway-session.target" ];
+    };
+    Service = {
+      ExecStart = "${pkgs.autotiling-rs}/bin/autotiling-rs";
+      Restart = "on-failure";
+    };
+    Install.WantedBy = [ "sway-session.target" ];
   };
 
   services.swayidle = {
