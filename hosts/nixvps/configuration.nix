@@ -1,8 +1,21 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 let
   identity = import ../../common/identity.nix;
   sshPort = 47291;
+
+  # Cloudflare's published ranges (https://www.cloudflare.com/ips/ — they
+  # change rarely; refresh occasionally). Used twice: Caddy trusts these to
+  # resolve the real client IP, and fail2ban must never ban them (banning an
+  # edge would break the site for everyone behind it).
+  cloudflareRanges = lib.concatStringsSep " " [
+    "173.245.48.0/20" "103.21.244.0/22" "103.22.200.0/22" "103.31.4.0/22"
+    "141.101.64.0/18" "108.162.192.0/18" "190.93.240.0/20" "188.114.96.0/20"
+    "197.234.240.0/22" "198.41.128.0/17" "162.158.0.0/15" "104.16.0.0/13"
+    "104.24.0.0/14" "172.64.0.0/13" "131.0.72.0/22"
+    "2400:cb00::/32" "2606:4700::/32" "2803:f800::/32" "2405:b500::/32"
+    "2405:8100::/32" "2a06:98c0::/29" "2c0f:f248::/32"
+  ];
 in
 
 {
@@ -59,13 +72,18 @@ in
       maxtime = "168h";
     };
     # Ban vault password-guessing, not just SSH. Relies on IP_HEADER =
-    # X-Real-IP so the logged IP is the real client, not Caddy.
+    # X-Real-IP so the logged IP is the real client, not Caddy/Cloudflare
+    # (never ban CF edge IPs — that breaks the site for everyone).
+    # Caveat: iptables bans only stop attackers hitting the origin IP
+    # directly; traffic via Cloudflare isn't blocked at L3. Edge-level
+    # blocking would need fail2ban's cloudflare-token action + a CF API key.
     jails.vaultwarden.settings = {
       backend = "systemd";
       journalmatch = "_SYSTEMD_UNIT=vaultwarden.service";
       filter = "vaultwarden";
       port = "http,https";
       maxretry = 5;
+      ignoreip = cloudflareRanges;
     };
   };
 
@@ -88,8 +106,9 @@ in
       # Disabled 2026-07 (audit): rarely needed; re-enable temporarily for
       # one-off admin tasks. ADMIN_TOKEN stays in vaultwarden.env either way.
       ADMIN_PANEL_ENABLED = false;
-      # Caddy sets X-Real-IP unconditionally from the TCP peer, so unlike
-      # X-Forwarded-For it can't be influenced by a client-supplied header.
+      # Caddy sets X-Real-IP from {client_ip}: the CF-Connecting-IP value
+      # when the connection comes from a trusted Cloudflare range, else the
+      # TCP peer. Not client-spoofable either way.
       IP_HEADER = "X-Real-IP";
 
       SMTP_HOST = "smtp.migadu.com";
@@ -139,6 +158,15 @@ in
 
   services.caddy = {
     enable = true;
+    # vault.jukeluke.com is Cloudflare-proxied, so the TCP peer is a CF edge
+    # node. Trust CF's ranges so {client_ip} resolves from CF-Connecting-IP,
+    # which CF always overwrites and direct connections can't fake.
+    globalConfig = ''
+      servers {
+        client_ip_headers CF-Connecting-IP
+        trusted_proxies static ${cloudflareRanges}
+      }
+    '';
     virtualHosts."vault.jukeluke.com" = {
       extraConfig = ''
         header {
@@ -149,7 +177,7 @@ in
           X-Frame-Options "SAMEORIGIN"
         }
         reverse_proxy 127.0.0.1:8222 {
-          header_up X-Real-IP {remote_host}
+          header_up X-Real-IP {client_ip}
         }
       '';
     };
