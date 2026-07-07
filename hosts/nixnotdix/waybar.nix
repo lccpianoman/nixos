@@ -28,9 +28,12 @@ in
       if [ -f "$keyfile" ]; then
         export OPENWEATHER_API_KEY="$(${pkgs.coreutils}/bin/cat "$keyfile")"
       fi
-      exec ${weatherPy}/bin/python3 "${weatherDir}/main.py" \
+      # Waybar hides a custom module's output when the exec exits non-zero,
+      # which would swallow the script's "N/A" fallback — so swallow the
+      # exit code here (the script keeps honest exit codes for CLI use).
+      ${weatherPy}/bin/python3 "${weatherDir}/main.py" \
         -u ${weatherConfig.units} \
-        -c "${weatherConfig.location}"
+        -c "${weatherConfig.location}" || true
     '';
   };
 
@@ -40,6 +43,10 @@ in
 
   programs.waybar = {
     enable = true;
+    # Run as a systemd user service (graphical-session.target) instead of a
+    # sway startup exec: restart-on-crash, `systemctl --user restart waybar`,
+    # logs in `journalctl --user -u waybar`.
+    systemd.enable = true;
 
     settings = [{
       layer         = "bottom";

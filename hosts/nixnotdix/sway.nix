@@ -179,22 +179,24 @@ in
         "Shift+Print"         = "exec ${pkgs.grimblast}/bin/grimblast save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
       };
 
-      # ===== Startup =====
-
-      startup = [
-        { command = "${pkgs.waybar}/bin/waybar"; }
-        {
-          command = ''
-            ${pkgs.swayidle}/bin/swayidle -w \
-              timeout 300 '${swaylock-cmd}' \
-              timeout 600 'swaymsg "output * dpms off"' \
-              resume 'swaymsg "output * dpms on"' \
-              before-sleep '${swaylock-cmd}'
-          '';
-        }
-      ];
-
+      # Daemons run as systemd user services, not sway startup execs:
+      # waybar via programs.waybar.systemd (waybar.nix), swayidle below.
       bars = [];
     };
+  };
+
+  services.swayidle = {
+    enable = true;
+    timeouts = [
+      { timeout = 300; command = swaylock-cmd; }
+      {
+        timeout = 600;
+        command = "${pkgs.sway}/bin/swaymsg 'output * dpms off'";
+        resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * dpms on'";
+      }
+    ];
+    events = [
+      { event = "before-sleep"; command = swaylock-cmd; }
+    ];
   };
 }

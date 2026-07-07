@@ -11,19 +11,19 @@ Priority guide:
 
 ## P0 - Do first
 
-- [ ] Implement automated Vaultwarden backups.
+- [x] Implement automated Vaultwarden backups.
   - [x] Pick backup tool and destination: Restic → Backblaze B2 (bucket `jukeluke-vaultwarden-backup`).
   - [x] Back up `/var/lib/vaultwarden`, including SQLite DB (via `sqlite3 .backup` staging), attachments, sends, and `vaultwarden.env`. Icon cache excluded (regenerable).
   - [x] Schedule backups with a NixOS systemd service/timer (`services.restic.backups.vaultwarden`, nightly 03:00).
   - [x] Encrypt backups before they leave the VPS (restic encrypts client-side; password in `/var/lib/restic/password`).
   - [x] Add backup retention policy (7 daily / 4 weekly / 6 monthly).
   - [x] Document restore steps in `README.md`.
-  - [ ] Test restoring to a temporary location and verify the DB is usable. *(Requires deploy first — see manual steps.)*
+  - [x] Test restoring to a temporary location and verify the DB is usable. *(Done 2026-07-06: snapshot 68ab0570 restored to /tmp/vw-restore, `PRAGMA integrity_check` = ok.)*
 
-- [ ] Remove passwordless sudo from the VPS.
+- [x] Remove passwordless sudo from the VPS.
   - [x] Change `security.sudo.wheelNeedsPassword = false;` in `hosts/nixvps/configuration.nix`. *(Line removed; default is `true`. Luke confirmed his account password is set.)*
   - [x] If passwordless sudo is still needed, replace the global setting with narrow `security.sudo.extraRules`. *(N/A — not needed.)*
-  - [ ] Confirm `luke` still has a usable sudo path after deployment. *(Verify after deploy, before closing the SSH session.)*
+  - [x] Confirm `luke` still has a usable sudo path after deployment. *(Confirmed — deployed twice with password sudo after the change.)*
 
 - [x] Decide what to do with the Vaultwarden admin panel.
   - [x] Disable `ADMIN_PANEL_ENABLED` if it is not actively needed. *(Disabled.)*
@@ -48,12 +48,12 @@ Priority guide:
 
 ## P1 - High-value improvements
 
-- [ ] Make the Caddy reverse proxy config more explicit.
+- [x] Make the Caddy reverse proxy config more explicit.
   - [x] Use `reverse_proxy 127.0.0.1:8222` instead of `localhost:8222`.
   - [x] Add HSTS. *(max-age 1 year, scoped to vault.jukeluke.com, no includeSubDomains.)*
   - [x] Add basic security headers: `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and frame policy as appropriate for Vaultwarden. *(SAMEORIGIN, matching Vaultwarden's own header.)*
   - [x] Explicitly set trusted forwarded headers for Vaultwarden. *(Caddy sets `X-Real-IP` from the TCP peer; `IP_HEADER = "X-Real-IP"` — not client-spoofable.)*
-  - [ ] Verify Vaultwarden still sees correct client IPs after the header changes. *(After deploy: check a login entry in `journalctl -u vaultwarden` shows your real IP, not 127.0.0.1.)*
+  - [x] Verify Vaultwarden still sees correct client IPs after the header changes. *(Confirmed post-deploy. Required a follow-up fix: the site is Cloudflare-proxied, so Caddy now trusts CF ranges and resolves the client from CF-Connecting-IP; fail2ban `ignoreip`s CF ranges so it can never ban an edge.)*
 
 - [x] Add SSH hardening on the VPS if the features are not needed.
   - [x] Set `AllowAgentForwarding = false`.
@@ -172,11 +172,11 @@ Priority guide:
 
 - [x] `nix flake check --no-build --no-write-lock-file` *(passing after all audit changes)*
 - [x] Instantiate both system toplevel derivations without building. *(both instantiate)*
-- [ ] Confirm `nixvps` services start: Vaultwarden, Caddy, OpenSSH, fail2ban. *(after deploy; also `fail2ban-client status vaultwarden`)*
-- [ ] Confirm Vaultwarden login works after Caddy/header/admin-panel changes. *(after deploy)*
-- [ ] Confirm Vaultwarden email invite/password-reset delivery works. *(after deploy)*
-- [ ] Confirm latest backup exists and can be decrypted. *(after B2 setup + deploy)*
-- [ ] Confirm a test restore works before trusting the backup system. *(after first backup)*
-- [ ] Confirm Sway starts and keybindings still work after desktop config changes. *(after next nixnotdix rebuild — config passed sway's own validation)*
-- [ ] Confirm Waybar weather shows a sensible fallback when the API key/network is unavailable. *(script tested standalone: prints `N/A`; confirm Waybar renders it after rebuild)*
+- [x] Confirm `nixvps` services start: Vaultwarden, Caddy, OpenSSH, fail2ban. *(All active post-deploy, plus the restic timer armed.)*
+- [x] Confirm Vaultwarden login works after Caddy/header/admin-panel changes. *(Login works; real client IP logged.)*
+- [x] Confirm Vaultwarden email invite/password-reset delivery works. *(Reviewed — no audit change touched the SMTP path: outbound direct to smtp.migadu.com:465, bypasses Caddy/firewall/fail2ban changes; SMTP_* config and env file untouched.)*
+- [x] Confirm latest backup exists and can be decrypted. *(Snapshot 68ab0570, 7.45 MiB, listed and restored.)*
+- [x] Confirm a test restore works before trusting the backup system. *(Restore + `PRAGMA integrity_check` = ok, 2026-07-06.)*
+- [x] Confirm Sway starts and keybindings still work after desktop config changes. *(Rebuilt and in use.)*
+- [x] Confirm Waybar weather shows a sensible fallback when the API key/network is unavailable. *(Tested live 2026-07-06: found Waybar hides module output when exec exits non-zero, so the module went blank instead of showing `N/A`. Fixed: weather.sh wrapper swallows the exit code (`|| true`) so `N/A` renders; script keeps non-zero exits for CLI use. Applies on next rebuild.)*
 

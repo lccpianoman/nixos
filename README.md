@@ -46,14 +46,21 @@ the restic password the backups are unrecoverable):
 ### Restore procedure
 
 ```bash
-# On the VPS (or any machine with the two secret files above):
-export $(cat /var/lib/restic/b2.env | xargs)
-restic -r b2:jukeluke-vaultwarden-backup: --password-file /var/lib/restic/password snapshots
-restic -r b2:jukeluke-vaultwarden-backup: --password-file /var/lib/restic/password \
-  restore latest --target /tmp/vw-restore
+# On the VPS: use the wrapper the NixOS module generates — it has the repo,
+# B2 credentials, and password preloaded (run as root):
+restic-vaultwarden snapshots
+restic-vaultwarden restore latest --target /tmp/vw-restore
 
-# Verify the restored DB is usable before touching production:
+# On any other machine you'd need restic + the two secret files:
+#   export $(cat b2.env | xargs)
+#   restic -r b2:jukeluke-vaultwarden-backup: --password-file <password-file> ...
+
+# Verify the restored DB is usable before touching production
+# (no sqlite on the VPS by default — use nix-shell -p sqlite):
 sqlite3 /tmp/vw-restore/var/backup/vaultwarden/db.sqlite3 "PRAGMA integrity_check;"
+
+# Afterwards, clean up — the restore contains the real vault:
+rm -rf /tmp/vw-restore
 
 # To actually restore:
 systemctl stop vaultwarden
