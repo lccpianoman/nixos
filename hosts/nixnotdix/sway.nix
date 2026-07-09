@@ -175,8 +175,8 @@ in
         "${mod}+Shift+6"      = "move container to workspace number 6";
 
         # Screenshot
-        "Print"               = "exec ${pkgs.grimblast}/bin/grimblast copy area";
-        "Shift+Print"         = "exec ${pkgs.grimblast}/bin/grimblast save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
+        "Delete"              = "exec ${pkgs.grimblast}/bin/grimblast copy area";
+        "Shift+Delete"        = "exec ${pkgs.grimblast}/bin/grimblast save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
       };
 
       # Daemons run as systemd user services, not sway startup execs:
@@ -209,8 +209,6 @@ in
         resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * dpms on'";
       }
     ];
-    events = [
-      { event = "before-sleep"; command = swaylock-cmd; }
-    ];
+    events."before-sleep" = swaylock-cmd;
   };
 }
