@@ -175,8 +175,8 @@ in
         "${mod}+Shift+6"      = "move container to workspace number 6";
 
         # Screenshot
-        "Delete"              = "exec ${pkgs.grimblast}/bin/grimblast copy area";
-        "Shift+Delete"        = "exec ${pkgs.grimblast}/bin/grimblast save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
+        "Delete"              = "exec ${pkgs.sway-contrib.grimshot}/bin/grimshot copy area";
+        "Shift+Delete"        = "exec ${pkgs.sway-contrib.grimshot}/bin/grimshot save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
       };
 
       # Daemons run as systemd user services, not sway startup execs:

@@ -52,7 +52,7 @@ in
     nh
     killall
     fastfetch
-    grimblast
+    sway-contrib.grimshot
     swayidle
     swaylock
     xeyes
