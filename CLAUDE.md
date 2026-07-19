@@ -106,7 +106,7 @@ Shared settings live in `common/default.nix` (imported by both hosts):
 - Timezone `America/Denver`, locale `en_US.UTF-8`
 
 Host-specific:
-- nixnotdix: `permittedInsecurePackages`, clonehero overlay
+- nixnotdix: clonehero overlay
 - `useGlobalPkgs` + `useUserPackages` enabled in home-manager (nixnotdix only)
 
 ## Git Config (home-manager managed, nixnotdix)
