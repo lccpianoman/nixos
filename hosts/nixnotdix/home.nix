@@ -57,6 +57,7 @@ in
     swaylock
     xeyes
     glow
+    ansible
 
     # Applications
     vlc
