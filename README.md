@@ -157,11 +157,13 @@ wiped, so any Linux image with SSH will do.
    the disk is `/dev/vda`, and the NixOS config expects DHCP:
 
    ```bash
-   ssh root@<IP> 'lsblk; ip -4 addr show; ip route'
+   ssh root@<IP> 'lsblk; ip -4 addr show; ip route; [ -d /sys/firmware/efi ] && echo BOOT=UEFI || echo BOOT=BIOS'
    ```
 
-   The system disk must show as `vda`. If it is `sda`, change `device` in
-   `hosts/nixcraft/disko.nix` first.
+   The system disk must show as `vda` (if it is `sda`, change `device` in
+   `hosts/nixcraft/disko.nix`), and the boot mode must be **UEFI** —
+   `disko.nix` creates an EFI System Partition and GRUB is configured with
+   `efiSupport`. A BIOS-only host would need an EF02 `bios_grub` layout instead.
 3. **Stage the password hash.** This repo is public, so `luke`'s password hash is
    never committed — it is copied in at install time instead. Without it there is
    no sudo and no console login, i.e. no way back in if SSH breaks.
@@ -200,6 +202,18 @@ wiped, so any Linux image with SSH will do.
 
 Afterwards the `rebuild` script does not apply — it activates locally only. Deploy
 changes by SSHing in, pulling the repo, and running `nixos-rebuild switch --flake .#nixcraft`.
+
+### If the VM boots to a UEFI shell
+
+`UEFI Interactive Shell v2.2` with a `Mapping table` means the firmware found no
+bootable EFI application. Check the partition sizes it lists: a 1 MiB partition 1
+is an EF02 `bios_grub` layout, which UEFI firmware ignores completely. The disk
+needs an EF00 ESP instead — see `hosts/nixcraft/disko.nix`.
+
+There is no way to boot the installed system from that shell (it cannot read
+ext4), so recovery is: reinstall the provider's stock distro from the panel — on
+Vultr this keeps the same instance and IP — then re-run `nixos-anywhere` with the
+corrected layout.
 
 ## Updating
 

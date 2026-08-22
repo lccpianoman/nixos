@@ -2,10 +2,13 @@
 
 # Declarative disk layout, consumed by nixos-anywhere at install time.
 #
-# Vultr Cloud Compute boots legacy BIOS, so this is a GPT table with a 1 MiB
-# EF02 "BIOS boot" partition to hold GRUB's core image, plus a single ext4
-# root filling the rest of the disk. Nothing here is read at runtime — it
-# exists so the disk can be recreated from scratch with no manual fdisk work.
+# Vultr Cloud Compute boots via UEFI (EDK II), so this is a GPT table with an
+# EF00 EFI System Partition plus an ext4 root. Nothing here is read at runtime
+# — it exists so the disk can be recreated from scratch with no manual fdisk
+# work.
+#
+# Do not "simplify" this to a BIOS/EF02 bios_grub layout: the firmware ignores
+# the MBR gap entirely, finds nothing bootable, and drops to the UEFI shell.
 
 {
   disko.devices.disk.main = {
@@ -15,10 +18,18 @@
     content = {
       type = "gpt";
       partitions = {
-        boot = {
+        ESP = {
           priority = 1;
-          size = "1M";
-          type = "EF02";
+          size = "512M";
+          type = "EF00";
+          content = {
+            type = "filesystem";
+            format = "vfat";
+            mountpoint = "/boot";
+            # The ESP is FAT, which has no permission bits — without this the
+            # whole thing is world-readable and systemd-boot/GRUB complain.
+            mountOptions = [ "umask=0077" ];
+          };
         };
         root = {
           size = "100%";
