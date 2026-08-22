@@ -11,9 +11,19 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Declarative partitioning — used by nixos-anywhere to install nixcraft.
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # Packaged Minecraft servers + the services.minecraft-servers module.
+    nix-minecraft = {
+      url = "github:Infinidoge/nix-minecraft";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { nixpkgs, home-manager, nur, ... }: {
+  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, ... }: {
     # `nix fmt` — nixfmt (RFC 166 style) wrapped in treefmt for whole-tree runs.
     # Declared only; run it when a big reformat diff is acceptable.
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
@@ -22,6 +32,16 @@
       system = "x86_64-linux";
       modules = [
         ./hosts/nixvps/configuration.nix
+      ];
+    };
+
+    nixosConfigurations.nixcraft = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      modules = [
+        disko.nixosModules.disko
+        nix-minecraft.nixosModules.minecraft-servers
+        { nixpkgs.overlays = [ nix-minecraft.overlay ]; }
+        ./hosts/nixcraft/configuration.nix
       ];
     };
 
