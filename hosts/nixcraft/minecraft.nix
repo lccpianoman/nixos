@@ -20,9 +20,38 @@ let
   # usual cause of the server refusing to start after a version bump.
   mods = {
     # Required by most Fabric mods.
+    #
+    # Deliberately NOT included: ServerCore. Its dynamic mobcaps and tick
+    # throttling change mob spawn rates and chunk-tick behaviour, which breaks
+    # farm rates and makes timings inconsistent — the opposite of what a
+    # Carpet/TIS technical world wants.
+    # Also dropped when migrating the old 1.21.10 world: Distant Horizons (its
+    # LOD database was 19 GB of the world folder) and MaLiLib (client-only, so
+    # inert on a dedicated server).
     fabric-api = pkgs.fetchurl {
       url = "https://cdn.modrinth.com/data/P7dR8mSH/versions/NqwNSxwA/fabric-api-0.158.0%2B26.2.jar";
       sha512 = "4c2c1ebe74ffd54875a01ff371b53ba3d8674ac98d561f7dae02a96d3d37fbdbc5f5abc6e820f73b6154d6f873ddd05a442b0998ed2d456863dc0ad972e040a6";
+    };
+    # Technical-server toolkit carried over from the old world. Carpet Extra
+    # and TIS Addition both require Carpet itself.
+    carpet = pkgs.fetchurl {
+      url = "https://cdn.modrinth.com/data/TQTTVgYE/versions/bGrLxJ8v/fabric-carpet-26.2%2Bv260616.jar";
+      sha512 = "8b8fac6979bd3153f5cfb4faa6bab52e1357eab814492a6658f3c0e1ac2856ad37a626c0a03a0839c39abb7bf56661f77b09d05d10ac01173bcdd373a33c6265";
+    };
+    carpet-extra = pkgs.fetchurl {
+      url = "https://cdn.modrinth.com/data/VX3TgwQh/versions/Z5BJRYil/carpet-extra-26.2-26.2.jar";
+      sha512 = "39bcfd81340cee04c2e9b9e61d628c297a13af2f96464d0081040ffa9e6336a64d36d95b76371aa00f343cef334bff3d0c6773cfb96994a9441e62ff7632da8d";
+    };
+    carpet-tis-addition = pkgs.fetchurl {
+      url = "https://cdn.modrinth.com/data/jE0SjGuf/versions/lW1s6HL1/carpet-tis-addition-v1.82.4-mc26.2.jar";
+      sha512 = "ebe83e448b882c67afb9fca74899bd1146e23eca1fc25e412b5793e884f79ef4020290051951746ab6117f80d311072c2cbfca7a7c553915cfcc81488c8cd363";
+    };
+    # Server half of masa's toolkit (Litematica / MiniHUD data sync). Versions
+    # below 0.11.x carry a published advisory (GHSA-4x67-52jx-vr7m) that Carpet
+    # TIS Addition now hard-conflicts with — do not downgrade this.
+    servux = pkgs.fetchurl {
+      url = "https://cdn.modrinth.com/data/zQhsx8KF/versions/Er2wlain/servux-fabric-26.2-0.11.3.jar";
+      sha512 = "42ec8769ba50ecf1ac6b3da4caa554d5dad6e8226ebb4faf0918a483c0a7823e3a1a69ae39c1157029209b4272df6a6fb025c5b797fd0d4402ab9ddcc800ae67";
     };
     # General server-tick optimisations, no behaviour changes.
     lithium = pkgs.fetchurl {
@@ -38,11 +67,6 @@ let
     krypton = pkgs.fetchurl {
       url = "https://cdn.modrinth.com/data/fQEb0iXm/versions/5WeL0Nkz/krypton-0.3.1.jar";
       sha512 = "b8d9af34cd0050493afb8a6232cb8f785daa9d8887b7045f6e6a53c6bb9b5ffc4318fd9b0347a940eacfeba4773f10cb80ae0be1e79ce4c1888f96eda21e564e";
-    };
-    # Dynamic mobcaps / tick throttling. Server-side only.
-    servercore = pkgs.fetchurl {
-      url = "https://cdn.modrinth.com/data/4WWQxlQP/versions/edrtnY9v/servercore-fabric-1.5.19%2B26.2.jar";
-      sha512 = "aa4cfc93f8e02172910302444330e37713dfcf2047d28e55eb7323a3cd5d51493374a0959aa3e626ec2bf43fc707a755508b83454bb34b6d57d65c069929074b";
     };
     # Profiler — `/spark tps` and `/spark profiler` for diagnosing lag.
     spark = pkgs.fetchurl {
@@ -109,10 +133,12 @@ in
 
       serverProperties = {
         server-port = 25565;
-        motd = "nixcraft";
-        difficulty = "normal";
+        motd = "\\u00A7b\\u00A7lnixcraft \\u00A78\\u00BB \\u00A77survival & technical\\n\\u00A78\\u00BB \\u00A77rebuilt, never reinstalled";
+        # Carried over from the old 1.21.10 server so the migrated world plays
+        # exactly as it did before.
+        difficulty = "hard";
         gamemode = "survival";
-        max-players = 10;
+        max-players = 20;
         online-mode = true;
         white-list = true;
         # Without this, players already connected when the whitelist changes
@@ -122,8 +148,15 @@ in
         # change to online-mode can't silently drop IP-based protection.
         enforce-secure-profile = true;
         spawn-protection = 0;
+        pvp = true;
         view-distance = 10;
-        simulation-distance = 8;
+        simulation-distance = 10;
+        enable-command-block = true;
+        # This is the vanilla default, pinned explicitly because it is load-
+        # bearing here: hitting the cap silently truncates a redstone update
+        # chain instead of erroring, so a lowered value would look like
+        # contraptions randomly breaking. Raise it if that starts happening.
+        max-chained-neighbor-updates = 1000000;
         # RCON is a plaintext protocol with a password in server.properties;
         # the tmux console covers admin access, so leave it off.
         enable-rcon = false;
@@ -134,10 +167,15 @@ in
         ScathaPro = "d94be89d-b808-481d-a1dd-ed9b564d8e8d";
         Samwy = "92a17f3d-abd8-49f0-9342-797dbf1f2cf0";
         bedwargod = "b0af0d0b-6760-48f5-bbac-5c5f15db0222";
+        WormPro = "4cd5441f-94b7-4bbf-a809-7578eb6bd5b4";
+        coolrunnings22 = "72ec6d21-f772-4db3-9e8f-fffc45fa4c76";
+        Golden_Wraith = "5e584a8e-c3da-4c99-ad04-ea1696334cf5";
       };
 
+      # Matches the old server's ops.json.
       operators = {
         ScoreSpy = "8c98c93b-e269-446e-8df8-23c8a82b5397";
+        ScathaPro = "d94be89d-b808-481d-a1dd-ed9b564d8e8d";
       };
 
       # Replace the whole mods directory atomically. linkFarmFromDrvs builds a
