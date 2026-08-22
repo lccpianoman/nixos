@@ -65,7 +65,20 @@ in
       # Fabric for Minecraft 26.2. Attribute names replace "." with "_", so
       # 26.2 -> fabric-26_2. The Fabric loader is the latest pinned by the
       # nix-minecraft flake input; it moves only when that input is updated.
-      package = pkgs.fabricServers.fabric-26_2;
+      #
+      # The jre_headless override is required, not cosmetic. Minecraft 26.2 is
+      # compiled for Java 25 (class file version 69), but nix-minecraft only
+      # selects a matching JDK for `vanillaServers` — `mkTextileServer`, which
+      # builds the Fabric/Quilt launchers, takes jre_headless from the package
+      # scope and so silently gets nixpkgs' default Java 21. The server then
+      # dies on every start with:
+      #   UnsupportedClassVersionError: net/minecraft/bundler/Main has been
+      #   compiled by a more recent version of the Java Runtime (class file
+      #   version 69.0) ... only recognizes class file versions up to 65.0
+      # Recheck on nix-minecraft updates; drop this once it passes the right JDK.
+      package = pkgs.fabricServers.fabric-26_2.override {
+        jre_headless = pkgs.jdk25_headless;
+      };
 
       # Aikar's G1GC flags. 6 GB heap on an 8 GB box leaves headroom for the
       # JVM's own off-heap use and the OS page cache — handing the heap all
