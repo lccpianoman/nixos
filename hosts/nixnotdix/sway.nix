@@ -50,18 +50,17 @@ in
 
       # ===== Outputs =====
 
-      output = {
-        ${monitors.secondary.name} = {
-          mode = monitors.secondary.mode;
-          pos = monitors.secondary.pos;
-          bg = "${wallpaper} fill";
-        };
-        ${monitors.primary.name} = {
-          mode = monitors.primary.mode;
-          pos = monitors.primary.pos;
-          bg = "${wallpaper} fill";
-        };
-      };
+      # Built from constants.monitors so the set of outputs lives in exactly
+      # one place — adding or removing a monitor is a constants.nix edit.
+      output = builtins.listToAttrs (map
+        (m: {
+          name = m.name;
+          value = {
+            inherit (m) mode pos;
+            bg = "${wallpaper} fill";
+          };
+        })
+        (builtins.attrValues monitors));
 
       # ===== Workspaces =====
 

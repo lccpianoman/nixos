@@ -53,8 +53,7 @@ hosts/nixvps/
 - **GPU:** NVIDIA (proprietary drivers, libvdpau, 32-bit support)
 - **Kernel:** Zen (low-latency)
 - **Monitors:**
-  - DP-3: 1920x1080 @ 144Hz — workspaces 1–3
-  - HDMI-A-1: 1920x1080 @ 60Hz — workspaces 4–6
+  - DP-1 (ASUS VG278): 1920x1080 @ 144Hz — all workspaces (1–6)
 
 ## Desktop Stack (nixnotdix)
 | Component | Choice |
