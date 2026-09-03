@@ -212,9 +212,10 @@ in
         "toolkit.telemetry.firstShutdownPing.enabled" = false;
         "browser.ping-centre.telemetry" = false;
 
-        # Tracking protection (standard; strict blocked cross-domain assets like
-        # lichess1.org). Leave the sub-prefs unset or Firefox reverts to Custom.
-        "browser.contentblocking.category" = "standard";
+        # Tracking protection (strict)
+        "privacy.trackingprotection.enabled" = true;
+        "privacy.trackingprotection.socialtracking.enabled" = true;
+        "browser.contentblocking.category" = "strict";
         "privacy.globalprivacycontrol.enabled" = true;
 
         # No password / form saving

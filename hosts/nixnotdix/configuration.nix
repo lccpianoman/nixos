@@ -41,6 +41,10 @@
   networking = {
     hostName = "nixnotdix";
     networkmanager.enable = true;
+    # No IPv6 on this LAN (link-local only, no default route), but DNS still
+    # returns AAAA records. Apps then get IPv6-only answers and fail instantly
+    # with "network unreachable". Off means getaddrinfo only hands out IPv4.
+    enableIPv6 = false;
     # GTA V Online under Proton: blocking these BattlEye endpoints is what
     # lets the game connect to Online without being kicked. Removing them
     # breaks GTA Online on this box.
