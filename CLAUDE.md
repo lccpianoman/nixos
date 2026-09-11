@@ -78,6 +78,31 @@ hosts/nixvps/
 
 ## Rules for Claude
 - **Never run `./rebuild` or `nix flake update`** — tell Luke when these should be done and let him run them.
+- **After any `nix flake update`, check the NVIDIA driver pin** (see below) and tell
+  Luke whether it can go. He does not want to sit on it longer than needed.
+
+## Active Pins (check on every flake update)
+Temporary overrides that should be removed once nixpkgs catches up. When Luke
+updates, proactively re-check these and report — don't wait to be asked.
+
+| Pin | Where | Added | Remove when |
+|---|---|---|---|
+| NVIDIA 595.99.02 | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | 2026-09-10 | nixpkgs `nvidiaPackages.stable` >= 595.99.02 |
+| CloneHero 1.1.0.6142 | `hosts/nixnotdix/configuration.nix` (overlay) + `pkgs/clonehero.nix` | 2026-07 | nixpkgs `clonehero` >= pinned version |
+
+Both are written to self-expire: the `lib.versionOlder` guard makes them no-ops
+once nixpkgs passes them, so they are safe to leave in, but the dead code should
+be deleted. Check with:
+
+```bash
+nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; }'
+```
+
+**NVIDIA pin background:** nixpkgs' 595.71.05 fails to build against kernel 7.2
+(`implicit declaration of function 'strncpy'` in `nvidia/os-interface.c`).
+Downgrading the kernel is not an option on this host — 7.0/7.1 are EOL-removed
+from nixpkgs 26.05, so everything non-EOL is already 7.2.x. Ref:
+https://discourse.nixos.org/t/production-nvidia-failed-build-on-linux-7-2/79845
 
 ## Rebuild Workflow
 The `rebuild` script at the repo root handles everything:
