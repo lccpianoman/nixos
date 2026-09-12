@@ -86,6 +86,16 @@ nix run nixpkgs#sops -- secrets/nixvps/vaultwarden.env
 Adding a host means adding its `ssh-to-age` recipient to `.sops.yaml` and
 running `sops updatekeys` on the affected files.
 
+`secrets/` cannot be guarded by `.gitignore` — re-including the encrypted files
+re-includes everything — so a tracked pre-commit hook rejects any staged file
+under `secrets/` that `sops filestatus` does not report as encrypted. Enable it
+once per clone:
+
+```bash
+just hooks          # git config core.hooksPath .githooks
+just check-secrets  # same check over everything already committed
+```
+
 [sops-nix]: https://github.com/Mic92/sops-nix
 
 ## `nixnotdix`

@@ -12,6 +12,27 @@ boot *args:
 check:
   nix flake check --no-build --no-write-lock-file
 
+# Point git at the tracked hooks; run once per clone.
+hooks:
+  git config core.hooksPath .githooks
+
+# Same check the pre-commit hook runs, over every file already in secrets/.
+check-secrets:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  shopt -s nullglob globstar
+  fail=0
+  for f in secrets/**/*; do
+    [[ -f $f ]] || continue
+    if [[ $(sops filestatus "$f" 2>/dev/null) == *'"encrypted":true'* ]]; then
+      printf 'ok         %s\n' "$f"
+    else
+      printf 'PLAINTEXT  %s\n' "$f"
+      fail=1
+    fi
+  done
+  exit $fail
+
 shellcheck:
   nix run nixpkgs#shellcheck -- ./rebuild
 

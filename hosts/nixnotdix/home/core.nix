@@ -30,6 +30,8 @@ in
     btop
     nh
     just
+    sops
+    ssh-to-age
     killall
     fastfetch
     sway-contrib.grimshot

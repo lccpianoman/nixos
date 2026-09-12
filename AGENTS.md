@@ -41,6 +41,8 @@ secrets/
   each host's SSH host key. Recipients live in `.sops.yaml`.
 - Never write a plaintext secret into the repo, and never `cat` one into a
   transcript. Pipe host → `sops` directly.
+- `.githooks/pre-commit` blocks unencrypted files under `secrets/`. Enable with
+  `just hooks`. Never bypass it with `--no-verify`.
 
 ## Hard rules
 - Never run `./rebuild` or `nix flake update` in automation; Luke runs those manually.

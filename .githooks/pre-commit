@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Refuse to commit plaintext under secrets/. .gitignore cannot guard that
+# directory: re-including it for the sops files re-includes everything.
+set -euo pipefail
+
+mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACM -- secrets/)
+
+if [[ ${#staged[@]} -eq 0 ]]; then
+  exit 0
+fi
+
+if ! command -v sops >/dev/null 2>&1; then
+  echo "pre-commit: sops not on PATH, cannot verify secrets/" >&2
+  exit 1
+fi
+
+tmpdir=$(mktemp -d)
+trap 'rm -rf "$tmpdir"' EXIT
+
+failed=()
+for f in "${staged[@]}"; do
+  # Check the staged blob, not the working tree: they can differ.
+  dest="$tmpdir/$f"
+  mkdir -p "$(dirname "$dest")"
+  git show ":$f" >"$dest"
+
+  if [[ $(sops filestatus "$dest" 2>/dev/null) != *'"encrypted":true'* ]]; then
+    failed+=("$f")
+  fi
+done
+
+if [[ ${#failed[@]} -gt 0 ]]; then
+  echo "pre-commit: refusing to commit unencrypted files under secrets/:" >&2
+  printf '  %s\n' "${failed[@]}" >&2
+  cat >&2 <<'MSG'
+
+Encrypt with the recipients in .sops.yaml, e.g.:
+  sops -e -i secrets/nixvps/vaultwarden.env
+
+Bypass only if you are certain: git commit --no-verify
+MSG
+  exit 1
+fi
