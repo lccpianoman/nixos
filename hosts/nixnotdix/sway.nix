@@ -17,7 +17,7 @@ let
     + "--screenshots --effect-blur 7x5 --effect-vignette 0.5:0.5 "
     + "--fade-in 0.3 --grace 2 --grace-no-mouse "
     + "--clock --indicator --indicator-radius 110 --indicator-thickness 10 "
-    + "--timestr '%H:%M' --datestr '%A, %B %d' "
+    + "--timestr '%H:%M' --datestr '%a, %b %d' "
     + "--font '${fontUI.name}' --font-size 24 "
     + "--color ${hex c.base} "
     + "--inside-color ${hex c.surface} "
