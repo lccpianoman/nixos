@@ -81,6 +81,11 @@
       hostNames = [ "nixcraft" "[96.30.206.210]:47291" ];
       publicKeyFile = ../../keys/nixcraft.host.pub;
     };
+    # Needed for `git push` over SSH, including the push at the end of ./rebuild.
+    "github.com" = {
+      hostNames = [ "github.com" ];
+      publicKeyFile = ../../keys/github.com.pub;
+    };
   };
 
   # ===== Desktop Environment =====
