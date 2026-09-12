@@ -93,10 +93,11 @@ Fabric server for Minecraft **26.2**, managed by the
 - **Heap:** 6 GB of the 8 GB box, Aikar's G1GC flags. The remainder is deliberately
   left to the OS page cache and the JVM's off-heap use.
 - **Whitelist:** on and declarative — edit `whitelist` in
-  `hosts/nixcraft/minecraft.nix`, then rebuild. Changes made in-game with
+  `hosts/nixcraft/minecraft/server.nix`, then rebuild. Changes made in-game with
   `/whitelist add` are overwritten on the next rebuild.
-- **Mods:** pinned by URL + SHA-512 in `hosts/nixcraft/minecraft.nix`
-  (Fabric API, Lithium, FerriteCore, Krypton, ServerCore, spark).
+- **Mods:** pinned by URL + SHA-512 in `hosts/nixcraft/minecraft/server.nix`
+  (Fabric API, Carpet, Carpet Extra, Carpet TIS Addition, Servux, Lithium,
+  FerriteCore, Krypton, spark).
 
 Every mod must match the Minecraft version — a stale jar is the usual reason the
 server refuses to start after a version bump. To add or update one, copy the
@@ -241,14 +242,17 @@ The `rebuild` script handles diffing, building, committing, and pushing in one s
 
 ```
 flake.nix
+AGENTS.md             # agent-facing notes
 rebuild
-common/               # settings shared by all hosts (nix, locale, git identity)
+common/               # shared modules (nix defaults, server baseline, git identity)
 hosts/
   nixnotdix/          # workstation — system + home-manager config
+    home/             # split home-manager app/profile modules
     pkgs/             # local package overrides
     assets/           # wallpapers, waybar weather script
   nixvps/             # VPS — system config only
   nixcraft/           # Minecraft VPS — system config + disko layout
+    minecraft/        # server + backup modules
 keys/
   luke.pub            # SSH public key, referenced by host configs
 ```

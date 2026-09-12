@@ -10,8 +10,7 @@ let
 
   mod = "Mod4";
 
-  # Store path (not ~/.background-image) so `checkConfig` can validate the
-  # config in the build sandbox, where $HOME does not exist.
+  # Keep this as a store path so sway's config check works in build sandboxes.
   wallpaper = ./assets/wallpapers/interestellar.jpg;
 
   swaylock-cmd = "${pkgs.swaylock}/bin/swaylock -f "
@@ -48,10 +47,6 @@ in
       terminal = "${pkgs.alacritty}/bin/alacritty";
       menu = "${pkgs.fuzzel}/bin/fuzzel";
 
-      # ===== Outputs =====
-
-      # Built from constants.monitors so the set of outputs lives in exactly
-      # one place — adding or removing a monitor is a constants.nix edit.
       output = builtins.listToAttrs (map
         (m: {
           name = m.name;
@@ -62,13 +57,9 @@ in
         })
         (builtins.attrValues monitors));
 
-      # ===== Workspaces =====
-
       workspaceOutputAssign = builtins.attrValues (builtins.mapAttrs
         (workspace: output: { inherit workspace output; })
         constants.workspaceOutputs);
-
-      # ===== Appearance =====
 
       gaps = {
         inner = 4;
@@ -89,7 +80,6 @@ in
 
       fonts = {
         names = [ fontUI.name ];
-        # * 1.0 coerces the integer size to a float (this option requires a float/string)
         size = fontUI.size * 1.0;
       };
 
@@ -128,38 +118,31 @@ in
 
       focus.followMouse = true;
 
-      # ===== Keybindings =====
-
       keybindings = {
         "${mod}+Return"       = "exec ${pkgs.alacritty}/bin/alacritty";
         "${mod}+space"        = "exec ${pkgs.fuzzel}/bin/fuzzel";
         "${mod}+ctrl+l"       = "exec ${swaylock-cmd}";
 
-        # Kill / reload
         "${mod}+BackSpace"    = "kill";
         "${mod}+Shift+q"      = "kill";
         "${mod}+Shift+r"      = "reload";
         "${mod}+Shift+e"      = "exec swaynag -t warning -m 'Exit sway?' -b 'Yes' 'swaymsg exit'";
 
-        # Layout
         "${mod}+t"            = "layout toggle split";
         "${mod}+f"            = "fullscreen toggle";
         "${mod}+s"            = "floating toggle";
         "${mod}+Shift+s"      = "layout stacking";
 
-        # Focus
         "${mod}+h"            = "focus left";
         "${mod}+j"            = "focus down";
         "${mod}+k"            = "focus up";
         "${mod}+l"            = "focus right";
 
-        # Move
         "${mod}+Shift+h"      = "move left";
         "${mod}+Shift+j"      = "move down";
         "${mod}+Shift+k"      = "move up";
         "${mod}+Shift+l"      = "move right";
 
-        # Workspaces
         "${mod}+1"            = "workspace number 1";
         "${mod}+2"            = "workspace number 2";
         "${mod}+3"            = "workspace number 3";
@@ -173,14 +156,10 @@ in
         "${mod}+Shift+5"      = "move container to workspace number 5";
         "${mod}+Shift+6"      = "move container to workspace number 6";
 
-        # Screenshot
         "Delete"              = "exec ${pkgs.sway-contrib.grimshot}/bin/grimshot copy area";
         "Shift+Delete"        = "exec ${pkgs.sway-contrib.grimshot}/bin/grimshot save area ~/Pictures/$(date +%Y-%m-%d_%H-%M-%S).png";
       };
 
-      # Daemons run as systemd user services, not sway startup execs:
-      # waybar via programs.waybar.systemd (waybar.nix), swayidle and
-      # autotiling below.
       bars = [];
     };
   };

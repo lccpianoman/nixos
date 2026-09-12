@@ -1,13 +1,13 @@
 { pkgs, lib, ... }:
 
 let
-  identity = import ../../common/identity.nix;
   sshPort = 47291;
 in
 
 {
   imports = [
     ../../common
+    ../../common/server-base.nix
     ./hardware-configuration.nix
     ./disko.nix
     ./minecraft.nix
@@ -39,37 +39,6 @@ in
     hashedPasswordFile = "/etc/nixos-secrets/luke.hashedPassword";
   };
 
-  # Same hardening as nixvps — key-only, non-root, non-standard port.
-  services.openssh = {
-    enable = true;
-    ports = [ sshPort ];
-    settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
-      KbdInteractiveAuthentication = false;
-      MaxAuthTries = 3;
-      LoginGraceTime = 20;
-      AllowUsers = [ "luke" ];
-      AllowAgentForwarding = false;
-      AllowTcpForwarding = false;
-      X11Forwarding = false;
-      PermitTunnel = "no";
-      ClientAliveInterval = 300;
-      ClientAliveCountMax = 3;
-    };
-  };
-
-  services.fail2ban = {
-    enable = true;
-    maxretry = 3;
-    bantime = "1h";
-    bantime-increment = {
-      enable = true;
-      multipliers = "1 2 4 8 16 32 64";
-      maxtime = "168h";
-    };
-  };
-
   # The JVM heap must never be swapped — a paged-out heap turns a GC pause
   # into a multi-second freeze for everyone online. Swap exists only as an
   # OOM backstop, so make the kernel reach for it as late as possible.
@@ -78,37 +47,8 @@ in
   boot.tmp.cleanOnBoot = true;
 
   environment.systemPackages = with pkgs; [
-    # network / diagnostics
-    inetutils
-    mtr
-    sysstat
-    curl
-    wget
-    rsync
-
-    # shell tools
-    git
-    vim
-    tmux
-    tree
-    eza
-    ripgrep
-    jq
-    file
-    unzip
     zstd
-    btop
-    ncdu
-    nh
   ];
-
-  programs.git = {
-    enable = true;
-    config = {
-      user.name = identity.name;
-      user.email = identity.email;
-    };
-  };
 
   system.stateVersion = "26.05";
 }

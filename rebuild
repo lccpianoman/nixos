@@ -65,7 +65,7 @@ if git diff --quiet && git diff --cached --quiet && [ -z "$(git ls-files --other
 fi
 
 echo -e "\n${BLUE}Changes:${NC}"
-git diff HEAD
+git --no-pager diff HEAD
 
 # Untracked files are picked up by `git add -A` below but don't show in
 # `git diff HEAD`, so list them explicitly in the preview.

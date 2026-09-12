@@ -7,6 +7,7 @@ result-*
 # Python
 __pycache__/
 *.pyc
+.ruff_cache/
 
 # Secrets — never commit these
 .env
@@ -21,3 +22,4 @@ private/
 vaultwarden.env
 api_key
 openweathermap*
+CLAUDE.md

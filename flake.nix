@@ -23,40 +23,37 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, ... }: {
+  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, ... }:
+  let
+    mkHost = modules: nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux";
+      inherit modules;
+    };
+  in {
     # `nix fmt` — nixfmt (RFC 166 style) wrapped in treefmt for whole-tree runs.
     # Declared only; run it when a big reformat diff is acceptable.
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
 
-    nixosConfigurations.nixvps = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        ./hosts/nixvps/configuration.nix
-      ];
-    };
+    nixosConfigurations.nixvps = mkHost [
+      ./hosts/nixvps/configuration.nix
+    ];
 
-    nixosConfigurations.nixcraft = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        disko.nixosModules.disko
-        nix-minecraft.nixosModules.minecraft-servers
-        { nixpkgs.overlays = [ nix-minecraft.overlay ]; }
-        ./hosts/nixcraft/configuration.nix
-      ];
-    };
+    nixosConfigurations.nixcraft = mkHost [
+      disko.nixosModules.disko
+      nix-minecraft.nixosModules.minecraft-servers
+      { nixpkgs.overlays = [ nix-minecraft.overlay ]; }
+      ./hosts/nixcraft/configuration.nix
+    ];
 
-    nixosConfigurations.nixnotdix = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [
-        { nixpkgs.overlays = [ nur.overlays.default ]; }
-        ./hosts/nixnotdix/configuration.nix
-        home-manager.nixosModules.home-manager
-        {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.luke = import ./hosts/nixnotdix/home.nix;
-        }
-      ];
-    };
+    nixosConfigurations.nixnotdix = mkHost [
+      { nixpkgs.overlays = [ nur.overlays.default ]; }
+      ./hosts/nixnotdix/configuration.nix
+      home-manager.nixosModules.home-manager
+      {
+        home-manager.useGlobalPkgs = true;
+        home-manager.useUserPackages = true;
+        home-manager.users.luke = import ./hosts/nixnotdix/home.nix;
+      }
+    ];
   };
 }
