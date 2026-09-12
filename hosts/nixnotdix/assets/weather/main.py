@@ -86,7 +86,7 @@ def get_weather(city: str, lang: str, unit: str, api_key: str) -> dict[str, str]
 
     unit = unit_suffix(unit)
     return {
-        "temp": f"{int(round(temp))}{unit}",
+        "temp": f"{round(temp)}{unit}",
         "desc": desc.title(),
     }
 
