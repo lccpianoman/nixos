@@ -172,6 +172,20 @@ Run `nix flake update` roughly monthly or after security fixes, then rebuild eac
 ./rebuild --boot
 ```
 
+With `just`:
+
+```bash
+just rebuild
+just rebuild nixvps
+just boot
+```
+
+Minecraft console helper:
+
+```bash
+just minecraft
+```
+
 ## Checks
 
 ```bash
