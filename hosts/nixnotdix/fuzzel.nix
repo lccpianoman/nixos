@@ -14,7 +14,7 @@ in
     settings = {
       main = {
         font              = "${fontUI.name}:size=${toString fontUI.size}";
-        dpi-aware         = "no";
+        dpi-aware         = "yes";
         lines             = 10;
         width             = 40;
         horizontal-pad    = 16;

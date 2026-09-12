@@ -109,7 +109,7 @@ Desktop stack:
 - swayidle + swaylock
 - Alacritty
 
-Theme: Kanagawa Wave.
+Theme: saturated custom nebula palette.
 
 Key packages:
 - Gaming: Steam, protontricks, gamemode, NoiseTorch, CloneHero, PrismLauncher, Lunar Client

@@ -11,7 +11,7 @@ let
   mod = "Mod4";
 
   # Keep this as a store path so sway's config check works in build sandboxes.
-  wallpaper = ./assets/wallpapers/interestellar.jpg;
+  wallpaper = ./assets/wallpapers/a_space_shuttle_in_the_sky.jpg;
 
   swaylock-cmd = "${pkgs.swaylock}/bin/swaylock -f "
     + "--color ${hex c.base} "

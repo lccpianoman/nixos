@@ -125,7 +125,7 @@ in
       }
 
       window#waybar {
-        background: rgba(31, 31, 40, 0.85);
+        background: ${c.base}d9;
         border-radius: 8px;
         color: @text;
       }

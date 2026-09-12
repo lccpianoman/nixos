@@ -1,24 +1,24 @@
 {
   colors = {
-    # ===== Kanagawa Wave =====
+    # ===== Saturated nebula =====
 
-    base    = "#1f1f28";
-    surface = "#2a2a37";
-    overlay = "#363646";
-    muted   = "#54546d";
-    text    = "#dcd7ba";
-    subtext = "#c8c093";
+    base    = "#0b1022";
+    surface = "#151d34";
+    overlay = "#223258";
+    muted   = "#6e7fb0";
+    text    = "#f5f7ff";
+    subtext = "#d0dbff";
 
-    blue    = "#7e9cd8";
-    blueLight = "#7fb4ca";
-    teal    = "#6a9589";
-    green   = "#98bc6d";
-    purple  = "#957fb8";
-    red     = "#e82424";
-    redLight = "#e46876";
-    orange  = "#ffa066";
-    gold    = "#c0a36e";
-    pink    = "#d27e99";
+    blue    = "#6fa8ff";
+    blueLight = "#9dd7ff";
+    teal    = "#43e8d8";
+    green   = "#8fff7a";
+    purple  = "#c781ff";
+    red     = "#ff6b8b";
+    redLight = "#ff9cb0";
+    orange  = "#ffb45c";
+    gold    = "#ffd76a";
+    pink    = "#ff75d5";
   };
 
   # ===== Color helpers =====
@@ -46,7 +46,7 @@
   };
 
   font = {
-    name = "RobotoMono Nerd Font";
+    name = "JetBrainsMono Nerd Font";
     size = 11;
     sizeBar = 10;
   };
