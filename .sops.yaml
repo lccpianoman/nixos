@@ -1,0 +1,16 @@
+keys:
+  - &admin age1m34stffslkx9ukagc0pkpcvs682rwprgktarum50wax4fen3x5yq95g63g
+  - &nixvps age1qn9sljnn4hhrf04p70x9m0vc7wmekyevepp90ktn3zyw6k39pussn3yny8
+  - &nixcraft age1d44wpjmnzkfh3xssxqynylmr7lysje44eddz38kzyem355l2qy7s3tunlx
+
+creation_rules:
+  - path_regex: secrets/nixvps/[^/]+$
+    key_groups:
+      - age:
+          - *admin
+          - *nixvps
+  - path_regex: secrets/nixcraft/[^/]+$
+    key_groups:
+      - age:
+          - *admin
+          - *nixcraft

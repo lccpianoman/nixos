@@ -38,8 +38,55 @@ hosts/
     minecraft.nix
     minecraft/
 keys/
-  luke.pub
+  luke-nixnotdix.pub
+  nixvps.host.pub
+  nixcraft.host.pub
+secrets/
+  nixvps/
+  nixcraft/
+.sops.yaml
 ```
+
+## Keys and secrets
+
+`keys/` holds public keys only, and everything in it is safe to publish.
+
+| File | What it is |
+|---|---|
+| `luke-nixnotdix.pub` | Luke's admin key; installed into `authorized_keys` on every server by `common/server-base.nix` |
+| `nixvps.host.pub`, `nixcraft.host.pub` | Server host keys, pinned as `programs.ssh.knownHosts` on nixnotdix and used as sops recipients |
+
+Private keys never leave the machine that generated them. Servers pull this
+repo over HTTPS (it is public), so they need no key at all.
+
+### Secrets
+
+Secrets are encrypted into `secrets/` with [sops-nix] and decrypted at
+activation using each host's SSH host key — no key material has to be placed on
+a host by hand. Recipients are declared in `.sops.yaml`: the admin key plus the
+one host that needs the secret.
+
+| Secret | Host | Mounted at |
+|---|---|---|
+| `secrets/nixvps/vaultwarden.env` | nixvps | `/run/secrets/vaultwarden.env` |
+| `secrets/nixvps/restic-b2.env` | nixvps | `/run/secrets/restic-b2.env` |
+| `secrets/nixvps/restic-password` | nixvps | `/run/secrets/restic-password` |
+| `secrets/nixcraft/users.yaml` | nixcraft | `/run/secrets-for-users/luke-hashed-password` |
+
+The `.env` secrets use sops' `dotenv` format, so variable *names* stay readable
+in git and only values are encrypted. They are mounted whole (`key = ""`) so
+systemd can consume them as `EnvironmentFile`.
+
+Edit a secret with:
+
+```bash
+nix run nixpkgs#sops -- secrets/nixvps/vaultwarden.env
+```
+
+Adding a host means adding its `ssh-to-age` recipient to `.sops.yaml` and
+running `sops updatekeys` on the affected files.
+
+[sops-nix]: https://github.com/Mic92/sops-nix
 
 ## `nixnotdix`
 
@@ -73,7 +120,8 @@ Security:
 - password auth disabled
 - fail2ban enabled
 
-Vaultwarden secrets live in `/var/lib/vaultwarden/vaultwarden.env`.
+Vaultwarden secrets are managed by sops-nix and mounted at
+`/run/secrets/vaultwarden.env`. See [Secrets](#secrets).
 
 ### Backups
 
@@ -85,11 +133,13 @@ The backup includes:
 - attachments
 - sends
 - RSA keys
-- `vaultwarden.env`
 
-Restic secrets are stored on the host:
-- `/var/lib/restic/b2.env`
-- `/var/lib/restic/password`
+`vaultwarden.env` is no longer in the backup set: it moved out of
+`/var/lib/vaultwarden` into sops, so the encrypted copy in this repo is the
+authoritative one.
+
+Restic's own credentials are sops secrets, mounted at `/run/secrets/restic-b2.env`
+and `/run/secrets/restic-password`.
 
 ### Restore
 
@@ -159,6 +209,13 @@ nix run github:nix-community/nixos-anywhere -- \
   --extra-files /tmp/nixcraft-files \
   root@<IP>
 ```
+
+`--extra-files` must seed the host's SSH host key at
+`/tmp/nixcraft-files/etc/ssh/ssh_host_ed25519_key` (mode `0600`, plus the
+`.pub`). sops decrypts with that key, so without it the first activation cannot
+unlock any secret — and a freshly generated key would not match the recipient in
+`.sops.yaml`. Seeding it also keeps `keys/nixcraft.host.pub` valid across a
+reinstall, so the `knownHosts` pin does not break.
 
 ## Updating
 

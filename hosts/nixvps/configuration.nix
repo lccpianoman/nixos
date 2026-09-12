@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   sshPort = 47291;
@@ -34,7 +34,25 @@ in
   users.users.luke = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
-    openssh.authorizedKeys.keyFiles = [ ../../keys/luke.pub ];
+  };
+
+  # key = "" mounts the whole decrypted file, so dotenv secrets stay usable as
+  # systemd EnvironmentFiles while keeping variable names readable in git.
+  sops.secrets = {
+    "vaultwarden.env" = {
+      sopsFile = ../../secrets/nixvps/vaultwarden.env;
+      format = "dotenv";
+      key = "";
+    };
+    "restic-b2.env" = {
+      sopsFile = ../../secrets/nixvps/restic-b2.env;
+      format = "dotenv";
+      key = "";
+    };
+    "restic-password" = {
+      sopsFile = ../../secrets/nixvps/restic-password;
+      format = "binary";
+    };
   };
 
   services.fail2ban = {
@@ -58,7 +76,7 @@ in
   services.vaultwarden = {
     enable = true;
     dbBackend = "sqlite";
-    environmentFile = "/var/lib/vaultwarden/vaultwarden.env";
+    environmentFile = config.sops.secrets."vaultwarden.env".path;
     config = {
       DOMAIN = "https://vault.jukeluke.com";
       ROCKET_ADDRESS = "127.0.0.1";
@@ -80,8 +98,8 @@ in
   services.restic.backups.vaultwarden = {
     initialize = true;
     repository = "b2:jukeluke-vaultwarden-backup:";
-    environmentFile = "/var/lib/restic/b2.env";
-    passwordFile = "/var/lib/restic/password";
+    environmentFile = config.sops.secrets."restic-b2.env".path;
+    passwordFile = config.sops.secrets."restic-password".path;
     paths = [
       "/var/lib/vaultwarden"
       "/var/backup/vaultwarden"

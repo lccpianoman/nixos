@@ -26,8 +26,21 @@ hosts/
   nixvps/
   nixcraft/
 keys/
-  luke.pub
+  luke-nixnotdix.pub
+  nixvps.host.pub
+  nixcraft.host.pub
+secrets/
+.sops.yaml
 ```
+
+## Keys and secrets
+- `keys/` is public keys only — safe to commit, safe to publish.
+- Private keys never leave the machine that generated them; servers pull this
+  repo over HTTPS, so they hold no key.
+- Secrets are sops-nix encrypted under `secrets/`, decrypted at activation with
+  each host's SSH host key. Recipients live in `.sops.yaml`.
+- Never write a plaintext secret into the repo, and never `cat` one into a
+  transcript. Pipe host → `sops` directly.
 
 ## Hard rules
 - Never run `./rebuild` or `nix flake update` in automation; Luke runs those manually.

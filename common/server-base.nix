@@ -24,6 +24,11 @@ in
     };
   };
 
+  # Admin keys for every server. New device: drop its pubkey in keys/ and list it.
+  users.users.luke.openssh.authorizedKeys.keyFiles = [
+    ../keys/luke-nixnotdix.pub
+  ];
+
   services.fail2ban = {
     enable = true;
     maxretry = 3;

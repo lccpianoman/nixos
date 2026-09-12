@@ -21,9 +21,15 @@
       url = "github:Infinidoge/nix-minecraft";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Secrets encrypted into this repo, decrypted at activation with each
+    # host's SSH host key. Recipients live in .sops.yaml.
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, ... }:
+  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, sops-nix, ... }:
   let
     mkHost = modules: nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
@@ -35,12 +41,14 @@
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
 
     nixosConfigurations.nixvps = mkHost [
+      sops-nix.nixosModules.sops
       ./hosts/nixvps/configuration.nix
     ];
 
     nixosConfigurations.nixcraft = mkHost [
       disko.nixosModules.disko
       nix-minecraft.nixosModules.minecraft-servers
+      sops-nix.nixosModules.sops
       { nixpkgs.overlays = [ nix-minecraft.overlay ]; }
       ./hosts/nixcraft/configuration.nix
     ];

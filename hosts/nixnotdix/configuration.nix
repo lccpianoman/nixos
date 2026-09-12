@@ -69,6 +69,20 @@
     extraGroups = [ "wheel" "networkmanager" "video" "input" ];
   };
 
+  # ===== SSH =====
+
+  # Pin server host keys so a reinstall fails loudly instead of prompting.
+  programs.ssh.knownHosts = {
+    nixvps = {
+      hostNames = [ "nixvps" "[66.228.49.38]:47291" ];
+      publicKeyFile = ../../keys/nixvps.host.pub;
+    };
+    nixcraft = {
+      hostNames = [ "nixcraft" "[96.30.206.210]:47291" ];
+      publicKeyFile = ../../keys/nixcraft.host.pub;
+    };
+  };
+
   # ===== Desktop Environment =====
 
   programs.sway = {

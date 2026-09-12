@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   sshPort = 47291;
@@ -29,14 +29,18 @@ in
     # "minecraft" lets Luke read/write the server files and attach to the
     # server console tmux socket without sudo.
     extraGroups = [ "wheel" "minecraft" ];
-    openssh.authorizedKeys.keyFiles = [ ../../keys/luke.pub ];
     # Without a password luke could not sudo (wheel needs one) and the Vultr
     # web console would be unusable, since root login is disabled everywhere —
-    # a key-only box with no recovery path. This repo is public, so the hash
-    # is not committed: it is placed on the host at install time with
-    #   nixos-anywhere --extra-files
-    # See "Deploying a new VPS" in README.md.
-    hashedPasswordFile = "/etc/nixos-secrets/luke.hashedPassword";
+    # a key-only box with no recovery path.
+    hashedPasswordFile = config.sops.secrets."luke-hashed-password".path;
+  };
+
+  # neededForUsers lands the hash in /run/secrets-for-users, which is populated
+  # before users are created; a plain secret would be too late.
+  sops.secrets."luke-hashed-password" = {
+    sopsFile = ../../secrets/nixcraft/users.yaml;
+    key = "luke_hashed_password";
+    neededForUsers = true;
   };
 
   # The JVM heap must never be swapped — a paged-out heap turns a GC pause

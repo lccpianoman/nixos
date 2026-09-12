@@ -10,12 +10,14 @@
         User = "luke";
         Port = 47291;
         IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = true;
       };
       "nixcraft" = {
         Hostname = "96.30.206.210";
         User = "luke";
         Port = 47291;
         IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = true;
       };
     };
   };

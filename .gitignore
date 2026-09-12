@@ -17,9 +17,12 @@ __pycache__/
 *.secret
 *.pass
 *.pw
-secrets/
 private/
 vaultwarden.env
 api_key
 openweathermap*
 CLAUDE.md
+
+# secrets/ is sops-encrypted and must be committed; re-include it after the
+# plaintext guards above.
+!secrets/**
