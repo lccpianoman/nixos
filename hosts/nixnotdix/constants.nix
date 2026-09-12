@@ -14,6 +14,10 @@ rec {
     };
   };
 
+  # Desktop + greeter share one wallpaper; keep it a store path so it resolves
+  # for both sway and regreet.
+  wallpaper = ./assets/wallpapers/a_space_shuttle_in_the_sky.jpg;
+
   # All workspaces on the single output
   workspaceOutputs = {
     "1" = monitors.primary.name;

@@ -1,5 +1,11 @@
 { config, lib, pkgs, ... }:
 
+let
+  theme = import ./theme.nix;
+  constants = import ./constants.nix;
+  c = theme.colors;
+  fontUI = theme.fontUI;
+in
 {
   imports = [
     ../../common
@@ -128,29 +134,94 @@
 
   programs.sway = {
     enable = true;
-    # SwayFX — sway plus blur/shadows/rounded corners/animations. Binary is
-    # still named `sway`, so greetd's --cmd below needs no change.
+    # SwayFX — sway plus blur/shadows/rounded corners/animations.
     package = pkgs.swayfx;
+    # ReGreet launches the session from sway.desktop (`Exec=sway`), so the NVIDIA
+    # flag has to live in the wrapper rather than in a greeter --cmd.
+    extraOptions = [ "--unsupported-gpu" ];
     wrapperFeatures.gtk = true;
   };
 
-  services.greetd = {
+  # ReGreet runs under cage; programs.regreet sets greetd's default_session
+  # command itself, so only the user is set here.
+  services.greetd.settings.default_session.user = "greeter";
+
+  programs.regreet = {
     enable = true;
+    font = { name = fontUI.name; package = pkgs.inter; size = 14; };
+    # Matches sway's seat cursor and home.pointerCursor so the pointer doesn't
+    # change shape between greeter and session.
+    cursorTheme = { name = "Bibata-Modern-Ice"; package = pkgs.bibata-cursors; };
+    theme = { name = "Adwaita-dark"; package = pkgs.gnome-themes-extra; };
+
     settings = {
-      default_session = {
-        command = let
-          theme = import ./theme.nix;
-          c = theme.colors;
-        in ''
-          ${pkgs.tuigreet}/bin/tuigreet \
-            --time \
-            --remember \
-            --cmd "sway --unsupported-gpu" \
-            --theme "border=${c.blue};text=${c.text};prompt=${c.gold};time=${c.blueLight};action=${c.purple};button=${c.blue};container=${c.surface};input=${c.text}"
-        '';
-        user = "greeter";
-      };
+      background = { path = constants.wallpaper; fit = "Cover"; };
+      GTK.application_prefer_dark_theme = true;
+      appearance.greeting_msg = "Welcome back, Luke";
+      widget.clock.format = "%A, %B %d   %H:%M";
     };
+
+    # Nebula palette over the wallpaper: a translucent card, themed entry and
+    # buttons, blue focus ring.
+    extraCss = ''
+      window {
+        background: transparent;
+      }
+
+      .background {
+        background-color: alpha(${c.base}, 0.55);
+      }
+
+      box.horizontal > frame,
+      frame > box,
+      .login-box {
+        background-color: alpha(${c.surface}, 0.92);
+        border: 1px solid ${c.overlay};
+        border-radius: ${toString theme.cornerRadius}px;
+        padding: 24px;
+      }
+
+      label {
+        color: ${c.text};
+      }
+
+      entry {
+        background-color: ${c.base};
+        color: ${c.text};
+        border: 1px solid ${c.overlay};
+        border-radius: ${toString theme.cornerRadius}px;
+        padding: 8px 12px;
+      }
+
+      entry:focus, entry:focus-within {
+        border-color: ${c.blue};
+        box-shadow: 0 0 0 2px alpha(${c.blue}, 0.35);
+      }
+
+      button {
+        background-image: none;
+        background-color: ${c.overlay};
+        color: ${c.text};
+        border: 1px solid ${c.overlay};
+        border-radius: ${toString theme.cornerRadius}px;
+        padding: 8px 16px;
+      }
+
+      button:hover {
+        background-color: ${c.blue};
+        color: ${c.base};
+      }
+
+      #clock_label {
+        color: ${c.blueLight};
+        font-size: 20pt;
+      }
+
+      #greeting_label {
+        color: ${c.text};
+        font-size: 16pt;
+      }
+    '';
   };
 
   security.pam.services.swaylock = {};

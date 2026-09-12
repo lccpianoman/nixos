@@ -102,11 +102,11 @@ just check-secrets  # same check over everything already committed
 
 Desktop stack:
 - SwayFX (sway 1.12 fork adding blur, shadows, rounded corners, animations)
-- greetd + tuigreet
+- greetd + ReGreet (GTK greeter under cage)
 - Waybar
 - Fuzzel
 - Mako
-- swayidle + swaylock
+- swayidle + swaylock-effects (blurred-screenshot lock)
 - Alacritty
 
 Theme: saturated custom nebula palette.
