@@ -13,14 +13,14 @@ in
     enable = true;
     settings = {
       main = {
-        font              = "${fontUI.name}:size=${toString fontUI.size}";
+        font              = "${fontUI.name}:size=12";
         dpi-aware         = "yes";
-        lines             = 10;
-        width             = 40;
-        horizontal-pad    = 16;
-        vertical-pad      = 12;
-        inner-pad         = 8;
-        line-height       = 22;
+        lines             = 11;
+        width             = 42;
+        horizontal-pad    = 18;
+        vertical-pad      = 14;
+        inner-pad         = 10;
+        line-height       = 24;
         letter-spacing    = 0;
         icons-enabled     = true;
         icon-theme        = "hicolor";
