@@ -49,7 +49,8 @@ in
     systemd.enable = true;
 
     settings = [{
-      layer         = "bottom";
+      # "top", not "bottom": swayfx cannot apply layer_effects to the bottom layer.
+      layer         = "top";
       position      = "bottom";
       height        = 30;
       spacing       = 0;

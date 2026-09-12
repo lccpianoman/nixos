@@ -15,7 +15,7 @@ in
       text-color       = c.text;
       border-color     = c.overlay;
       border-size      = 1;
-      border-radius    = 8;
+      border-radius    = theme.cornerRadius;
       padding          = "14,16";
       outer-margin     = "9,12";
       margin           = "3,0";

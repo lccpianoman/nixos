@@ -10,6 +10,8 @@ in
     enable = true;
     settings = {
       window.opacity = 0.85;
+      # Keep text clear of swayfx's rounded corners, which clip flush content.
+      window.padding = { x = theme.cornerRadius; y = theme.cornerRadius; };
       font = {
         normal = { family = font.name; style = "Regular"; };
         bold = { family = font.name; style = "Bold"; };

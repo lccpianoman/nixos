@@ -51,6 +51,10 @@
     sizeBar = 10;
   };
 
+  # Window corner radius. swayfx clips window content to this arc, so anything
+  # drawing flush to its edge (terminal padding, mako) must match it.
+  cornerRadius = 8;
+
   fontUI = {
     name = "Inter";
     size = 11;

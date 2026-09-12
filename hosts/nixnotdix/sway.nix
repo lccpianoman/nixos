@@ -7,6 +7,7 @@ let
   fontUI = theme.fontUI;
   monitors = constants.monitors;
   hex = theme.lib.stripHash;
+  radius = toString theme.cornerRadius;
 
   mod = "Mod4";
 
@@ -170,7 +171,7 @@ in
     extraConfig = ''
       animation_duration_ms 250
 
-      corner_radius 8
+      corner_radius ${radius}
       smart_corner_radius enable
 
       blur enable
@@ -190,7 +191,23 @@ in
       default_dim_inactive 0.1
       dim_inactive_colors.unfocused ${c.base}
 
-      layer_effects "waybar" blur enable; shadows enable; corner_radius 8
+      # Brace blocks are required — a single line would be split on `;` into
+      # separate global commands. Namespaces confirmed via WAYLAND_DEBUG.
+      layer_effects "waybar" {
+        blur enable;
+        shadows enable;
+        corner_radius ${radius};
+      }
+
+      layer_effects "notifications" {
+        shadows enable;
+        corner_radius ${radius};
+      }
+
+      layer_effects "launcher" {
+        shadows enable;
+        corner_radius 6;
+      }
     '';
   };
 
