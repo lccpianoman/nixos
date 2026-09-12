@@ -29,6 +29,7 @@ in
     wl-clipboard
     btop
     nh
+    just
     killall
     fastfetch
     sway-contrib.grimshot

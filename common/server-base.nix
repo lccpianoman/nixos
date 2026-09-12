@@ -54,6 +54,7 @@ in
     btop
     ncdu
     nh
+    just
   ];
 
   programs.git = {
