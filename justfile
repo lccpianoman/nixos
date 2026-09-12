@@ -12,6 +12,14 @@ boot *args:
 check:
   nix flake check --no-build --no-write-lock-file
 
+garbage:
+  nix-collect-garbage -d
+  sudo nix-collect-garbage -d
+
+optimize:
+  nix store optimise
+  sudo nix store optimise
+
 # Point git at the tracked hooks; run once per clone.
 hooks:
   git config core.hooksPath .githooks

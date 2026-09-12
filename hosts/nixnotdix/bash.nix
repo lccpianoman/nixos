@@ -37,12 +37,14 @@ in
     # ===== Prompt =====
 
     initExtra = ''
-      C_CYAN="\e[38;2;${ansi c.blueLight}m"
-      C_FG="\e[38;2;${ansi c.text}m"
-      C_ACCENT="\e[38;2;${ansi c.blue}m"
-      C_GREEN="\e[38;2;${ansi c.green}m"
-      C_RED="\e[38;2;${ansi c.red}m"
-      C_GRAY="\e[38;2;${ansi c.muted}m"
+      # Named by role, not by hue, so a palette swap can't strand these.
+      # Never use c.text here: alacritty already paints normal output with it.
+      C_HOST="\e[38;2;${ansi c.teal}m"
+      C_PATH="\e[38;2;${ansi c.blueLight}m"
+      C_GIT="\e[38;2;${ansi c.purple}m"
+      C_OK="\e[38;2;${ansi c.green}m"
+      C_ERR="\e[38;2;${ansi c.red}m"
+      C_DIM="\e[38;2;${ansi c.muted}m"
       C_RESET="\e[0m"
 
       ICON_GIT=$''
@@ -63,16 +65,16 @@ in
 
         local branch=$(${pkgs.git}/bin/git symbolic-ref --short HEAD 2>/dev/null)
         if [ -n "$branch" ]; then
-          git_info="  \[''${C_GRAY}\]''${ICON_GIT} \[''${C_ACCENT}\]$branch\[''${C_RESET}\]"
+          git_info="  \[''${C_DIM}\]''${ICON_GIT} \[''${C_GIT}\]$branch\[''${C_RESET}\]"
         fi
 
         if [ $exit_code -eq 0 ]; then
-          status_color="''${C_GREEN}"
+          status_color="''${C_OK}"
         else
-          status_color="''${C_RED}"
+          status_color="''${C_ERR}"
         fi
 
-        PS1="''${spacing}\[''${C_CYAN}\]\u@\h\[''${C_RESET}\] \[''${C_FG}\]\w\[''${C_RESET}\]''${git_info}\n\[''${status_color}\]❯\[''${C_RESET}\] "
+        PS1="''${spacing}\[''${C_HOST}\]\u@\h\[''${C_RESET}\] \[''${C_PATH}\]\w\[''${C_RESET}\]''${git_info}\n\[''${status_color}\]❯\[''${C_RESET}\] "
       }
 
       # Prepend rather than overwrite so hooks like direnv keep working;
