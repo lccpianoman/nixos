@@ -12,6 +12,19 @@ boot *args:
 check:
   nix flake check --no-build --no-write-lock-file
 
+# Validate nixnotdix's generated sway config against the real swayfx binary.
+# Can't run at build time: swayfx's GLES2-only renderer needs a DRM FD, which
+# the Nix sandbox lacks, so wayland.windowManager.sway.checkConfig is off.
+check-sway:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  conf=$(nix build --no-link --print-out-paths \
+    '.#nixosConfigurations.nixnotdix.config.home-manager.users.luke.xdg.configFile."sway/config".source')
+  sway=$(nix build --no-link --print-out-paths \
+    '.#nixosConfigurations.nixnotdix.config.programs.sway.package')
+  nix run nixpkgs#xvfb-run -- "$sway/bin/sway" --config "$conf" --validate --unsupported-gpu
+  echo "ok  $conf"
+
 garbage:
   nix-collect-garbage -d
   sudo nix-collect-garbage -d

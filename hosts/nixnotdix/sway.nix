@@ -39,8 +39,11 @@ in
 {
   wayland.windowManager.sway = {
     enable = true;
+    package = pkgs.swayfx;
     xwayland = true;
-    checkConfig = true;
+    # SwayFX's renderer is GLES2-only (no pixman fallback), so it cannot start
+    # in the Nix sandbox with no DRM FD. Validate with `just check-sway` instead.
+    checkConfig = false;
 
     config = {
       modifier = mod;
@@ -162,6 +165,33 @@ in
 
       bars = [];
     };
+
+    # SwayFX-only options — home-manager has no typed options for these.
+    extraConfig = ''
+      animation_duration_ms 250
+
+      corner_radius 8
+      smart_corner_radius enable
+
+      blur enable
+      blur_passes 2
+      blur_radius 5
+      blur_noise 0.02
+      blur_brightness 0.9
+      blur_saturation 1.1
+
+      shadows enable
+      shadows_on_csd disable
+      shadow_blur_radius 20
+      shadow_color #000000aa
+      shadow_inactive_color #00000066
+      shadow_offset 0 2
+
+      default_dim_inactive 0.1
+      dim_inactive_colors.unfocused ${c.base}
+
+      layer_effects "waybar" blur enable; shadows enable; corner_radius 8
+    '';
   };
 
   systemd.user.services.autotiling = {
@@ -183,8 +213,8 @@ in
       { timeout = 300; command = swaylock-cmd; }
       {
         timeout = 600;
-        command = "${pkgs.sway}/bin/swaymsg 'output * dpms off'";
-        resumeCommand = "${pkgs.sway}/bin/swaymsg 'output * dpms on'";
+        command = "${pkgs.swayfx}/bin/swaymsg 'output * dpms off'";
+        resumeCommand = "${pkgs.swayfx}/bin/swaymsg 'output * dpms on'";
       }
     ];
     events."before-sleep" = swaylock-cmd;

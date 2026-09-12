@@ -101,7 +101,7 @@ just check-secrets  # same check over everything already committed
 ## `nixnotdix`
 
 Desktop stack:
-- Sway
+- SwayFX (sway 1.12 fork adding blur, shadows, rounded corners, animations)
 - greetd + tuigreet
 - Waybar
 - Fuzzel
@@ -257,6 +257,7 @@ just minecraft
 
 ```bash
 nix flake check --no-build --no-write-lock-file
+just check-sway   # validates nixnotdix's generated sway config against swayfx
 nix run nixpkgs#shellcheck -- ./rebuild
 nix run nixpkgs#ruff -- check hosts/nixnotdix/assets/weather/main.py
 nix fmt

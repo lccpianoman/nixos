@@ -19,6 +19,42 @@
            then custom
            else prev.clonehero;
     })
+
+    # SwayFX 0.6 (animations, rebased on sway 1.12) needs scenefx 0.5; nixpkgs
+    # 26.05 ships 0.5.3/0.4.1. wlroots_0_20 is already in 26.05, so both need
+    # only a src bump. Delete once nixpkgs reaches these versions.
+    (final: prev: {
+      scenefx =
+        let custom = (prev.scenefx.override { wlroots_0_19 = final.wlroots_0_20; })
+          .overrideAttrs (old: rec {
+            version = "0.5";
+            src = final.fetchFromGitHub {
+              owner = "wlrfx";
+              repo = "scenefx";
+              tag = version;
+              hash = "sha256-vUjLG6eubEhJJVa9LPygIcVmNoHwYbSUTJcWEcbxnU4=";
+            };
+            buildInputs = old.buildInputs ++ [ final.lcms2 ];
+          });
+        in if final.lib.versionOlder prev.scenefx.version custom.version
+           then custom
+           else prev.scenefx;
+
+      swayfx-unwrapped =
+        let custom = (prev.swayfx-unwrapped.override { wlroots_0_19 = final.wlroots_0_20; })
+          .overrideAttrs (_: rec {
+            version = "0.6";
+            src = final.fetchFromGitHub {
+              owner = "wlrfx";
+              repo = "swayfx";
+              tag = version;
+              hash = "sha256-yvVqwgKEZt/JbT4cxyRA95oK1t/KcZ2AvI5/o7gYa0M=";
+            };
+          });
+        in if final.lib.versionOlder prev.swayfx-unwrapped.version custom.version
+           then custom
+           else prev.swayfx-unwrapped;
+    })
   ];
 
   # Release this host was first installed with — pins on-disk data formats.
@@ -92,6 +128,9 @@
 
   programs.sway = {
     enable = true;
+    # SwayFX — sway plus blur/shadows/rounded corners/animations. Binary is
+    # still named `sway`, so greetd's --cmd below needs no change.
+    package = pkgs.swayfx;
     wrapperFeatures.gtk = true;
   };
 
