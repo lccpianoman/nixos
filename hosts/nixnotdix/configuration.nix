@@ -139,18 +139,29 @@ in
     wrapperFeatures.gtk = true;
   };
 
-  # ReGreet runs under cage; programs.regreet sets greetd's default_session
-  # command itself, so only the user is set here.
+  # programs.regreet sets greetd's default_session command itself; it is
+  # overridden below, so only the user is set here.
   services.greetd.settings.default_session.user = "greeter";
 
-  # regreet.toml's cursor_theme_name only reaches GTK; cage draws the pointer
-  # itself and reads XCURSOR_*. The greeter user has neither home-manager's
-  # settings nor a default XCURSOR_PATH that finds Bibata, so set all three.
-  systemd.services.greetd.environment = {
-    XCURSOR_THEME = theme.cursor.name;
-    XCURSOR_SIZE = toString theme.cursor.size;
-    XCURSOR_PATH = "${pkgs.bibata-cursors}/share/icons";
-  };
+  # Run the greeter under sway rather than the module's default cage: cage
+  # hardcodes its cursor (`wlr_xcursor_manager_create(NULL, XCURSOR_SIZE)`) and
+  # ignores XCURSOR_*, and wlroots' xcursor honours neither XCURSOR_THEME nor
+  # theme inheritance. sway sets the seat cursor explicitly, and it is already
+  # known to work on this GPU.
+  services.greetd.settings.default_session.command =
+    let
+      greeterConfig = pkgs.writeText "greeter-sway.conf" ''
+        seat * xcursor_theme ${theme.cursor.name} ${toString theme.cursor.size}
+        output * bg ${constants.wallpaper} fill
+        default_border none
+        exec "${pkgs.regreet}/bin/regreet; ${pkgs.swayfx}/bin/swaymsg exit"
+      '';
+    in
+    "${pkgs.dbus}/bin/dbus-run-session ${pkgs.swayfx}/bin/sway --config ${greeterConfig}";
+
+  # sway is the greeter compositor now, so it needs the NVIDIA opt-out here too;
+  # environment.sessionVariables only covers the logged-in user session.
+  systemd.services.greetd.environment.SWAY_UNSUPPORTED_GPU = "true";
 
   programs.regreet = {
     enable = true;
