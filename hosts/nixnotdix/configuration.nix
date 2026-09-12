@@ -136,9 +136,6 @@ in
     enable = true;
     # SwayFX — sway plus blur/shadows/rounded corners/animations.
     package = pkgs.swayfx;
-    # ReGreet launches the session from sway.desktop (`Exec=sway`), so the NVIDIA
-    # flag has to live in the wrapper rather than in a greeter --cmd.
-    extraOptions = [ "--unsupported-gpu" ];
     wrapperFeatures.gtk = true;
   };
 
@@ -146,12 +143,21 @@ in
   # command itself, so only the user is set here.
   services.greetd.settings.default_session.user = "greeter";
 
+  # regreet.toml's cursor_theme_name only reaches GTK; cage draws the pointer
+  # itself and reads XCURSOR_*. The greeter user has neither home-manager's
+  # settings nor a default XCURSOR_PATH that finds Bibata, so set all three.
+  systemd.services.greetd.environment = {
+    XCURSOR_THEME = theme.cursor.name;
+    XCURSOR_SIZE = toString theme.cursor.size;
+    XCURSOR_PATH = "${pkgs.bibata-cursors}/share/icons";
+  };
+
   programs.regreet = {
     enable = true;
     font = { name = fontUI.name; package = pkgs.inter; size = 14; };
     # Matches sway's seat cursor and home.pointerCursor so the pointer doesn't
     # change shape between greeter and session.
-    cursorTheme = { name = "Bibata-Modern-Ice"; package = pkgs.bibata-cursors; };
+    cursorTheme = { name = theme.cursor.name; package = pkgs.bibata-cursors; };
     theme = { name = "Adwaita-dark"; package = pkgs.gnome-themes-extra; };
 
     settings = {
@@ -258,6 +264,10 @@ in
     GBM_BACKEND       = "nvidia-drm";
     __GLX_VENDOR_LIBRARY_NAME = "nvidia";
     WLR_NO_HARDWARE_CURSORS   = "1";
+    # home-manager's profile sway shadows the NixOS wrapper in PATH, so
+    # programs.sway.extraOptions never reaches the session. swayfx 0.6 reads
+    # this instead, whichever wrapper launches it.
+    SWAY_UNSUPPORTED_GPU      = "true";
     MOZ_ENABLE_WAYLAND        = "1";
     QT_QPA_PLATFORM                  = "wayland";
     QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";

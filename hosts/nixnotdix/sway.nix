@@ -8,6 +8,7 @@ let
   monitors = constants.monitors;
   hex = theme.lib.stripHash;
   radius = toString theme.cornerRadius;
+  cursor = theme.cursor;
 
   mod = "Mod4";
 
@@ -122,7 +123,7 @@ in
         };
       };
 
-      seat."*".xcursor_theme = "Bibata-Modern-Ice 22";
+      seat."*".xcursor_theme = "${cursor.name} ${toString cursor.size}";
 
       focus.followMouse = true;
 

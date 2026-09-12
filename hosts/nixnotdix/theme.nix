@@ -51,6 +51,13 @@
     sizeBar = 10;
   };
 
+  # Pointer theme. The greeter runs as a different user and cannot see
+  # home-manager's cursor settings, so greetd gets these via XCURSOR_* too.
+  cursor = {
+    name = "Bibata-Modern-Ice";
+    size = 22;
+  };
+
   # Window corner radius. swayfx clips window content to this arc, so anything
   # drawing flush to its edge (terminal padding, mako) must match it.
   cornerRadius = 8;

@@ -55,9 +55,9 @@ in
   home.pointerCursor = {
     gtk.enable = true;
     sway.enable = true;
-    name = "Bibata-Modern-Ice";
+    name = theme.cursor.name;
     package = pkgs.bibata-cursors;
-    size = 22;
+    size = theme.cursor.size;
   };
 
   gtk = {
