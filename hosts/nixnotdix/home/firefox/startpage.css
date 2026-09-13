@@ -1,0 +1,145 @@
+/* Start page styling. At-delimited placeholders are substituted from
+   theme.nix by firefox.nix. No JS runs here — new-tab-override injects this
+   page with insertAdjacentHTML, which drops <script>, so keep it CSS-only. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  font-family: "@fontUI@", sans-serif;
+  color: @text@;
+  background-color: @base@;
+  /* Nebula wash: the same hues as the wallpaper, as gradients so the page
+     needs no external image (extension pages cannot load file:// assets). */
+  background-image:
+    radial-gradient(ellipse 70% 55% at 18% 12%, @purple@2e, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 85% 20%, @blue@33, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 50% 105%, @pink@1f, transparent 70%);
+  background-attachment: fixed;
+}
+
+main {
+  width: 100%;
+  max-width: 46rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.25rem;
+}
+
+.host {
+  margin: 0;
+  text-align: center;
+  font-family: "@fontMono@", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: @muted@;
+}
+
+/* ===== Search ===== */
+form {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1.25rem;
+  border: 1px solid @overlay@;
+  border-radius: @radius@px;
+  background-color: @surface@b8;
+  backdrop-filter: blur(12px);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+form:focus-within {
+  border-color: @blue@;
+  box-shadow: 0 0 0 1px @blue@;
+}
+
+form svg {
+  flex: none;
+  width: 1.15rem;
+  height: 1.15rem;
+  stroke: @muted@;
+  fill: none;
+  stroke-width: 2;
+}
+
+form:focus-within svg {
+  stroke: @blue@;
+}
+
+input {
+  flex: 1;
+  min-width: 0;
+  padding: 1rem 0;
+  border: none;
+  background: none;
+  color: @text@;
+  font: inherit;
+  font-size: 1.05rem;
+}
+
+input::placeholder {
+  color: @muted@;
+}
+
+input:focus {
+  outline: none;
+}
+
+/* ===== Links ===== */
+nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+  gap: 0.75rem;
+}
+
+a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid @overlay@;
+  border-radius: @radius@px;
+  background-color: @surface@a6;
+  color: @subtext@;
+  text-decoration: none;
+  font-size: 0.95rem;
+  transition: transform 120ms ease, border-color 120ms ease, color 120ms ease,
+    background-color 120ms ease;
+}
+
+a:hover,
+a:focus-visible {
+  transform: translateY(-2px);
+  border-color: @blue@;
+  background-color: @overlay@;
+  color: @text@;
+  outline: none;
+}
+
+/* Per-link accent dot, coloured inline from the link's `accent` in
+   firefox.nix so each tile is identifiable at a glance. */
+a span {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+@media (max-width: 30rem) {
+  main {
+    gap: 1.5rem;
+  }
+
+  nav {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

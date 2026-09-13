@@ -1,0 +1,15 @@
+/* Page-content styling. At-delimited placeholders are substituted from
+   theme.nix by firefox.nix. Deliberately tiny — restyling arbitrary sites
+   breaks them, so this only covers Firefox's own blank surfaces, which
+   otherwise flash white against a dark desktop. */
+
+@-moz-document url("about:blank"),
+  url("about:newtab"),
+  url("about:home"),
+  url("about:privatebrowsing") {
+  :root,
+  body {
+    background-color: @base@ !important;
+    color: @text@ !important;
+  }
+}

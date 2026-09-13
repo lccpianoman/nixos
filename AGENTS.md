@@ -62,3 +62,10 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 ## Notes
 - `rebuild` only applies to the local host where it runs.
 - `nixnotdix` uses home-manager; `nixvps` and `nixcraft` are NixOS-only.
+- Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
+  The CSS files carry at-delimited placeholders substituted from `theme.nix` —
+  never hard-code a colour in them. The new tab page is new-tab-override reading
+  the start page out of declaratively-written extension storage; it only accepts
+  `http(s)`/`moz-extension` URLs (so no `file://`) and injects the page with
+  `insertAdjacentHTML`, which drops `<script>` — the start page must stay
+  CSS-only.
