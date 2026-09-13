@@ -40,6 +40,9 @@ let
     + "--line-clear-color 00000000 "
     + "--line-ver-color 00000000 "
     + "--line-wrong-color 00000000";
+  # systemd user units (swayidle) treat `%` as specifiers; escape to keep
+  # swaylock's strftime tokens intact.
+  swaylock-cmd-systemd = builtins.replaceStrings [ "%" ] [ "%%" ] swaylock-cmd;
 in
 
 {
@@ -232,13 +235,13 @@ in
   services.swayidle = {
     enable = true;
     timeouts = [
-      { timeout = 300; command = swaylock-cmd; }
+      { timeout = 300; command = swaylock-cmd-systemd; }
       {
         timeout = 600;
         command = "${pkgs.swayfx}/bin/swaymsg 'output * dpms off'";
         resumeCommand = "${pkgs.swayfx}/bin/swaymsg 'output * dpms on'";
       }
     ];
-    events."before-sleep" = swaylock-cmd;
+    events."before-sleep" = swaylock-cmd-systemd;
   };
 }
