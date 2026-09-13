@@ -29,14 +29,14 @@ let
       param = "q";
     };
     links = [
-      { name = "GitHub";       url = "https://github.com";                    accent = c.text; }
-      { name = "Nix Packages"; url = "https://search.nixos.org/packages";      accent = c.blue; }
-      { name = "NixOS Wiki";   url = "https://wiki.nixos.org";                 accent = c.blueLight; }
+      { name = "GitHub";       url = "https://github.com";                        accent = c.text; }
+      { name = "Nix Packages"; url = "https://search.nixos.org/packages";         accent = c.blue; }
+      { name = "NixOS Wiki";   url = "https://wiki.nixos.org";                    accent = c.blueLight; }
       { name = "HM Options";   url = "https://home-manager-options.extranix.com"; accent = c.teal; }
-      { name = "Reddit";       url = "https://old.reddit.com";                 accent = c.orange; }
-      { name = "YouTube";      url = "https://youtube.com";                    accent = c.red; }
-      { name = "Hacker News";  url = "https://news.ycombinator.com";           accent = c.gold; }
-      { name = "Spotify";      url = "https://open.spotify.com";               accent = c.green; }
+      { name = "Reddit";       url = "https://reddit.com";                        accent = c.orange; }
+      { name = "YouTube";      url = "https://youtube.com";                       accent = c.red; }
+      { name = "Hacker News";  url = "https://news.ycombinator.com";              accent = c.gold; }
+      { name = "Spotify";      url = "https://open.spotify.com";                  accent = c.green; }
     ];
   };
 
