@@ -13,7 +13,7 @@ in
     enable = true;
     settings = {
       main = {
-        font              = "${font.name}:size=${toString font.size}";
+        font              = "${font.name}:size=${toString (font.size + 1)}";
         dpi-aware         = "yes";
         lines             = 8;
         width             = 64;
