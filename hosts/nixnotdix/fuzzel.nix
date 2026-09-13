@@ -14,13 +14,12 @@ in
     settings = {
       main = {
         font              = "${font.name}:size=${toString (font.size + 1)}";
-        dpi-aware         = "yes";
-        lines             = 8;
-        width             = 64;
-        horizontal-pad    = 22;
+        dpi-aware         = "auto";
+        lines             = 10;
+        width             = 56;
+        horizontal-pad    = 20;
         vertical-pad      = 14;
         inner-pad         = 12;
-        line-height       = 22;
         letter-spacing    = 0;
         icons-enabled     = true;
         icon-theme        = "hicolor";
