@@ -9,6 +9,7 @@
     ./fuzzel.nix
     ./home/core.nix
     ./home/alacritty.nix
+    ./home/btop.nix
     ./home/git.nix
     ./home/ssh.nix
     ./home/firefox.nix

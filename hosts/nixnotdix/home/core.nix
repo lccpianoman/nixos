@@ -27,7 +27,6 @@ in
     tree
     file
     wl-clipboard
-    btop
     nh
     just
     sops
