@@ -57,9 +57,6 @@ check-secrets:
 shellcheck:
   nix run nixpkgs#shellcheck -- ./rebuild
 
-fmt:
-  nix fmt
-
 minecraft host='nixcraft' server='survival':
   @echo "Attaching to Minecraft console '{{server}}' on {{host}}..."
   @echo "Detach safely with Ctrl-b then d (do NOT run 'stop' unless you mean to stop the server)."

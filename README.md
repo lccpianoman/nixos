@@ -260,8 +260,12 @@ nix flake check --no-build --no-write-lock-file
 just check-sway   # validates nixnotdix's generated sway config against swayfx
 nix run nixpkgs#shellcheck -- ./rebuild
 nix run nixpkgs#ruff -- check hosts/nixnotdix/assets/weather/main.py
-nix fmt
 ```
+
+There is deliberately no Nix formatter. `nixfmt` collapses the aligned `=`
+blocks in `theme.nix`, `mako.nix`, `fuzzel.nix`, `waybar.nix` and `sway.nix`,
+and it cannot be told not to — a whole-tree run rewrites 18 of 30 files for no
+change in output. Match the surrounding style by hand instead.
 
 ## Weather widget
 

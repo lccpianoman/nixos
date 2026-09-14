@@ -36,10 +36,6 @@
       inherit modules;
     };
   in {
-    # `nix fmt` — nixfmt (RFC 166 style) wrapped in treefmt for whole-tree runs.
-    # Declared only; run it when a big reformat diff is acceptable.
-    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
-
     nixosConfigurations.nixvps = mkHost [
       sops-nix.nixosModules.sops
       ./hosts/nixvps/configuration.nix

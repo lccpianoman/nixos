@@ -47,6 +47,10 @@ secrets/
 ## Hard rules
 - Never run `./rebuild` or `nix flake update` in automation; Luke runs those manually.
 - After any Luke-run `nix flake update`, re-check pin removal conditions and report.
+- No Nix formatter, on purpose — don't run `nix fmt` and don't re-add a
+  `formatter` output. `nixfmt` collapses the aligned `=` blocks this repo uses
+  and rewrites 18 of 30 files for zero change in output. Match local style by
+  hand; see README's Checks section.
 
 ## Active pins to re-check after flake updates
 | Pin | Where | Remove when |
