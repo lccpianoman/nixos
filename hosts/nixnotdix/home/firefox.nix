@@ -40,41 +40,27 @@ let
     ];
   };
 
-  # The homepage needs a real URL, so the standalone rendering lands in the
-  # store. The new tab page instead gets the fragment injected from extension
-  # storage below, because new-tab-override only accepts http(s) and
-  # moz-extension URLs — a file:// homepage URL would be rejected there.
+  # One URL serves as both homepage and new tab page. ./firefox/newtab.cfg
+  # makes it Firefox's new tab URL, which is what keeps the URL bar empty.
   startPageFile = pkgs.writeText "firefox-start.html" startPage.document;
+  startPageUrl = "file://${startPageFile}";
 
-  newTabOverride = "newtaboverride@agenedia.com";
+  # Must be a derivation, not a bare path: the wrapper splices extraPrefsFiles
+  # in with toString, which strips the string context a path would need to
+  # become a build input.
+  newTabCfg = pkgs.writeText "newtab.cfg" (builtins.readFile ./firefox/newtab.cfg);
 in
 
 {
   programs.firefox = {
     enable = true;
+    package = pkgs.firefox.override { extraPrefsFiles = [ newTabCfg ]; };
     configPath = "${config.xdg.configHome}/mozilla/firefox";
     profiles.default = {
-      extensions = {
-        packages = with pkgs.nur.repos.rycee.firefox-addons; [
-          ublock-origin
-          bitwarden
-          new-tab-override
-        ];
-
-        # Required to manage extension storage declaratively at all.
-        force = true;
-
-        # new-tab-override renders this string as the new tab page. It injects
-        # it with insertAdjacentHTML, so <script> is dropped — the start page
-        # is deliberately CSS-only.
-        settings.${newTabOverride}.settings = {
-          type = "local_file";
-          local_file = startPage.fragment;
-          storage_schema = "1";
-          # Leave focus in the address bar, as on a stock new tab.
-          focus_website = false;
-        };
-      };
+      extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
+        ublock-origin
+        bitwarden
+      ];
 
       userChrome = subst ./firefox/userChrome.css;
       userContent = subst ./firefox/userContent.css;
@@ -164,13 +150,14 @@ in
 
         # ===== Start page =====
         "browser.startup.page" = 1;
-        "browser.startup.homepage" = "file://${startPageFile}";
+        "browser.startup.homepage" = startPageUrl;
+        # Read by ./firefox/newtab.cfg, which makes this the new tab URL too.
+        "nixos.newtab.url" = startPageUrl;
         # Extensions installed from the Nix store are a "system" scope, which
-        # Firefox disables by default — new-tab-override must be live to
-        # replace the new tab page.
+        # Firefox disables by default.
         "extensions.autoDisableScopes" = 0;
-        # Fallback if the override is ever off: a stock about:newtab stripped of
-        # sponsored tiles, Pocket stories, weather and telemetry.
+        # Fallback if the autoconfig hook ever fails: a stock about:newtab
+        # stripped of sponsored tiles, Pocket stories, weather and telemetry.
         "browser.newtabpage.activity-stream.showSponsored" = false;
         "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
         "browser.newtabpage.activity-stream.feeds.topsites" = false;

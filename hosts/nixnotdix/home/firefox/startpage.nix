@@ -1,7 +1,5 @@
-# Builds the themed start page. Returns two renderings of one source:
-#   fragment — <title> + <style> + markup, for new-tab-override's local_file
-#              store (it injects the string into its own page's <body>)
-#   document — a standalone file, for browser.startup.homepage over file://
+# Builds the themed start page as a standalone document, written to the store
+# and used as both the homepage and the new tab page.
 {
   lib,
   css,
@@ -30,17 +28,8 @@ let
     ${lib.concatMapStringsSep "\n" link links}
       </nav>
     </main>'';
-
-  fragment = ''
-    <title>${host}</title>
-    <style>
-    ${css}
-    </style>
-    ${body}'';
 in
 {
-  inherit fragment;
-
   document = ''
     <!doctype html>
     <html lang="en">

@@ -64,8 +64,12 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 - `nixnotdix` uses home-manager; `nixvps` and `nixcraft` are NixOS-only.
 - Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
   The CSS files carry at-delimited placeholders substituted from `theme.nix` —
-  never hard-code a colour in them. The new tab page is new-tab-override reading
-  the start page out of declaratively-written extension storage; it only accepts
-  `http(s)`/`moz-extension` URLs (so no `file://`) and injects the page with
-  `insertAdjacentHTML`, which drops `<script>` — the start page must stay
-  CSS-only.
+  never hard-code a colour in them. One store-written `file://` document is both
+  the homepage and the new tab page: `home/firefox/newtab.cfg` is an autoconfig
+  script (appended to the wrapper's `mozilla.cfg` via `extraPrefsFiles`) that
+  reads the `nixos.newtab.url` pref and assigns `AboutNewTab.newTabURL`. Firefox
+  blanks the URL bar for any URL equal to that one (`isInitialPage` in
+  `browser.js`), which is the whole point — keep the two prefs identical.
+  `extraPrefsFiles` entries must be derivations, not bare paths: the wrapper
+  splices them with `toString`, which strips the string context a path needs to
+  become a build input.
