@@ -291,7 +291,7 @@ until reboot. **Reboot after changing optics rather than relying on hot-plug.**
 
 ### Storage pool
 
-The twelve SAS disks are one `raidz2` vdev named `storage`: ~91 TiB usable,
+The twelve SAS disks are one `raidz2` vdev named `storage`: 82.4 TiB usable,
 surviving any two failures. A single wide vdev rather than two 6-disk vdevs
 because the SFPs negotiate 1 Gbps, so the wire caps at ~113 MB/s and one raidz2
 vdev already does 600–900 MB/s sequential — splitting it would buy random IOPS
@@ -326,15 +326,29 @@ partial downloads until they age out.
 
 #### Creating it (one-time, destroys everything on the twelve disks)
 
-Order matters: the `zfs` command and the kernel module arrive with the rebuild,
-and the mount units are expected to fail until the pool exists.
+Order matters, and the first rebuild **fails on purpose**. ZFS arrives with that
+rebuild, so it cannot be present when the config that wants the pool is first
+activated. Read step 1 before running it.
 
 ```bash
-# 1. Rebuild first — this is what installs ZFS. The four /srv mounts will fail
-#    and that is expected; they are `nofail`, so the boot is unaffected.
+# 1. Rebuild. This installs ZFS, and then exits 4 with
+#    "the following units failed: zfs-import-storage.service" — the pool does
+#    not exist yet, so the import cannot succeed and the four /srv mounts never
+#    start. Expected. Two consequences:
+#      - ./rebuild stops before its commit. Nothing is stranded.
+#      - the system profile is NOT advanced. DO NOT REBOOT until step 9, or the
+#        machine comes back on the pre-ZFS generation.
 ./rebuild
 
-# 2. Collect the twelve disks by model, never by /dev/sd*. This cannot catch
+# 2. Load the ZFS module by hand. modprobe resolves against
+#    /run/booted-system/kernel-modules, which predates ZFS; the module built by
+#    step 1 is in the *current* system's tree. The kernel binary is the same
+#    store path in both, so the module is ABI-correct for the running kernel.
+sudo -i
+modprobe -d /run/current-system/kernel-modules zfs
+cat /sys/module/zfs/version          # expect the version pkgs.zfs reports
+
+# 3. Collect the twelve disks by model, never by /dev/sd*. This cannot catch
 #    the NVMe or the USB chainloader stick, and survives a disk swap.
 mapfile -t disks < <(
   for d in /dev/disk/by-id/wwn-0x*; do
@@ -344,13 +358,13 @@ mapfile -t disks < <(
 )
 printf '%s\n' "${disks[@]}"; echo "count: ${#disks[@]}"   # must say 12
 
-# 3. Destroy the old pool. It was built on another machine, so it needs -f, and
+# 4. Destroy the old pool. It was built on another machine, so it needs -f, and
 #    -N keeps it from mounting anything on the way through.
 zpool import                       # note the old pool's name and id
 zpool import -f -N <oldname>
 zpool destroy <oldname>
 
-# 4. Clear the old labels and the TrueNAS-era 2 G swap partitions.
+# 5. Clear the old labels and the TrueNAS-era 2 G swap partitions.
 for d in "${disks[@]}"; do
   for p in "$d"-part*; do
     [ -e "$p" ] && { zpool labelclear -f "$p" || true; wipefs -a "$p"; }
@@ -359,7 +373,7 @@ for d in "${disks[@]}"; do
 done
 udevadm settle
 
-# 5. Create the pool. ashift=12 is forced anyway (these disks are 4Kn:
+# 6. Create the pool. ashift=12 is forced anyway (these disks are 4Kn:
 #    PHY-SEC and LOG-SEC are both 4096) but is stated so it cannot be guessed
 #    wrong on a future replacement disk that reports 512e.
 zpool create \
@@ -368,22 +382,33 @@ zpool create \
   -O dnodesize=auto -O canmount=off -O mountpoint=none \
   storage raidz2 "${disks[@]}"
 
-# 6. Datasets. mountpoint=legacy because they are mounted from zfs.nix, not by
+# 7. Datasets. mountpoint=legacy because they are mounted from zfs.nix, not by
 #    zfs-mount.service — see the comment there for why that ordering matters.
 zfs create -o mountpoint=legacy -o recordsize=1M                      storage/media
 zfs create -o mountpoint=legacy -o recordsize=1M                      storage/photos
 zfs create -o mountpoint=legacy -o recordsize=128K -o compression=zstd storage/documents
 zfs create -o mountpoint=legacy -o recordsize=1M   -o compression=off  storage/backups
 
-# 7. Mount them and let tmpfiles build the directory tree.
+# 8. Mount them and let tmpfiles build the directory tree. Not
+#    `systemctl restart systemd-tmpfiles-setup.service` — that unit sets
+#    RefuseManualStart and will decline.
 systemctl start srv-media.mount srv-photos.mount srv-documents.mount srv-backups.mount
-systemctl restart systemd-tmpfiles-setup.service
+systemd-tmpfiles --create
 
-# 8. Check.
+# 9. Check.
 zpool status storage
 zpool list -o name,size,alloc,free,cap,health
 zfs list -o name,used,avail,recordsize,compression,mountpoint
 ls -la /srv/media
+exportfs -ra && exportfs -v          # /srv/media appears only once mounted
+exit                                  # done as root
+
+# 10. Rebuild again. This is the run that matters: with the pool present
+#     zfs-import-storage succeeds, the mounts come up, it exits 0, and the
+#     generation finally lands in the profile and the bootloader. Only now is
+#     it safe to reboot.
+./rebuild
+systemctl --failed                    # expect none
 ```
 
 #### Sharing

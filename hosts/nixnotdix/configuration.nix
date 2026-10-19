@@ -95,6 +95,10 @@ in
       "test-s1.battleye.com"
       "paradiseenhanced-s1.battleye.com"
     ];
+    # calliope is statically addressed, so the router never learns a name for
+    # it. The alias in home/ssh.nix resolves it for ssh only, which is why
+    # `ssh calliope` works while mount.nfs reports "Name or service not known".
+    hosts."192.168.0.10" = [ "calliope" ];
   };
 
   # ===== Localization =====

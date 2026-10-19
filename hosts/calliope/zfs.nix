@@ -68,7 +68,7 @@
     "d /srv/backups                    0770 luke media -"
   ];
 
-  # Monthly. A scrub reads every allocated block, so on a loaded 91 TiB pool it
+  # Monthly. A scrub reads every allocated block, so on a loaded 82 TiB pool it
   # runs for most of a day — weekly would leave it scrubbing a third of the time.
   services.zfs.autoScrub.enable = true;
 

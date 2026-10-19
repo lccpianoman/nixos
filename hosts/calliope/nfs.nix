@@ -13,7 +13,7 @@
     # `mountpoint` is the required companion to the `nofail` mounts in zfs.nix:
     # without it, a pool that failed to import leaves nfsd exporting the bare
     # tmpfiles-created directory on the root NVMe, and clients write into the
-    # OS disk thinking they are writing to 91 TiB of raidz2. With it, the export
+    # OS disk thinking they are writing to 82 TiB of raidz2. With it, the export
     # simply does not happen unless the dataset is really mounted there.
     exports = ''
       /srv/media 192.168.0.0/24(rw,sync,no_subtree_check,root_squash,mountpoint)

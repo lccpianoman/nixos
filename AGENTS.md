@@ -56,7 +56,7 @@ secrets/
   hand; see README's Checks section.
 - Never add calliope's twelve SAS disks to `hosts/calliope/disko.nix`, and never
   describe the `storage` pool declaratively. That file covering only the boot
-  NVMe is what makes `disko --mode destroy,format,mount` unable to wipe 91 TiB
+  NVMe is what makes `disko --mode destroy,format,mount` unable to wipe 82 TiB
   of data. The pool is created by hand — see README's "Storage pool".
 
 ## Active pins to re-check after flake updates
