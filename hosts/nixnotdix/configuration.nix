@@ -123,6 +123,10 @@ in
       hostNames = [ "nixcraft" "[96.30.206.210]:47291" ];
       publicKeyFile = ../../keys/nixcraft.host.pub;
     };
+    calliope = {
+      hostNames = [ "calliope" "[192.168.0.10]:47291" ];
+      publicKeyFile = ../../keys/calliope.host.pub;
+    };
     # Needed for `git push` over SSH, including the push at the end of ./rebuild.
     "github.com" = {
       hostNames = [ "github.com" ];

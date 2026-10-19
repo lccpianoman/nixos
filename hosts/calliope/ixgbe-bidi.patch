@@ -1,0 +1,14 @@
+--- a/drivers/net/ethernet/intel/ixgbe/ixgbe_phy.c
++++ b/drivers/net/ethernet/intel/ixgbe/ixgbe_phy.c
+@@ -1670,8 +1670,9 @@
+ 		 * Nominal Value as per SFF-8472 by convention 1.25 Gb/s should
+ 		 * be rounded up to 0Dh (13 in units of 100 MBd) for 1000BASE-BX
+ 		 */
+-		} else if ((comp_codes_1g & IXGBE_SFF_BASEBX10_CAPABLE) &&
+-			   (bitrate_nominal == 0xD)) {
++		} else if ((comp_codes_1g & IXGBE_SFF_BASEBX10_CAPABLE) ||
++			   (comp_codes_10g == 0 &&
++			    bitrate_nominal >= 0xA && bitrate_nominal <= 0x10)) {
+ 			if (hw->bus.lan_id == 0)
+ 				hw->phy.sfp_type =
+ 					ixgbe_sfp_type_1g_bx_core0;

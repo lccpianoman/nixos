@@ -41,6 +41,13 @@
       ./hosts/nixvps/configuration.nix
     ];
 
+    # No sops module yet: calliope holds no secrets and is not a recipient in
+    # .sops.yaml. Add both together when it needs one.
+    nixosConfigurations.calliope = mkHost [
+      disko.nixosModules.disko
+      ./hosts/calliope/configuration.nix
+    ];
+
     nixosConfigurations.nixcraft = mkHost [
       disko.nixosModules.disko
       nix-minecraft.nixosModules.minecraft-servers

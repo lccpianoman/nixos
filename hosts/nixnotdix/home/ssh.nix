@@ -19,6 +19,13 @@
         IdentityFile = "~/.ssh/id_ed25519";
         IdentitiesOnly = true;
       };
+      "calliope" = {
+        Hostname = "192.168.0.10";
+        User = "luke";
+        Port = 47291;
+        IdentityFile = "~/.ssh/id_ed25519";
+        IdentitiesOnly = true;
+      };
     };
   };
 }

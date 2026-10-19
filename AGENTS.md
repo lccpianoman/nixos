@@ -11,6 +11,7 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
+| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe) |
 
 ## Repo layout (high-level)
 ```text
@@ -25,10 +26,12 @@ hosts/
   nixnotdix/
   nixvps/
   nixcraft/
+  calliope/
 keys/
   luke-nixnotdix.pub
   nixvps.host.pub
   nixcraft.host.pub
+  calliope.host.pub
 secrets/
 .sops.yaml
 ```
@@ -57,6 +60,7 @@ secrets/
 |---|---|---|
 | NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
 | CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
+| ixgbe BiDi SFP patch | `hosts/calliope/ixgbe-bidi.{nix,patch}` | upstream `ixgbe` accepts 1000BASE-BX modules whose SFF-8472 byte 6 is blank (currently it requires the `BASEBX10` bit *and* `bitrate_nominal == 0xD`) |
 
 Check with:
 ```bash
@@ -65,7 +69,14 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 
 ## Notes
 - `rebuild` only applies to the local host where it runs.
-- `nixnotdix` uses home-manager; `nixvps` and `nixcraft` are NixOS-only.
+- `nixnotdix` uses home-manager; `nixvps`, `nixcraft` and `calliope` are
+  NixOS-only. `calliope` also has no sops secrets and is not a `.sops.yaml`
+  recipient yet.
+- `calliope` is fibre-only and its link depends on the `ixgbe` kernel patch.
+  If that patch stops applying the host boots with no network and needs a
+  physical console, so never "fix" a patch conflict by dropping the patch.
+  The copper i350 ports are left unconfigured on purpose: a second interface on
+  the same subnet gives two default routes and reverse-path-filtered replies.
 - Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
   The CSS files carry at-delimited placeholders substituted from `theme.nix` —
   never hard-code a colour in them. One store-written `file://` document is both
