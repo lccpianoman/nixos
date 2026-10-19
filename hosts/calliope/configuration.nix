@@ -72,6 +72,8 @@ in
     nvme-cli
     smartmontools
     lm_sensors
+    claude-code
+    github-copilot-cli
   ];
 
   system.stateVersion = "26.05";

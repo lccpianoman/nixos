@@ -252,6 +252,12 @@ The twelve SAS disks carry the `storage` ZFS pool — see "Storage pool" below.
 `networking.hostId` was set before the pool was built, so it is stamped with
 calliope's own id and imports without `-f`.
 
+Claude Code and the GitHub Copilot CLI are installed here too, so this repo can
+be edited on the server. Pushing uses `git@github.com:lccpianoman/nixos.git` over
+an `~/.ssh/id_ed25519` keypair generated on calliope — the private key never
+leaves the host, and the public half is a write-enabled deploy key on the GitHub
+repo, not a file in `keys/` (which is only for admin SSH access to the servers).
+
 ### Network
 
 Fibre-only, by design — see the comment block in `configuration.nix`. The copper
