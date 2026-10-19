@@ -1,4 +1,4 @@
-{ config, lib, modulesPath, ... }:
+{ config, lib, ... }:
 
 # Dell PowerEdge R720xd — dual Xeon E5-2690 v4 (56 threads), 236 GB RAM,
 # UEFI firmware, Samsung 970 EVO Plus 500 GB NVMe for the OS, twelve 10 TB SAS
@@ -8,23 +8,15 @@
 # are declared in disko.nix, so there is no fileSystems.<path> block here.
 
 {
-  imports = [
-    (modulesPath + "/installer/scan/not-detected.nix")
-  ];
-
+  # The SATA/USB/HID modules a generated file would list here are all in
+  # nixpkgs' default initrd set already (boot.initrd.includeDefaultModules).
+  # Only these two are stated, so the root disk and the HBA do not silently
+  # depend on that default staying true.
   boot.initrd.availableKernelModules = [
     "nvme"        # root lives on the NVMe; without this the initrd cannot find it
-    "ahci"
-    "xhci_pci"
-    "ehci_pci"
-    "mpt3sas"     # LSI SAS3008 HBA — not needed to boot, needed to see the pool
-    "usb_storage"
-    "usbhid"
-    "sd_mod"
+    "mpt3sas"     # LSI SAS3008 HBA — brings the twelve SAS disks up in stage 1
   ];
-  boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-intel" ];
-  boot.extraModulePackages = [ ];
 
   boot.loader.systemd-boot = {
     enable = true;
@@ -39,6 +31,8 @@
   # chainloader device, which needs no NVRAM entry at all.
   boot.loader.efi.canTouchEfiVariables = false;
 
+  # Also the only thing an installer/scan/not-detected.nix import would set,
+  # which is why that import is absent.
   hardware.enableRedistributableFirmware = true;
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 

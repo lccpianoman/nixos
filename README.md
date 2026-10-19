@@ -44,6 +44,8 @@ hosts/
     disko.nix
     ixgbe-bidi.nix
     ixgbe-bidi.patch
+    zfs.nix
+    nfs.nix
 keys/
   luke-nixnotdix.pub
   nixvps.host.pub
@@ -246,11 +248,9 @@ knownHosts pin plus an ssh alias, so `ssh calliope` works from the workstation.
 - 12× 10 TB SAS (HUH721010AL4200) behind an LSI SAS3008 HBA
 - Static `192.168.0.10` on `eno1`, SSH on port `47291`
 
-The twelve SAS disks carry an existing ZFS pool named `storage`, left over from
-the Proxmox install that the NVMe replaced. It is **not** imported or referenced
-anywhere in this config yet. `networking.hostId` is already set so adopting it
-later is a single change rather than a rebuild-and-reboot; the first import will
-still need `-f`, because the pool was last touched under a different hostId.
+The twelve SAS disks carry the `storage` ZFS pool — see "Storage pool" below.
+`networking.hostId` was set before the pool was built, so it is stamped with
+calliope's own id and imports without `-f`.
 
 ### Network
 
@@ -288,6 +288,145 @@ reads the EEPROM before the module has powered up, gets a bad identifier byte,
 and calls `unregister_netdev()` — the interface vanishes. Worse, the probe-error
 path leaks its `mdio_bus` sysfs node, which survives `rmmod` and blocks the port
 until reboot. **Reboot after changing optics rather than relying on hot-plug.**
+
+### Storage pool
+
+The twelve SAS disks are one `raidz2` vdev named `storage`: ~91 TiB usable,
+surviving any two failures. A single wide vdev rather than two 6-disk vdevs
+because the SFPs negotiate 1 Gbps, so the wire caps at ~113 MB/s and one raidz2
+vdev already does 600–900 MB/s sequential — splitting it would buy random IOPS
+nothing here can spend and cost 18 TiB. All twelve bays are full and the chassis
+has no more, so there is no second-vdev expansion path to preserve either.
+
+The cost of a wide vdev is resilver time: rebuilding one 9 TiB disk reads every
+other disk in the vdev and runs for most of a day, at one parity. That is the
+right trade for replaceable media, and the wrong one for anything irreplaceable
+— for that the answer is `storage/documents` plus an offsite copy, not more
+parity. **The pool is not a backup.**
+
+`hosts/calliope/zfs.nix` carries the NixOS side: mounts, permissions, scrub,
+ZED and snapshot policy. The pool and datasets themselves are created by hand,
+because `hosts/calliope/disko.nix` deliberately describes only the boot NVMe —
+that is what makes a `disko --mode destroy,format,mount` run unable to reach
+these twelve disks, and it is worth more as a standing guarantee than as a
+convenience used once.
+
+| Dataset | Mount | `recordsize` | `compression` | Why |
+|---|---|---|---|---|
+| `storage/media` | `/srv/media` | 1M | lz4 | Large sequential files. Holds both `library/` and `downloads/` — see below |
+| `storage/photos` | `/srv/photos` | 1M | lz4 | Write-once originals; a file below `recordsize` still uses one right-sized record, so thumbnails waste nothing |
+| `storage/documents` | `/srv/documents` | 128K | zstd | Small, compressible, rewritten in place |
+| `storage/backups` | `/srv/backups` | 1M | off | restic/borg output is already compressed and encrypted; lz4 would only burn CPU |
+
+`downloads/` is a **directory inside** `storage/media`, not its own dataset.
+Hardlinks and atomic renames cannot cross a ZFS dataset boundary, so splitting
+them would turn every import into a full file copy and make seeding cost double
+the space. The price is that snapshots of `storage/media` also pin deleted
+partial downloads until they age out.
+
+#### Creating it (one-time, destroys everything on the twelve disks)
+
+Order matters: the `zfs` command and the kernel module arrive with the rebuild,
+and the mount units are expected to fail until the pool exists.
+
+```bash
+# 1. Rebuild first — this is what installs ZFS. The four /srv mounts will fail
+#    and that is expected; they are `nofail`, so the boot is unaffected.
+./rebuild
+
+# 2. Collect the twelve disks by model, never by /dev/sd*. This cannot catch
+#    the NVMe or the USB chainloader stick, and survives a disk swap.
+mapfile -t disks < <(
+  for d in /dev/disk/by-id/wwn-0x*; do
+    case "$d" in *-part*) continue ;; esac
+    [ "$(lsblk -ndo MODEL "$d")" = HUH721010AL4200 ] && echo "$d"
+  done | sort
+)
+printf '%s\n' "${disks[@]}"; echo "count: ${#disks[@]}"   # must say 12
+
+# 3. Destroy the old pool. It was built on another machine, so it needs -f, and
+#    -N keeps it from mounting anything on the way through.
+zpool import                       # note the old pool's name and id
+zpool import -f -N <oldname>
+zpool destroy <oldname>
+
+# 4. Clear the old labels and the TrueNAS-era 2 G swap partitions.
+for d in "${disks[@]}"; do
+  for p in "$d"-part*; do
+    [ -e "$p" ] && { zpool labelclear -f "$p" || true; wipefs -a "$p"; }
+  done
+  sgdisk --zap-all "$d"
+done
+udevadm settle
+
+# 5. Create the pool. ashift=12 is forced anyway (these disks are 4Kn:
+#    PHY-SEC and LOG-SEC are both 4096) but is stated so it cannot be guessed
+#    wrong on a future replacement disk that reports 512e.
+zpool create \
+  -o ashift=12 -o autoexpand=on \
+  -O compression=lz4 -O atime=off -O xattr=sa -O acltype=posixacl \
+  -O dnodesize=auto -O canmount=off -O mountpoint=none \
+  storage raidz2 "${disks[@]}"
+
+# 6. Datasets. mountpoint=legacy because they are mounted from zfs.nix, not by
+#    zfs-mount.service — see the comment there for why that ordering matters.
+zfs create -o mountpoint=legacy -o recordsize=1M                      storage/media
+zfs create -o mountpoint=legacy -o recordsize=1M                      storage/photos
+zfs create -o mountpoint=legacy -o recordsize=128K -o compression=zstd storage/documents
+zfs create -o mountpoint=legacy -o recordsize=1M   -o compression=off  storage/backups
+
+# 7. Mount them and let tmpfiles build the directory tree.
+systemctl start srv-media.mount srv-photos.mount srv-documents.mount srv-backups.mount
+systemctl restart systemd-tmpfiles-setup.service
+
+# 8. Check.
+zpool status storage
+zpool list -o name,size,alloc,free,cap,health
+zfs list -o name,used,avail,recordsize,compression,mountpoint
+ls -la /srv/media
+```
+
+#### Sharing
+
+`/srv/media` is exported over **NFSv4 only** (`hosts/calliope/nfs.nix`), which
+is why the firewall needs a single port: v3 drags in `mountd`, `statd` and
+`lockd` on ports that wander unless each one is pinned. nixnotdix is the only
+client and mounts it at `/mnt/media` via `x-systemd.automount`, so the
+workstation boots fine when calliope is asleep and mounts on first access.
+
+NFS AUTH_SYS trusts whatever uid the client sends, so the export is only as
+safe as the LAN — hence the `192.168.0.0/24` restriction and `root_squash`.
+It also means **both hosts must agree on numeric ids**: `luke` is pinned to
+uid 1000 and the shared `media` group to gid 3000 in both configurations. They
+were already those values; pinning them stops a future user from shifting one
+host's allocation and silently breaking writes. The library directories are
+`2775 luke:media` so that luke and the service users can share one tree.
+
+The export carries `mountpoint`, which is the required companion to the
+`nofail` mounts: without it a pool that failed to import would leave nfsd
+exporting the bare directory on the root NVMe, and clients would write into the
+OS disk believing they were writing to the pool. Keep it on every export added
+here.
+
+To export another dataset, add a line to `nfs.server.exports` in
+`hosts/calliope/nfs.nix` — no new ports are needed under v4.
+
+#### Identifying a disk without SES
+
+The R720xd backplane does not present SES through the SAS3008 —
+`/sys/class/enclosure` is empty — so ZED cannot blink a failed disk and
+`ZED_USE_ENCLOSURE_LEDS` is off. **Build the serial-to-bay map now, while every
+disk still works**, because doing it after a failure means guessing:
+
+```bash
+lsblk -do NAME,SERIAL,MODEL          # serials
+ls -l /dev/disk/by-id/wwn-0x*        # wwn -> /dev/sdX
+# Then, one disk at a time, watch which bay's light comes on:
+dd if=/dev/sdX of=/dev/null bs=1M status=progress
+```
+
+Record the result somewhere outside this repo — a label on the chassis is best.
+Then replacing a failure is `zpool replace storage <old-wwn> <new-wwn>`.
 
 ### Deployment
 

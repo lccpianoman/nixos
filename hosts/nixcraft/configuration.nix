@@ -14,7 +14,6 @@ in
   ];
 
   networking.hostName = "nixcraft";
-  networking.domain = "";
 
   # Vultr hands out addressing over DHCP on the single virtio NIC.
   networking.useDHCP = lib.mkDefault true;

@@ -11,10 +11,11 @@ in
     ./hardware-configuration.nix
     ./disko.nix
     ./ixgbe-bidi.nix
+    ./zfs.nix
+    ./nfs.nix
   ];
 
   networking.hostName = "calliope";
-  networking.domain   = "";
 
   # ===== Network =====
   #
@@ -50,7 +51,10 @@ in
 
   users.users.luke = {
     isNormalUser = true;
-    extraGroups  = [ "wheel" ];
+    # Pinned rather than allocated: NFS puts numeric ids on the wire, so this
+    # has to keep matching nixnotdix. 1000 is what both hosts already hold.
+    uid          = 1000;
+    extraGroups  = [ "wheel" "media" ];
     # No password is declared here. This repo is public, and calliope has no
     # sops recipient yet (see README). users.mutableUsers keeps its default of
     # true, so set one once from the installer:
@@ -63,6 +67,7 @@ in
 
   environment.systemPackages = with pkgs; [
     ethtool        # `ethtool -m eno1` dumps the SFP EEPROM and optical power
+    gptfdisk       # sgdisk, to zap a replacement disk's old partition table
     pciutils
     nvme-cli
     smartmontools

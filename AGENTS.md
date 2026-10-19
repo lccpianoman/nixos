@@ -11,7 +11,7 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
-| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe) |
+| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool) |
 
 ## Repo layout (high-level)
 ```text
@@ -54,6 +54,10 @@ secrets/
   `formatter` output. `nixfmt` collapses the aligned `=` blocks this repo uses
   and rewrites 18 of 30 files for zero change in output. Match local style by
   hand; see README's Checks section.
+- Never add calliope's twelve SAS disks to `hosts/calliope/disko.nix`, and never
+  describe the `storage` pool declaratively. That file covering only the boot
+  NVMe is what makes `disko --mode destroy,format,mount` unable to wipe 91 TiB
+  of data. The pool is created by hand — see README's "Storage pool".
 
 ## Active pins to re-check after flake updates
 | Pin | Where | Remove when |
@@ -77,6 +81,16 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   physical console, so never "fix" a patch conflict by dropping the patch.
   The copper i350 ports are left unconfigured on purpose: a second interface on
   the same subnet gives two default routes and reverse-path-filtered replies.
+- `calliope`'s `storage` datasets are `mountpoint=legacy` and mounted from
+  `hosts/calliope/zfs.nix`, not by `zfs-mount.service`: `systemd.targets.zfs` is
+  only `wantedBy` multi-user.target, never ordered before it, so ZFS-native
+  mounts race the services reading them. Keep new datasets in `fileSystems`, and
+  keep `nofail` on them — an unimportable pool must never hold up this host's
+  boot. Services that read the pool get `RequiresMountsFor` instead.
+- `calliope` builds a patched kernel, so ZFS builds its module against it from
+  source — a `nix flake update` that moves the LTS kernel past what the packaged
+  ZFS supports fails the build. Check `boot.kernelPackages.kernel.version`
+  against `pkgs.zfs` before assuming a kernel bump is safe.
 - Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
   The CSS files carry at-delimited placeholders substituted from `theme.nix` —
   never hard-code a colour in them. One store-written `file://` document is both

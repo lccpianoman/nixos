@@ -108,7 +108,31 @@ in
 
   users.users.luke = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
+    # Pinned rather than allocated, and "media" mirrors calliope's group: NFS
+    # puts numeric ids on the wire, so both have to keep matching. 1000/3000
+    # are what the two hosts already hold.
+    uid = 1000;
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "media" ];
+  };
+
+  users.groups.media.gid = 3000;
+
+  # ===== Storage =====
+
+  # calliope's media library. automount rather than a boot-time mount: the
+  # workstation has to come up whether or not the file server is awake, so the
+  # mount happens on first access and unmounts again after ten idle minutes.
+  fileSystems."/mnt/media" = {
+    device = "calliope:/srv/media";
+    fsType = "nfs";
+    options = [
+      "nfsvers=4.2"
+      "noauto"
+      "x-systemd.automount"
+      "x-systemd.idle-timeout=600"
+      "x-systemd.mount-timeout=10s"
+      "_netdev"
+    ];
   };
 
   # ===== SSH =====
