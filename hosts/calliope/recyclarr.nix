@@ -1,25 +1,30 @@
 { config, ... }:
 
 # Recyclarr syncs TRaSH Guides' quality profiles, custom formats, file-size
-# limits and naming into Radarr, daily. Everything it manages is overwritten
-# on each run, so change those settings here rather than in the Radarr UI.
+# limits and naming into Radarr and Sonarr, daily. Everything it manages is
+# overwritten on each run, so change those settings here rather than in the UIs.
 #
-# Two profiles, chosen per movie (one copy each, no separate 4K instance):
-#   HD Bluray + WEB    1080p encodes; 720p disabled, never anything lower
-#   Remux + WEB 2160p  4K remuxes, with audio formats for HD passthrough
+# Two profiles each, chosen per movie/show (one copy each, no 4K instances):
+#   Radarr  HD Bluray + WEB    1080p encodes; 720p disabled, never anything lower
+#           Remux + WEB 2160p  4K remuxes, with audio formats for HD passthrough
+#   Sonarr  WEB-1080p          1080p WEB-DLs, what nearly all good TV releases are
+#           WEB-2160p          4K WEB-DLs, for HDR
 #
-# trash_ids come from the TRaSH-Guides repo (docs/json/radarr/), and the
-# group/select layout mirrors recyclarr's config-templates for these profiles.
+# trash_ids come from the TRaSH-Guides repo (docs/json/{radarr,sonarr}/), and
+# the group/select layout mirrors recyclarr's config-templates for these profiles.
 
 let
   hdBlurayWeb   = "d1d67249d3890e49bc12e275d989a7e9";  # HD Bluray + WEB
   remuxWeb2160p = "fd161a61e3ab826d3a22d53f935696dd";  # Remux + WEB 2160p
+  web1080p      = "72dae194fc92bf828f32cde7744e51a1";  # WEB-1080p
+  web2160p      = "d1498e7d189fbe6c7110ceaabb7473e6";  # WEB-2160p
 
-  uhdOnly = [ { trash_id = remuxWeb2160p; } ];
+  uhdOnly       = [ { trash_id = remuxWeb2160p; } ];
+  uhdOnlySonarr = [ { trash_id = web2160p; } ];
 in
 {
-  # api_key reads radarr.nix's radarr-api-key, the same secret Radarr's APIKEY
-  # is templated from, so the two can never disagree.
+  # Each api_key reads the same secret its *arr's APIKEY is templated from
+  # (radarr.nix, sonarr.nix), so the two can never disagree.
   services.recyclarr = {
     enable = true;
     configuration.radarr.calliope = {
@@ -105,7 +110,57 @@ in
         }
       ];
     };
+
+    configuration.sonarr.calliope = {
+      base_url = "http://127.0.0.1:8989";
+      api_key._secret = config.sops.secrets."sonarr-api-key".path;
+
+      delete_old_custom_formats = true;
+
+      quality_definition.type = "series";
+
+      media_management.propers_and_repacks = "do_not_prefer";
+
+      # TVDB ids: Plex's TV agent matches on them.
+      media_naming = {
+        series = "plex-tvdb";
+        season = "default";
+        episodes = {
+          rename   = true;
+          standard = "default";
+          daily    = "default";
+          anime    = "default";
+        };
+      };
+
+      quality_profiles = [
+        { trash_id = web1080p; reset_unmatched_scores.enabled = true; }
+        { trash_id = web2160p; reset_unmatched_scores.enabled = true; }
+      ];
+
+      custom_format_groups.add = [
+        {
+          trash_id = "59c3af66780d08332fdc64e68297098f";  # [Unwanted] Unwanted Formats
+          select = [
+            "82d40da2bc6923f41e14394075dd4b03"  # No-RlsGroup
+            "e1a997ddb54e3ecbfe06341ad323c458"  # Obfuscated
+            "06d66ab109d4d2eddb2794d21526d140"  # Retags
+          ];
+        }
+        # Small bonus so a full season beats single episodes of equal quality.
+        { trash_id = "d920fd959d220306888f40b6f38e1578"; }  # [Optional] Season Packs
+        # Same TV choices as Radarr: no Dolby Vision, HDR10+ yes.
+        { trash_id = "d776a1ea912a117d66d83b880ff2055d"; assign_scores_to = uhdOnlySonarr; }  # DV (w/o HDR fallback)
+        { trash_id = "7d366c213e5c23a052b157356fac1921"; assign_scores_to = uhdOnlySonarr; }  # HDR10+ Boost
+        {
+          trash_id = "e1053c0ef622df3749fa43c22865663a";  # [HDR Formats] SDR
+          assign_scores_to = uhdOnlySonarr;
+          # 4K SDR WEB-DLs still allowed, as in Radarr; SDR WEBRips are not.
+          select = [ "83304f261cf516bb208c18c54c0adf97" ];  # SDR (no WEBDL)
+        }
+      ];
+    };
   };
 
-  systemd.services.recyclarr.after = [ "radarr.service" ];
+  systemd.services.recyclarr.after = [ "radarr.service" "sonarr.service" ];
 }

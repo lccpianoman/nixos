@@ -85,6 +85,7 @@ one host that needs the secret.
 | `secrets/calliope/cloudflare.env` | calliope | `/run/secrets/cloudflare.env` |
 | `secrets/calliope/wg-qb.conf` | calliope | `/run/secrets/wg-qb.conf` |
 | `secrets/calliope/radarr.yaml` | calliope | `/run/secrets/radarr-api-key` (bare key, for Recyclarr), templated into `/run/secrets/rendered/radarr.env` for Radarr |
+| `secrets/calliope/sonarr.yaml` | calliope | `/run/secrets/sonarr-api-key` (bare key, for Recyclarr), templated into `/run/secrets/rendered/sonarr.env` for Sonarr |
 
 Both calliope secrets were committed as encrypted `REPLACE_ME` placeholders so
 the configuration evaluates before the real values exist — fill them in with
@@ -656,17 +657,19 @@ touches `/srv/media` carries `RequiresMountsFor`, which is what makes the
 `nofail` ZFS mounts safe: if the pool fails to import, the services fail
 individually instead of writing into the bare directory on the NVMe.
 
-Radarr's quality profiles, custom formats, file-size limits, naming and
-propers/repacks setting come from TRaSH Guides via **Recyclarr**
+Radarr's and Sonarr's quality profiles, custom formats, file-size limits,
+naming and propers/repacks setting come from TRaSH Guides via **Recyclarr**
 (`recyclarr.nix`), which re-syncs daily and overwrites anything it manages —
-change those there, not in the Radarr UI. Two TRaSH profiles, picked per movie:
-`HD Bluray + WEB` (1080p, with the guide's Bluray-720p fallback disabled) and
-`Remux + WEB 2160p`. The opt-ins (no Dolby Vision on any TV, HDR10+ yes, HD
-audio passthrough, private trackers only) are commented in the module. Radarr's
-API key is pinned by `secrets/calliope/radarr.yaml` (`api_key`), templated into
-Radarr's `RADARR__AUTH__APIKEY`, so the key Recyclarr uses can never drift from
-the one Radarr serves. It is YAML rather than dotenv on purpose: sops-nix
-ignores `key` for dotenv and hands over the whole `KEY=value` line. Run a sync
+change those there, not in the UIs. Two TRaSH profiles each, picked per movie
+or show: Radarr gets `HD Bluray + WEB` (1080p, with the guide's Bluray-720p
+fallback disabled) and `Remux + WEB 2160p`; Sonarr gets `WEB-1080p` and
+`WEB-2160p`, with season packs preferred. The opt-ins (no Dolby Vision on any
+TV, HDR10+ yes, HD audio passthrough, private trackers only) are commented in
+the module. Each API key is pinned by `secrets/calliope/{radarr,sonarr}.yaml`
+(`api_key`), templated into the service's `*__AUTH__APIKEY`, so the key
+Recyclarr uses can never drift from the one the service serves. They are YAML
+rather than dotenv on purpose: sops-nix ignores `key` for dotenv and hands
+over the whole `KEY=value` line. Run a sync
 by hand with `sudo systemctl start recyclarr` and read it with
 `journalctl -u recyclarr`.
 
