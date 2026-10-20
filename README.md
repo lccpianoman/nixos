@@ -717,6 +717,25 @@ patch -p1 --dry-run < hosts/calliope/ixgbe-bidi.patch
 A failure here breaks the build loudly rather than booting calliope with no
 network, which is the intended failure mode.
 
+### The unstable input
+
+`flake.nix` has a second nixpkgs, `nixpkgs-unstable`, used by exactly one
+overlay: `claude-code` on `nixnotdix`. It releases several times a week and
+stable backports lag it by months. It is imported with the host's
+`nixpkgs.config` (it is unfree) rather than read from `legacyPackages`, so it
+does evaluate a second nixpkgs — the cost of one derivation's closure.
+
+Keep it to that one package. Anything else pulled from unstable mixes two
+channels' glibc and stdenv into one system closure. Check what the overlay is
+actually serving with:
+
+```bash
+nix eval .#nixosConfigurations.nixnotdix.config.home-manager.users.luke.home.packages \
+  --apply 'ps: map (p: p.name) (builtins.filter (p: (p.pname or "") == "claude-code") ps)'
+```
+
+The other three hosts keep stable `claude-code`.
+
 ## Rebuild
 
 ```bash

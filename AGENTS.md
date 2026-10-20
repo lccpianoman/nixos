@@ -73,6 +73,12 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 
 ## Notes
 - `rebuild` only applies to the local host where it runs.
+- `flake.nix` has a second nixpkgs input, `nixpkgs-unstable`, feeding exactly
+  one overlay: `claude-code` on `nixnotdix`. Keep it to that one package —
+  pulling anything else from unstable mixes two channels' stdenv into one
+  closure. It is `import`ed with `prev.config` rather than read from
+  `legacyPackages` because `claude-code` is unfree and `legacyPackages` carries
+  its own config. See README's "The unstable input".
 - `nixnotdix` uses home-manager; `nixvps`, `nixcraft` and `calliope` are
   NixOS-only.
 - `calliope`'s media services (`hosts/calliope/{caddy,plex,qbittorrent,

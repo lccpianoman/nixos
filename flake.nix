@@ -3,6 +3,9 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # Tracked solely for claude-code, which releases far faster than the stable
+    # channel backports it. Nothing else may be taken from this input.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,7 +32,7 @@
     };
   };
 
-  outputs = { nixpkgs, home-manager, nur, disko, nix-minecraft, sops-nix, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, home-manager, nur, disko, nix-minecraft, sops-nix, ... }:
   let
     mkHost = modules: nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
@@ -56,7 +59,20 @@
     ];
 
     nixosConfigurations.nixnotdix = mkHost [
-      { nixpkgs.overlays = [ nur.overlays.default ]; }
+      {
+        nixpkgs.overlays = [
+          nur.overlays.default
+          # claude-code only, straight from unstable — see the input comment.
+          # Imported rather than read from legacyPackages so it picks up this
+          # host's nixpkgs.config (claude-code is unfree).
+          (final: prev: {
+            inherit (import nixpkgs-unstable {
+              inherit (prev.stdenv.hostPlatform) system;
+              inherit (prev) config;
+            }) claude-code;
+          })
+        ];
+      }
       ./hosts/nixnotdix/configuration.nix
       home-manager.nixosModules.home-manager
       {
