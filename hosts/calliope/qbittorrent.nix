@@ -86,9 +86,20 @@ in
   # address and endpoint arrive together. Committed as a REPLACE_ME
   # placeholder (see README's "Media services"), so until it is real wg-qb
   # fails to start and qBittorrent, which bindsTo it, stays down.
+  # restartUnits is what makes editing this secret take effect: the unit text
+  # does not change when only the secret's contents do, so without it a
+  # rebuild writes the new config to /run/secrets and leaves the tunnel
+  # running on the old one. All three are listed because the tunnel's
+  # dependents have to come back up with it; systemd orders them by their
+  # own After=.
   sops.secrets."wg-qb.conf" = {
     sopsFile = ../../secrets/calliope/wg-qb.conf;
     format   = "binary";
+    restartUnits = [
+      "wg-quick-wg-qb.service"
+      "qbittorrent-vpn-routing.service"
+      "qbittorrent.service"
+    ];
   };
 
   networking.wg-quick.interfaces.wg-qb = {
@@ -193,9 +204,13 @@ in
   # need the interface to exist, and keeping them here makes a failure visible
   # as its own failed unit instead of a cascade.
   systemd.services.qbittorrent-vpn-routing = {
-    description = "Policy route qBittorrent's marked traffic into wg-qb";
+    description = "Policy route qBittorrent's traffic into wg-qb";
     after      = [ "wg-quick-wg-qb.service" ];
     bindsTo    = [ "wg-quick-wg-qb.service" ];
+    # partOf as well as bindsTo: bindsTo stops this when the tunnel stops but
+    # does not bring it back, so `systemctl restart wg-quick-wg-qb` alone
+    # would leave the rule and route uninstalled.
+    partOf     = [ "wg-quick-wg-qb.service" ];
     requiredBy = [ "qbittorrent.service" ];
     before     = [ "qbittorrent.service" ];
     serviceConfig = {
@@ -210,6 +225,7 @@ in
     wants   = [ "wg-quick-wg-qb.service" ];
     after   = [ "wg-quick-wg-qb.service" ];
     bindsTo = [ "wg-quick-wg-qb.service" ];
+    partOf  = [ "wg-quick-wg-qb.service" ];
     unitConfig.RequiresMountsFor = [ "/srv/media/downloads" ];
     serviceConfig.BindReadOnlyPaths = [ "/etc/qbittorrent/resolv.conf:/etc/resolv.conf" ];
   };

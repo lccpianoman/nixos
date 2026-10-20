@@ -41,10 +41,14 @@ let
   '';
 in
 {
+  # restartUnits so that rotating the token actually reaches Caddy: changing
+  # only a secret's contents leaves the unit text identical, so a rebuild
+  # would otherwise write the new value and leave Caddy holding the old one.
   sops.secrets."cloudflare.env" = {
     sopsFile = ../../secrets/calliope/cloudflare.env;
     format   = "dotenv";
     key      = "";
+    restartUnits = [ "caddy.service" ];
   };
 
   services.caddy = {
