@@ -23,11 +23,12 @@ let
   uhdOnlySonarr = [ { trash_id = web2160p; } ];
 in
 {
-  # Each api_key reads the same secret its *arr's APIKEY is templated from
-  # (radarr.nix, sonarr.nix), so the two can never disagree.
+  # Instance names must be unique across both services, or the sync silently
+  # does nothing. Each api_key reads the secret its *arr's APIKEY is templated
+  # from (radarr.nix, sonarr.nix), so the two can never disagree.
   services.recyclarr = {
     enable = true;
-    configuration.radarr.calliope = {
+    configuration.radarr.radarr = {
       base_url = "http://127.0.0.1:7878";
       api_key._secret = config.sops.secrets."radarr-api-key".path;
 
@@ -111,7 +112,7 @@ in
       ];
     };
 
-    configuration.sonarr.calliope = {
+    configuration.sonarr.sonarr = {
       base_url = "http://127.0.0.1:8989";
       api_key._secret = config.sops.secrets."sonarr-api-key".path;
 
