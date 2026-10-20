@@ -162,6 +162,23 @@ in
         # Localhost-only; Caddy is the only client, and reaches it over lo.
         Address       = "127.0.0.1";
         ServerDomains = "qb.jukeluke.com";
+
+        # No login prompt. Caddy connects from 127.0.0.1, so whitelisting
+        # that single address bypasses auth for every request it proxies —
+        # which is all of them, the WebUI being bound to loopback.
+        #
+        # Deliberately NOT LocalHostAuth, the option usually cited for this:
+        # it was removed in qBittorrent 5.x. The 5.2.2 binary has no such
+        # symbol while it does still carry the AuthSubnetWhitelist setters,
+        # so setting it would be silently ignored and the prompt would stay.
+        #
+        # Access control is therefore entirely the LAN guard on this vhost
+        # in caddy.nix. Worth being clear what that grants, because it is
+        # more than it looks: the WebUI can set a "run external program on
+        # torrent completion", so reaching it is equivalent to running code
+        # as the qbittorrent user, which can write the whole media library.
+        AuthSubnetWhitelistEnabled = true;
+        AuthSubnetWhitelist        = "127.0.0.1/32";
       };
     };
   };

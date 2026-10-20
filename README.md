@@ -581,6 +581,22 @@ survives the endpoint or port changing with a new provider config.
 
 `torrentPort` in `qbittorrent.nix` must match the port TorGuard forwards, and
 is the single place to change it — the `wg-qb` firewall hole derives from it.
+Request that port as **both TCP and UDP**: BitTorrent uses TCP for the peer
+wire protocol and UDP for µTP and DHT. The forward must also be issued on the
+server you are actually connected to, so it has to be re-requested after
+changing endpoints.
+
+The WebUI has **no login**. `WebUI\AuthSubnetWhitelist` is set to
+`127.0.0.1/32`, and since Caddy proxies from loopback and the WebUI binds
+there only, every request that can reach it is exempt from authentication.
+Note this is *not* `LocalHostAuth`, the option usually suggested for it —
+that was removed in qBittorrent 5.x and would be silently ignored. All access
+control therefore rests on the LAN guard on the `qb.jukeluke.com` vhost, and
+that is a bigger grant than it appears: the WebUI can configure a program to
+run on torrent completion, so reaching it means code execution as the
+`qbittorrent` user, which can write the whole media library. If the LAN ever
+stops being a trust boundary, put a `Password_PBKDF2` in `serverConfig` and
+drop the whitelist.
 
 Its `qBittorrent.conf` is
 **fully declarative** — the module reinstalls it on every service start, so
