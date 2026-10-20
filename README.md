@@ -100,6 +100,38 @@ Edit a secret with:
 nix run nixpkgs#sops -- secrets/nixvps/vaultwarden.env
 ```
 
+That editing form only works where a *decryption* key exists. The admin
+recipient is derived from `keys/luke-nixnotdix.pub`, so its private half lives
+on **nixnotdix** — that is the only machine where `sops <file>` can open an
+existing secret. A server holds just its own host key, which is
+`0600 root:root`, so as `luke` on calliope there is no usable identity and
+`sops secrets/calliope/...` fails with "Failed to get the data key".
+
+That is rarely a problem, because *encryption* needs only the public
+recipients from `.sops.yaml`. To set a new value on the host itself, overwrite
+and re-encrypt rather than edit in place:
+
+```bash
+: > secrets/calliope/wg-qb.conf
+vim secrets/calliope/wg-qb.conf     # paste the new contents
+sops encrypt --input-type binary --output-type binary --in-place secrets/calliope/wg-qb.conf
+sops filestatus secrets/calliope/wg-qb.conf     # {"encrypted":true}
+```
+
+Drop the `--input-type`/`--output-type` flags for the `.env` secrets, whose
+format sops infers. To genuinely *read* a calliope secret on calliope, go
+through the host key as root — and chown it back afterwards, since sops leaves
+the file root-owned:
+
+```bash
+sudo SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key EDITOR=vim $(which sops) secrets/calliope/cloudflare.env
+sudo chown luke:users secrets/calliope/cloudflare.env
+```
+
+Never hand-write `/etc/resolv.conf` or other resolvconf-managed files while
+debugging: openresolv signs them, and an unsigned file makes
+`network-local-commands.service` fail, which fails the whole rebuild.
+
 Adding a host means adding its `ssh-to-age` recipient to `.sops.yaml` and
 running `sops updatekeys` on the affected files.
 
