@@ -64,8 +64,7 @@ secrets/
 | File | What it is |
 |---|---|
 | `luke-nixnotdix.pub` | Luke's admin key; installed into `authorized_keys` on every server by `common/server-base.nix` |
-| `nixvps.host.pub`, `nixcraft.host.pub` | Server host keys, pinned as `programs.ssh.knownHosts` on nixnotdix and used as sops recipients |
-| `calliope.host.pub` | calliope's host key, pinned as `knownHosts` on nixnotdix. Not yet a sops recipient — calliope holds no secrets |
+| `nixvps.host.pub`, `nixcraft.host.pub`, `calliope.host.pub` | Server host keys, pinned as `programs.ssh.knownHosts` on nixnotdix and used as sops recipients |
 
 Private keys never leave the machine that generated them. Servers pull this
 repo over HTTPS (it is public), so they need no key at all.
@@ -83,6 +82,13 @@ one host that needs the secret.
 | `secrets/nixvps/restic-b2.env` | nixvps | `/run/secrets/restic-b2.env` |
 | `secrets/nixvps/restic-password` | nixvps | `/run/secrets/restic-password` |
 | `secrets/nixcraft/users.yaml` | nixcraft | `/run/secrets-for-users/luke-hashed-password` |
+| `secrets/calliope/cloudflare.env` | calliope | `/run/secrets/cloudflare.env` |
+| `secrets/calliope/wg-qb.conf` | calliope | `/run/secrets/wg-qb.conf` |
+
+Both calliope secrets were committed as encrypted `REPLACE_ME` placeholders so
+the configuration evaluates before the real values exist — fill them in with
+`sops` before expecting certificates or the torrent tunnel to work. See
+"Media services" under calliope.
 
 The `.env` secrets use sops' `dotenv` format, so variable *names* stay readable
 in git and only values are encrypted. They are mounted whole (`key = ""`) so
@@ -458,6 +464,114 @@ dd if=/dev/sdX of=/dev/null bs=1M status=progress
 
 Record the result somewhere outside this repo — a label on the chassis is best.
 Then replacing a failure is `zpool replace storage <old-wwn> <new-wwn>`.
+
+### Media services
+
+One module per service under `hosts/calliope/`, all localhost-only except Plex,
+all reached through Caddy (`caddy.nix`) — the only module that exposes anything:
+
+| Service | Where | Reached at |
+|---|---|---|
+| Seerr (requests) | `127.0.0.1:5055` | `https://request.jukeluke.com` — **public**, Cloudflare-proxied |
+| homepage dashboard | `127.0.0.1:8082` | `https://dash.jukeluke.com` — LAN only |
+| qBittorrent | `127.0.0.1:8090` | `https://qb.jukeluke.com` — LAN only |
+| Radarr | `127.0.0.1:7878` | `https://radarr.jukeluke.com` — LAN only |
+| Sonarr | `127.0.0.1:8989` | `https://sonarr.jukeluke.com` — LAN only |
+| Prowlarr | `127.0.0.1:9696` | `https://prowlarr.jukeluke.com` — LAN only |
+| Plex | `0.0.0.0:32400` | `http://192.168.0.10:32400/web` on the LAN; remote via plex.tv |
+
+Ports 80/443 are forwarded from the router to calliope so Cloudflare can reach
+Seerr. That forwarding is why "LAN only" cannot be left to DNS: anyone can
+connect to the home IP with the right SNI, so every non-public vhost carries a
+`remote_ip` guard (the socket address — unspoofable, unlike headers) and the
+public vhost accepts only Cloudflare's edge ranges
+(`common/cloudflare-ranges.nix`, shared with nixvps).
+
+Certificates come from Let's Encrypt over **DNS-01** (`acme_dns cloudflare`),
+because names that resolve to `192.168.0.10` can never answer an HTTP-01
+challenge. That required rebuilding Caddy with the cloudflare DNS plugin
+(`pkgs.caddy.withPlugins` in `caddy.nix` — the pinned `hash` fails loudly with
+the replacement value whenever the plugin or Caddy moves).
+
+Manual setup, once:
+
+1. **Cloudflare DNS**: `request` proxied (orange cloud) to the home IP;
+   `dash`, `qb`, `radarr`, `sonarr`, `prowlarr` as **unproxied** (grey) A
+   records to `192.168.0.10`.
+2. **API token**: create a Cloudflare token scoped to Zone → DNS → Edit on
+   jukeluke.com, then `sops secrets/calliope/cloudflare.env` and replace the
+   placeholder value of `CLOUDFLARE_API_TOKEN`.
+3. **WireGuard tunnel**: `sops secrets/calliope/wg-qb.conf` and paste the
+   TorGuard config with **two edits to `[Interface]`** — add `Table = off`
+   and **delete the `DNS =` line**. Both matter, and the stock config has
+   neither:
+   - Without `Table = off`, `AllowedIPs = 0.0.0.0/0` makes wg-quick install
+     a host-wide default route, dragging every service onto the VPN. It also
+     breaks inbound Seerr: Cloudflare connects on `eno1`, and Caddy's reply
+     to a public address would egress via `wg-qb` instead, so it never
+     arrives. With `Table = off`, `AllowedIPs` becomes a statement about what
+     the peer may carry rather than a system route, and `qbittorrent.nix`
+     does the routing itself.
+   - A `DNS =` line makes wg-quick run `resolvconf -x`, which replaces the
+     whole box's resolvers. The provider's resolver is instead pinned for
+     that one service via a private `/etc/resolv.conf`. It is *not* gated by
+     `Table = off`, so the line has to go.
+
+   Until this is real, `wg-quick-wg-qb` fails and qBittorrent (which
+   `bindsTo` it) deliberately stays down.
+
+qBittorrent — and nothing else — is routed through the tunnel by
+`qbittorrent.nix`. Because the interface carries `Table = off`, it is inert
+until this host puts traffic on it, which it does per-uid: an iptables `mangle`
+rule marks packets owned by the `qbittorrent` user, a policy rule sends that
+mark to a routing table whose only route is `wg-qb`, and `MASQUERADE` rewrites
+the source address (needed because glibc's resolver opens its own socket and
+ignores libtorrent's interface binding). A private `/etc/resolv.conf`, bound
+into that unit alone, points at the VPN's resolver so tracker lookups cannot
+leak to the LAN router.
+
+That split routing also needs the tunnel exempted from reverse-path filtering.
+`networking.firewall.checkReversePath` defaults to `true`, meaning *strict*,
+and packets arriving on `wg-qb` carry no mark — so NixOS's `rpfilter
+--validmark` test resolves their source through the main table, finds `eno1`,
+and drops them. That would kill every reply to qBittorrent's own connections,
+not just inbound peers, leaving the tunnel silently useless. A conventional
+full-tunnel setup never hits this because its default route points at the
+interface. The exemption is a `RETURN` inserted at the head of
+`nixos-fw-rpfilter`; skipping the test there is safe because WireGuard has
+already authenticated every packet on that interface against the peer's key,
+and strict filtering stays on `eno1` where spoofing could actually originate.
+
+The per-uid kill switch is what makes that safe to get wrong: if the mark,
+rule or route is ever missing, those packets fall back to `eno1` and are
+REJECTed, so the failure mode is an outage rather than a leak. The marking
+value is deliberately nonzero — WireGuard stamps its own encrypted packets
+with the *device* fwmark, which stays 0 here, so the outer packets don't match
+the rule and the tunnel never tries to carry itself. IPv6 is REJECTed outright
+for that uid, since TorGuard issues a v4-only tunnel.
+
+`torrentPort` in `qbittorrent.nix` must match the port TorGuard forwards, and
+is the single place to change it — the `wg-qb` firewall hole derives from it.
+
+Its `qBittorrent.conf` is
+**fully declarative** — the module reinstalls it on every service start, so
+settings changed in the WebUI options dialog revert on restart; change them in
+`serverConfig` instead. Torrent state, categories and RSS live in separate
+files and survive.
+
+Radarr, Sonarr and qBittorrent share the `media` group and the one
+`storage/media` dataset so imports are hardlinks, not copies — see "Storage
+pool" for why `downloads/` must stay inside that dataset. Every service that
+touches `/srv/media` carries `RequiresMountsFor`, which is what makes the
+`nofail` ZFS mounts safe: if the pool fails to import, the services fail
+individually instead of writing into the bare directory on the NVMe.
+
+Service-level configuration (indexers, quality profiles, API keys between the
+*arrs, homepage widgets) is done per service after first boot and is not in
+this repo — except homepage widget API keys, which must go through
+`services.homepage-dashboard.environmentFiles` (a future
+`secrets/calliope/homepage.env`), never `settings`, because `settings` lands
+in the world-readable store.
 
 ### Deployment
 

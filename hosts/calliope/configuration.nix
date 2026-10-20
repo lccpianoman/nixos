@@ -13,6 +13,17 @@ in
     ./ixgbe-bidi.nix
     ./zfs.nix
     ./nfs.nix
+    # Media stack — see README's "Media services". caddy.nix is the only
+    # module that exposes anything; the rest bind to localhost and are
+    # reached through it.
+    ./caddy.nix
+    ./plex.nix
+    ./qbittorrent.nix
+    ./prowlarr.nix
+    ./radarr.nix
+    ./sonarr.nix
+    ./seerr.nix
+    ./dashboard.nix
   ];
 
   networking.hostName = "calliope";
@@ -37,10 +48,23 @@ in
     address   = "192.168.0.1";
     interface = "eno1";
   };
-  networking.nameservers = [ "192.168.0.1" "1.1.1.1" ];
+  # Quad9, primary and secondary. Neither the router nor 1.1.1.1 is used:
+  # 1.1.1.1 answers ICMP from here but its port 53 is a black hole
+  # (CenturyLink intercepts third-party DNS), so as a *secondary* it was a
+  # resolver that could never answer. That mattered more than it sounds — the
+  # router's forwarder intermittently loses the A half of a dual-family
+  # lookup, glibc then retried the A against 1.1.1.1 and timed out, so the
+  # name resolved to its AAAA alone. This host has no IPv6 route, so anything
+  # resolving normally would dial IPv6 and fail "network is unreachable",
+  # which is what broke Go module fetches during a rebuild. nscd then cached
+  # the v6-only answer and made it stick.
+  networking.nameservers = [ "9.9.9.9" "149.112.112.112" ];
 
   networking.firewall.enable = true;
-  networking.firewall.allowedTCPPorts = [ sshPort ];
+  # 80/443 are Caddy's. They are also forwarded from the router so Cloudflare
+  # can reach request.jukeluke.com — which is why every other vhost in
+  # caddy.nix carries a LAN-only guard rather than trusting DNS to hide it.
+  networking.firewall.allowedTCPPorts = [ sshPort 80 443 ];
 
   # Set now rather than when the pool is adopted: ZFS stamps the importing
   # host's id into the pool, and changing it later turns a plain `zpool import`

@@ -18,6 +18,11 @@
     "L+ /bin/bash - - - - ${pkgs.bashInteractive}/bin/bash"
   ];
 
+  # Every host carries sops: the pre-commit hook and `just check-secrets`
+  # both need it, and it has to be there for a plain `git commit` outside a
+  # dev shell.
+  environment.systemPackages = [ pkgs.sops ];
+
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.settings.warn-dirty = false;
 

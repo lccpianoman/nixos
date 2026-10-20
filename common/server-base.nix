@@ -62,6 +62,28 @@ in
     just
   ];
 
+  # Interactive-shell QoL for every server. eza is in systemPackages above, so
+  # the aliases resolve everywhere this file is imported.
+  programs.bash = {
+    shellAliases = {
+      ls    = "eza --icons=auto";
+      ll    = "eza -lh --icons=auto --git";
+      la    = "eza -lah --icons=auto --git";
+      lt    = "eza --tree --icons=auto";
+      grep  = "grep --color=auto";
+      fgrep = "fgrep --color=auto";
+      egrep = "egrep --color=auto";
+      cp    = "cp -i";
+      mv    = "mv -i";
+      rm    = "rm -i";
+    };
+    interactiveShellInit = ''
+      HISTSIZE=10000
+      HISTFILESIZE=20000
+      HISTCONTROL=ignoredups:ignorespace
+    '';
+  };
+
   programs.git = {
     enable = true;
     config = {

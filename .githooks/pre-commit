@@ -9,8 +9,17 @@ if [[ ${#staged[@]} -eq 0 ]]; then
   exit 0
 fi
 
-if ! command -v sops >/dev/null 2>&1; then
-  echo "pre-commit: sops not on PATH, cannot verify secrets/" >&2
+# Prefer sops from PATH; fall back to nix so the hook still works in a shell
+# that lacks it (a plain `git commit` outside a dev shell, for instance).
+# Resolved once rather than per file: `nix run` per iteration is slow.
+if command -v sops >/dev/null 2>&1; then
+  sops=sops
+elif command -v nix >/dev/null 2>&1 \
+  && sops_store=$(nix build --no-link --print-out-paths nixpkgs#sops 2>/dev/null) \
+  && [[ -x "$sops_store/bin/sops" ]]; then
+  sops="$sops_store/bin/sops"
+else
+  echo "pre-commit: neither sops nor nix on PATH, cannot verify secrets/" >&2
   exit 1
 fi
 
@@ -24,7 +33,7 @@ for f in "${staged[@]}"; do
   mkdir -p "$(dirname "$dest")"
   git show ":$f" >"$dest"
 
-  if [[ $(sops filestatus "$dest" 2>/dev/null) != *'"encrypted":true'* ]]; then
+  if [[ $("$sops" filestatus "$dest" 2>/dev/null) != *'"encrypted":true'* ]]; then
     failed+=("$f")
   fi
 done

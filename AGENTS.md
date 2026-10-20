@@ -11,7 +11,7 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
-| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool) |
+| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see README "Media services") |
 
 ## Repo layout (high-level)
 ```text
@@ -74,8 +74,25 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 ## Notes
 - `rebuild` only applies to the local host where it runs.
 - `nixnotdix` uses home-manager; `nixvps`, `nixcraft` and `calliope` are
-  NixOS-only. `calliope` also has no sops secrets and is not a `.sops.yaml`
-  recipient yet.
+  NixOS-only.
+- `calliope`'s media services (`hosts/calliope/{caddy,plex,qbittorrent,
+  prowlarr,radarr,sonarr,seerr,dashboard}.nix`) are localhost-only behind
+  Caddy except Plex; the Caddy vhosts other than request.jukeluke.com carry a
+  `remote_ip` LAN guard that must never be removed, because 80/443 are
+  forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
+  declarative (rewritten every start) and only that service is routed through
+  the `wg-qb` tunnel, by fwmark policy routing plus a per-uid kill switch —
+  details in README's "Media services".
+- `secrets/calliope/wg-qb.conf` MUST carry `Table = off` and MUST NOT carry a
+  `DNS =` line. Without the first, `AllowedIPs = 0.0.0.0/0` gives wg-quick a
+  host-wide default route that moves every service onto the VPN and breaks
+  inbound Seerr via asymmetric routing; the second makes wg-quick run
+  `resolvconf -x` and replace the whole host's resolvers. Never "fix" a
+  qBittorrent connectivity problem by restoring either one.
+- `caddy.nix` on calliope pins a `withPlugins` vendor hash; a flake update
+  that moves Caddy or the cloudflare plugin fails the build with the
+  replacement hash in the error. The two `secrets/calliope/*` files were
+  committed as encrypted REPLACE_ME placeholders; Luke fills them with `sops`.
 - `calliope` is fibre-only and its link depends on the `ixgbe` kernel patch.
   If that patch stops applying the host boots with no network and needs a
   physical console, so never "fix" a patch conflict by dropping the patch.
