@@ -84,7 +84,7 @@ one host that needs the secret.
 | `secrets/nixcraft/users.yaml` | nixcraft | `/run/secrets-for-users/luke-hashed-password` |
 | `secrets/calliope/cloudflare.env` | calliope | `/run/secrets/cloudflare.env` |
 | `secrets/calliope/wg-qb.conf` | calliope | `/run/secrets/wg-qb.conf` |
-| `secrets/calliope/radarr.env` | calliope | `/run/secrets/radarr.env` (whole, for Radarr) and `/run/secrets/radarr-api-key` (bare key, for Recyclarr) |
+| `secrets/calliope/radarr.yaml` | calliope | `/run/secrets/radarr-api-key` (bare key, for Recyclarr), templated into `/run/secrets/rendered/radarr.env` for Radarr |
 
 Both calliope secrets were committed as encrypted `REPLACE_ME` placeholders so
 the configuration evaluates before the real values exist — fill them in with
@@ -658,8 +658,10 @@ change those there, not in the Radarr UI. Two TRaSH profiles, picked per movie:
 `HD Bluray + WEB` (1080p, with the guide's Bluray-720p fallback disabled) and
 `Remux + WEB 2160p`. The opt-ins (no Dolby Vision on any TV, HDR10+ yes, HD
 audio passthrough, private trackers only) are commented in the module. Radarr's
-API key is pinned by `secrets/calliope/radarr.env` (`RADARR__AUTH__APIKEY`), so
-the key Recyclarr uses can never drift from the one Radarr serves. Run a sync
+API key is pinned by `secrets/calliope/radarr.yaml` (`api_key`), templated into
+Radarr's `RADARR__AUTH__APIKEY`, so the key Recyclarr uses can never drift from
+the one Radarr serves. It is YAML rather than dotenv on purpose: sops-nix
+ignores `key` for dotenv and hands over the whole `KEY=value` line. Run a sync
 by hand with `sudo systemctl start recyclarr` and read it with
 `journalctl -u recyclarr`.
 

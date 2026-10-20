@@ -3,13 +3,19 @@
 { config, lib, ... }:
 
 {
-  # Pins Radarr's API key, so recyclarr.nix can read it from the same secret
-  # instead of it living only in Radarr's config.xml. restartUnits because a
-  # changed secret alone leaves the unit text identical.
-  sops.secrets."radarr.env" = {
-    sopsFile = ../../secrets/calliope/radarr.env;
-    format   = "dotenv";
-    key      = "";
+  # Pins Radarr's API key, so recyclarr.nix can read the same secret instead
+  # of it living only in Radarr's config.xml. YAML, not dotenv: sops-nix
+  # ignores `key` for dotenv and would hand Recyclarr the whole KEY=value line.
+  sops.secrets."radarr-api-key" = {
+    sopsFile = ../../secrets/calliope/radarr.yaml;
+    key      = "api_key";
+  };
+
+  # restartUnits because a changed secret alone leaves the unit text identical.
+  sops.templates."radarr.env" = {
+    content = ''
+      RADARR__AUTH__APIKEY=${config.sops.placeholder."radarr-api-key"}
+    '';
     restartUnits = [ "radarr.service" ];
   };
 
@@ -23,7 +29,7 @@
     # No login, as with qBittorrent: the LAN guard on the Caddy vhost is the
     # access control. Also stops Radarr demanding a user on first start.
     settings.auth.method = "External";
-    environmentFiles = [ config.sops.secrets."radarr.env".path ];
+    environmentFiles = [ config.sops.templates."radarr.env".path ];
   };
 
   systemd.services.radarr.unitConfig.RequiresMountsFor = [

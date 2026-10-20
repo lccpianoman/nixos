@@ -18,14 +18,8 @@ let
   uhdOnly = [ { trash_id = remuxWeb2160p; } ];
 in
 {
-  # The bare key, pulled out of the same file Radarr reads its APIKEY from, so
-  # the two can never disagree.
-  sops.secrets."radarr-api-key" = {
-    sopsFile = ../../secrets/calliope/radarr.env;
-    format   = "dotenv";
-    key      = "RADARR__AUTH__APIKEY";
-  };
-
+  # api_key reads radarr.nix's radarr-api-key, the same secret Radarr's APIKEY
+  # is templated from, so the two can never disagree.
   services.recyclarr = {
     enable = true;
     configuration.radarr.calliope = {
