@@ -636,6 +636,11 @@ run on torrent completion, so reaching it means code execution as the
 stops being a trust boundary, put a `Password_PBKDF2` in `serverConfig` and
 drop the whitelist.
 
+Radarr, Sonarr and Prowlarr follow the same model: `settings.auth.method =
+"External"` turns off their own login (and the first-start "create a user"
+screen), leaving the vhost LAN guard as the only gate. Their API keys still
+apply to every API call; only the web UI is unauthenticated.
+
 Its `qBittorrent.conf` is
 **fully declarative** — the module reinstalls it on every service start, so
 settings changed in the WebUI options dialog revert on restart; change them in

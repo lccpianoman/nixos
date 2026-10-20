@@ -8,5 +8,8 @@
       port        = 9696;
       bindaddress = "127.0.0.1";
     };
+    # No login, as with qBittorrent: the LAN guard on the Caddy vhost is the
+    # access control. Also stops Prowlarr demanding a user on first start.
+    settings.auth.method = "External";
   };
 }
