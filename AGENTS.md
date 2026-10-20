@@ -81,8 +81,12 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   `remote_ip` LAN guard that must never be removed, because 80/443 are
   forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
   declarative (rewritten every start) and only that service is routed through
-  the `wg-qb` tunnel, by fwmark policy routing plus a per-uid kill switch —
-  details in README's "Media services".
+  the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch —
+  details in README's "Media services". Do not "simplify" that to an fwmark
+  set in `mangle OUTPUT`: a mark lands after `connect()` has already pinned
+  the socket's source address, so the reroute is refused and everything not
+  explicitly bound to `wg-qb` (DNS especially) silently falls back to `eno1`
+  and gets rejected. That bug was shipped once already.
 - `secrets/calliope/wg-qb.conf` MUST carry `Table = off` and MUST NOT carry a
   `DNS =` line. Without the first, `AllowedIPs = 0.0.0.0/0` gives wg-quick a
   host-wide default route that moves every service onto the VPN and breaks

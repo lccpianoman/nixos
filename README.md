@@ -522,13 +522,25 @@ Manual setup, once:
 
 qBittorrent — and nothing else — is routed through the tunnel by
 `qbittorrent.nix`. Because the interface carries `Table = off`, it is inert
-until this host puts traffic on it, which it does per-uid: an iptables `mangle`
-rule marks packets owned by the `qbittorrent` user, a policy rule sends that
-mark to a routing table whose only route is `wg-qb`, and `MASQUERADE` rewrites
-the source address (needed because glibc's resolver opens its own socket and
-ignores libtorrent's interface binding). A private `/etc/resolv.conf`, bound
-into that unit alone, points at the VPN's resolver so tracker lookups cannot
-leak to the LAN router.
+until this host puts traffic on it, which it does per-uid: an `ip rule` with
+`uidrange` sends everything owned by the `qbittorrent` user to a routing table
+whose only route is `wg-qb`. The uid is pinned (996) so that rule cannot
+silently stop matching. A private `/etc/resolv.conf`, bound into that unit
+alone, points at the VPN's resolver so tracker lookups cannot leak to the LAN
+router.
+
+Keying on the uid rather than on an fwmark set in `mangle OUTPUT` is
+deliberate, and the difference is not cosmetic. A mark is applied as the
+packet is transmitted, long after `connect()` has chosen a route and pinned
+the socket's source address to `eno1`'s. The reroute then moves the packet to
+`wg-qb` while keeping that stale source, the kernel refuses it, and it falls
+back to `eno1` where the kill switch rejects it. That failed silently and
+selectively: libtorrent's own sockets are explicitly bound to `wg-qb`
+(`Session\Interface`) so they always had the right source and worked, while
+everything unbound — DNS lookups above all — was rejected. A uid rule is
+consulted during the *original* route lookup, so source selection is right
+from the start, with no reroute, marking or address rewriting involved.
+`MASQUERADE` on `wg-qb` is kept only as a cheap no-op safety net.
 
 That split routing also needs the tunnel exempted from reverse-path filtering.
 `networking.firewall.checkReversePath` defaults to `true`, meaning *strict*,
@@ -542,11 +554,10 @@ interface. The exemption is a `RETURN` inserted at the head of
 already authenticated every packet on that interface against the peer's key,
 and strict filtering stays on `eno1` where spoofing could actually originate.
 
-The per-uid kill switch is what makes that safe to get wrong: if the mark,
-rule or route is ever missing, those packets fall back to `eno1` and are
-REJECTed, so the failure mode is an outage rather than a leak. The marking
-value is deliberately nonzero — WireGuard stamps its own encrypted packets
-with the *device* fwmark, which stays 0 here, so the outer packets don't match
+The per-uid kill switch is what makes that safe to get wrong: if the rule or
+route is ever missing, those packets fall back to `eno1` and are REJECTed, so
+the failure mode is an outage rather than a leak. WireGuard's own encrypted
+packets are sent by the kernel rather than by that uid, so they never match
 the rule and the tunnel never tries to carry itself. IPv6 is REJECTed outright
 for that uid, since TorGuard issues a v4-only tunnel.
 

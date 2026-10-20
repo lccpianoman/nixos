@@ -15,16 +15,29 @@
 # the provider's resolver the whole box's only resolver.
 #
 # So this module does the routing itself, scoped to one uid:
-#   1. mangle marks qBittorrent's packets, and a policy rule sends that mark
+#   1. A `uidrange` policy rule sends everything owned by the qbittorrent uid
 #      to a table whose only route is the tunnel.
 #   2. A private /etc/resolv.conf gives the service the VPN's resolver, so its
 #      tracker lookups travel the tunnel instead of leaking to the LAN router.
 #   3. The filter kill switch REJECTs anything from that uid that still tries
 #      to leave by another interface.
 #
-# (3) is what makes (1) safe to get wrong. If the rule, route or mark is ever
+# (3) is what makes (1) safe to get wrong. If the rule or route is ever
 # missing, qBittorrent's packets fall back to eno1 and are rejected — the
 # failure mode is an outage, never a leak.
+#
+# This deliberately keys on the uid rather than on an fwmark set in mangle
+# OUTPUT, which is the obvious approach and is subtly broken. A mark is only
+# applied as the packet is transmitted, long after connect() has already
+# chosen a route and pinned the socket's source address to eno1's. The
+# subsequent reroute moves the packet to wg-qb but keeps that stale source,
+# which the kernel then refuses, so the packet falls back to eno1 and is
+# rejected. It worked for libtorrent's own sockets only because those are
+# explicitly bound to wg-qb (Session\Interface below) and so had the right
+# source all along — while everything unbound, DNS lookups most importantly,
+# was silently rejected. A uid rule is consulted during the *original* route
+# lookup, so source selection is correct from the start and no reroute,
+# marking or address rewriting is involved.
 
 let
   # The port TorGuard forwards for this account, TCP and UDP. If that
@@ -33,32 +46,39 @@ let
   # regardless; a mismatch only costs inbound peers.
   torrentPort = 47278;
 
-  # One number for both the firewall mark and the routing table it selects.
-  # Nonzero matters: WireGuard stamps its own encrypted packets with the
-  # device fwmark, which is 0 here because `Table = off` means wg-quick never
-  # calls `wg set fwmark`. The outer packets therefore do not match the rule
-  # below and route normally out eno1 — which is what stops the tunnel from
-  # trying to carry itself.
-  mark = 51820;
+  # Routing table holding the tunnel's default route, selected by the uid rule.
+  routeTable = 51820;
+
+  # Pinned so the routing rule can name it. The module leaves this to dynamic
+  # allocation, which would silently stop matching if it ever shifted — and a
+  # rule that no longer matches means qBittorrent is cut off by the kill
+  # switch. 996 is what it already holds, so pinning changes nothing on disk.
+  qbtUid = 996;
+
+  # WireGuard sends its own encrypted packets from the kernel, not from this
+  # uid, so they never match the rule below and route normally out eno1 —
+  # which is what stops the tunnel from trying to carry itself.
 
   # From TorGuard's config, where it arrived as the `DNS =` line removed
   # above. A public resolver rather than a tunnel-internal one, so it is
   # reachable over the tunnel like any other destination.
   vpnDns = "8.8.8.8";
 
+  uidRule = "uidrange ${toString qbtUid}-${toString qbtUid} lookup ${toString routeTable}";
+
   vpnRouting = pkgs.writeShellScript "qbittorrent-vpn-routing" ''
     set -eu
     ip="${pkgs.iproute2}/bin/ip"
     # `replace` and the del/add pair keep this idempotent across restarts.
-    $ip route replace default dev wg-qb table ${toString mark}
-    $ip rule del fwmark ${toString mark} lookup ${toString mark} 2>/dev/null || true
-    $ip rule add fwmark ${toString mark} lookup ${toString mark}
+    $ip route replace default dev wg-qb table ${toString routeTable}
+    $ip rule del ${uidRule} 2>/dev/null || true
+    $ip rule add ${uidRule}
   '';
 
   vpnRoutingStop = pkgs.writeShellScript "qbittorrent-vpn-routing-stop" ''
     ip="${pkgs.iproute2}/bin/ip"
-    $ip rule del fwmark ${toString mark} lookup ${toString mark} 2>/dev/null || true
-    $ip route del default dev wg-qb table ${toString mark} 2>/dev/null || true
+    $ip rule del ${uidRule} 2>/dev/null || true
+    $ip route del default dev wg-qb table ${toString routeTable} 2>/dev/null || true
   '';
 in
 {
@@ -82,6 +102,8 @@ in
   environment.etc."qbittorrent/resolv.conf".text = ''
     nameserver ${vpnDns}
   '';
+
+  users.users.qbittorrent.uid = qbtUid;
 
   services.qbittorrent = {
     enable = true;
@@ -114,16 +136,15 @@ in
     };
   };
 
-  # Marking and source-address rewriting. MASQUERADE matters for DNS: glibc's
-  # resolver opens its own socket and ignores qBittorrent's interface binding,
-  # so without this its queries would enter the tunnel still carrying the eno1
-  # address and be dropped at the far end.
+  # MASQUERADE is kept as a safety net rather than a necessity: the uid rule
+  # already gets source selection right, so this is a no-op in the normal
+  # case and only rewrites an address that somehow arrived wrong. Cheap
+  # insurance against the exact failure the fwmark approach had.
   #
   # No IPv6 equivalent on purpose — TorGuard issues a v4-only tunnel
   # (AllowedIPs is 0.0.0.0/0, with no ::/0), so there is nowhere for v6 to go
   # and the ip6tables REJECT below is the whole v6 policy.
   networking.firewall.extraCommands = lib.mkAfter ''
-    iptables -t mangle -C OUTPUT -m owner --uid-owner qbittorrent -j MARK --set-mark ${toString mark} 2>/dev/null || iptables -t mangle -A OUTPUT -m owner --uid-owner qbittorrent -j MARK --set-mark ${toString mark}
     iptables -t nat    -C POSTROUTING -o wg-qb -j MASQUERADE 2>/dev/null || iptables -t nat    -A POSTROUTING -o wg-qb -j MASQUERADE
 
     # Exempt the tunnel from reverse-path filtering, which is strict here
@@ -151,7 +172,6 @@ in
   '';
 
   networking.firewall.extraStopCommands = lib.mkAfter ''
-    iptables -t mangle -D OUTPUT -m owner --uid-owner qbittorrent -j MARK --set-mark ${toString mark} 2>/dev/null || true
     iptables -t nat    -D POSTROUTING -o wg-qb -j MASQUERADE 2>/dev/null || true
     iptables -t mangle -D nixos-fw-rpfilter -i wg-qb -j RETURN 2>/dev/null || true
 
