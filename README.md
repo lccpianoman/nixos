@@ -84,6 +84,7 @@ one host that needs the secret.
 | `secrets/nixcraft/users.yaml` | nixcraft | `/run/secrets-for-users/luke-hashed-password` |
 | `secrets/calliope/cloudflare.env` | calliope | `/run/secrets/cloudflare.env` |
 | `secrets/calliope/wg-qb.conf` | calliope | `/run/secrets/wg-qb.conf` |
+| `secrets/calliope/radarr.env` | calliope | `/run/secrets/radarr.env` (whole, for Radarr) and `/run/secrets/radarr-api-key` (bare key, for Recyclarr) |
 
 Both calliope secrets were committed as encrypted `REPLACE_ME` placeholders so
 the configuration evaluates before the real values exist — fill them in with
@@ -103,7 +104,10 @@ nix run nixpkgs#sops -- secrets/nixvps/vaultwarden.env
 That editing form only works where a *decryption* key exists. The admin
 recipient is derived from `keys/luke-nixnotdix.pub`, so its private half lives
 on **nixnotdix** — that is the only machine where `sops <file>` can open an
-existing secret. A server holds just its own host key, which is
+existing secret. It only works there because home-manager sets
+`SOPS_AGE_KEY_CMD` to `ssh-to-age -private-key`: the recipient is the
+*converted* X25519 key, and sops will not match a raw SSH key against it
+("identity did not match any of the recipients"). A server holds just its own host key, which is
 `0600 root:root`, so as `luke` on calliope there is no usable identity and
 `sops secrets/calliope/...` fails with "Failed to get the data key".
 
@@ -645,9 +649,21 @@ touches `/srv/media` carries `RequiresMountsFor`, which is what makes the
 `nofail` ZFS mounts safe: if the pool fails to import, the services fail
 individually instead of writing into the bare directory on the NVMe.
 
-Service-level configuration (indexers, quality profiles, API keys between the
-*arrs, homepage widgets) is done per service after first boot and is not in
-this repo — except homepage widget API keys, which must go through
+Radarr's quality profiles, custom formats, file-size limits, naming and
+propers/repacks setting come from TRaSH Guides via **Recyclarr**
+(`recyclarr.nix`), which re-syncs daily and overwrites anything it manages —
+change those there, not in the Radarr UI. Two TRaSH profiles, picked per movie:
+`HD Bluray + WEB` (1080p, with the guide's Bluray-720p fallback disabled) and
+`Remux + WEB 2160p`. The opt-ins (no Dolby Vision on any TV, HDR10+ yes, HD
+audio passthrough, private trackers only) are commented in the module. Radarr's
+API key is pinned by `secrets/calliope/radarr.env` (`RADARR__AUTH__APIKEY`), so
+the key Recyclarr uses can never drift from the one Radarr serves. Run a sync
+by hand with `sudo systemctl start recyclarr` and read it with
+`journalctl -u recyclarr`.
+
+Other service-level configuration (indexers, root folders, download clients,
+API keys between the *arrs, homepage widgets) is done per service after first
+boot and is not in this repo — except homepage widget API keys, which must go through
 `services.homepage-dashboard.environmentFiles` (a future
 `secrets/calliope/homepage.env`), never `settings`, because `settings` lands
 in the world-readable store.

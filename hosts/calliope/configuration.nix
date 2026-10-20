@@ -21,6 +21,7 @@ in
     ./qbittorrent.nix
     ./prowlarr.nix
     ./radarr.nix
+    ./recyclarr.nix
     ./sonarr.nix
     ./seerr.nix
     ./dashboard.nix

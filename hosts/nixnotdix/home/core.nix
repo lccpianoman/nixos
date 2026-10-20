@@ -9,7 +9,12 @@ in
   home.homeDirectory = "/home/luke";
   home.stateVersion = "25.11";
 
-  home.sessionVariables.EDITOR = "vim";
+  home.sessionVariables = {
+    EDITOR = "vim";
+    # The admin sops recipient is this SSH key converted to an age X25519 key,
+    # which sops can't match from the SSH key itself. Run without a shell.
+    SOPS_AGE_KEY_CMD = "${pkgs.ssh-to-age}/bin/ssh-to-age -private-key -i /home/luke/.ssh/id_ed25519";
+  };
 
   programs.home-manager.enable = true;
 
