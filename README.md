@@ -556,10 +556,28 @@ and strict filtering stays on `eno1` where spoofing could actually originate.
 
 The per-uid kill switch is what makes that safe to get wrong: if the rule or
 route is ever missing, those packets fall back to `eno1` and are REJECTed, so
-the failure mode is an outage rather than a leak. WireGuard's own encrypted
-packets are sent by the kernel rather than by that uid, so they never match
-the rule and the tunnel never tries to carry itself. IPv6 is REJECTed outright
+the failure mode is an outage rather than a leak. IPv6 is REJECTed outright
 for that uid, since TorGuard issues a v4-only tunnel.
+
+That kill switch needs one exemption, and omitting it strangles the tunnel.
+Every packet qBittorrent sends crosses `OUTPUT` **twice**: once as plaintext
+routed to `wg-qb`, then again as the encrypted outer UDP packet addressed to
+the VPN endpoint and routed out `eno1`. WireGuard does not orphan the skb in
+between, so that outer packet still carries uid 996, and the kill switch
+rejects the tunnel's own traffic. Nothing reaches the VPN, while root and
+other users can use the tunnel perfectly — `wg show` looks entirely healthy
+throughout, which makes it a genuinely confusing failure. The giveaway is that
+the ACCEPT and REJECT counters stay exactly equal, because each accepted inner
+packet produces one rejected outer packet:
+
+```bash
+sudo iptables -L OUTPUT -nvx | grep 996
+```
+
+The fix is `wg set wg-qb fwmark` (applied by `qbittorrent-vpn-routing`) plus a
+matching `-m mark` ACCEPT ahead of the REJECT. Marking beats punching a hole
+for UDP to the endpoint: it identifies WireGuard's output precisely and
+survives the endpoint or port changing with a new provider config.
 
 `torrentPort` in `qbittorrent.nix` must match the port TorGuard forwards, and
 is the single place to change it — the `wg-qb` firewall hole derives from it.

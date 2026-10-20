@@ -87,6 +87,14 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   the socket's source address, so the reroute is refused and everything not
   explicitly bound to `wg-qb` (DNS especially) silently falls back to `eno1`
   and gets rejected. That bug was shipped once already.
+- The kill switch MUST keep its `-m mark --mark` ACCEPT for WireGuard's own
+  encrypted output. qBittorrent's packets cross OUTPUT twice (plaintext to
+  wg-qb, then the encrypted outer packet out eno1), and WireGuard does not
+  orphan the skb, so the outer packet still carries uid 996. Without the
+  exemption the kill switch strangles the tunnel: nothing reaches the VPN
+  while `wg show` looks perfectly healthy. Diagnose with
+  `sudo iptables -L OUTPUT -nvx | grep 996` — exactly equal ACCEPT and REJECT
+  counters mean the outer packets are being killed.
 - `secrets/calliope/wg-qb.conf` MUST carry `Table = off` and MUST NOT carry a
   `DNS =` line. Without the first, `AllowedIPs = 0.0.0.0/0` gives wg-quick a
   host-wide default route that moves every service onto the VPN and breaks

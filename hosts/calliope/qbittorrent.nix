@@ -55,9 +55,24 @@ let
   # switch. 996 is what it already holds, so pinning changes nothing on disk.
   qbtUid = 996;
 
-  # WireGuard sends its own encrypted packets from the kernel, not from this
-  # uid, so they never match the rule below and route normally out eno1 —
-  # which is what stops the tunnel from trying to carry itself.
+  # The mark WireGuard stamps on its own *encrypted* packets, set with
+  # `wg set wg-qb fwmark` below, and the reason the kill switch has an
+  # exemption for it.
+  #
+  # Every packet qBittorrent sends crosses the OUTPUT chain twice: once as
+  # plaintext routed to wg-qb, then again as the encrypted outer UDP packet
+  # addressed to the VPN endpoint and routed out eno1. WireGuard does not
+  # orphan the skb in between, so that outer packet still carries uid 996 —
+  # and a naive per-uid kill switch rejects the tunnel's own traffic. The
+  # symptom is unmistakable once you know it: the ACCEPT and REJECT counters
+  # stay exactly equal, because each accepted inner packet produces one
+  # rejected outer packet. Nothing reaches the VPN, while root and other
+  # users can use the tunnel perfectly.
+  #
+  # Marking is the fix rather than, say, punching a hole for UDP to the
+  # endpoint: the mark identifies WireGuard's output precisely and survives
+  # the endpoint or port changing with a new provider config.
+  wgFwMark = 51821;
 
   # From TorGuard's config, where it arrived as the `DNS =` line removed
   # above. A public resolver rather than a tunnel-internal one, so it is
@@ -69,6 +84,10 @@ let
   vpnRouting = pkgs.writeShellScript "qbittorrent-vpn-routing" ''
     set -eu
     ip="${pkgs.iproute2}/bin/ip"
+    # Tag WireGuard's encrypted output so the kill switch can tell it apart
+    # from qBittorrent's own traffic. No `ip rule` matches this mark — it is
+    # purely a label for the firewall.
+    ${pkgs.wireguard-tools}/bin/wg set wg-qb fwmark ${toString wgFwMark}
     # `replace` and the del/add pair keep this idempotent across restarts.
     $ip route replace default dev wg-qb table ${toString routeTable}
     $ip rule del ${uidRule} 2>/dev/null || true
@@ -177,6 +196,9 @@ in
 
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent -o wg-qb -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -o wg-qb -j ACCEPT
+    # The tunnel's own encrypted output, which still carries uid 996 — see
+    # wgFwMark above. Without this the kill switch strangles the tunnel.
+    iptables  -C OUTPUT -m owner --uid-owner qbittorrent -m mark --mark ${toString wgFwMark} -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -m mark --mark ${toString wgFwMark} -j ACCEPT
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent          -j REJECT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent          -j REJECT
     ip6tables -C OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT 2>/dev/null || ip6tables -A OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT
     ip6tables -C OUTPUT -m owner --uid-owner qbittorrent          -j REJECT 2>/dev/null || ip6tables -A OUTPUT -m owner --uid-owner qbittorrent          -j REJECT
@@ -188,6 +210,7 @@ in
 
     iptables  -D OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT 2>/dev/null || true
     iptables  -D OUTPUT -m owner --uid-owner qbittorrent -o wg-qb -j ACCEPT 2>/dev/null || true
+    iptables  -D OUTPUT -m owner --uid-owner qbittorrent -m mark --mark ${toString wgFwMark} -j ACCEPT 2>/dev/null || true
     iptables  -D OUTPUT -m owner --uid-owner qbittorrent          -j REJECT 2>/dev/null || true
     ip6tables -D OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT 2>/dev/null || true
     ip6tables -D OUTPUT -m owner --uid-owner qbittorrent          -j REJECT 2>/dev/null || true
