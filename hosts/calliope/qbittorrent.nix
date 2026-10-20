@@ -157,7 +157,21 @@ in
         DefaultSavePath = "/srv/media/downloads/complete";
         TempPath        = "/srv/media/downloads/incomplete";
         TempPathEnabled = true;
+
+        # Automatic mode, so the *arrs' categories land in complete/<category>,
+        # and relocate on any save-path change (TRaSH).
+        DisableAutoTMMByDefault = false;
+        DisableAutoTMMTriggers = {
+          CategorySavePathChanged = false;
+          DefaultSavePathChanged  = false;
+        };
+
+        # libtorrent 2.0 defaults to mmap, which on ZFS double-caches every
+        # piece in the page cache and the ARC.
+        DiskIOType = "Posix";
       };
+      # UPnP/NAT-PMP is pointless here: the port is forwarded by TorGuard.
+      Network.PortForwardingEnabled = false;
       Preferences.WebUI = {
         # Localhost-only; Caddy is the only client, and reaches it over lo.
         Address       = "127.0.0.1";
@@ -267,6 +281,10 @@ in
     bindsTo = [ "wg-quick-wg-qb.service" ];
     partOf  = [ "wg-quick-wg-qb.service" ];
     unitConfig.RequiresMountsFor = [ "/srv/media/downloads" ];
-    serviceConfig.BindReadOnlyPaths = [ "/etc/qbittorrent/resolv.conf:/etc/resolv.conf" ];
+    serviceConfig = {
+      BindReadOnlyPaths = [ "/etc/qbittorrent/resolv.conf:/etc/resolv.conf" ];
+      # Group-writable, so the media group can manage what this creates.
+      UMask = "0002";
+    };
   };
 }

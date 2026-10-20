@@ -1,5 +1,7 @@
 # Movies. Localhost-only; reached via radarr.jukeluke.com (caddy.nix).
 # group media so imports into the shared library keep the 2775 tree writable.
+{ lib, ... }:
+
 {
   services.radarr = {
     enable = true;
@@ -14,4 +16,7 @@
     "/srv/media/downloads"
     "/srv/media/library/movies"
   ];
+  # Forced over the module's hard-set 0022, which would leave library
+  # folders writable by radarr alone.
+  systemd.services.radarr.serviceConfig.UMask = lib.mkForce "0002";
 }

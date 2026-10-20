@@ -638,7 +638,9 @@ files and survive.
 
 Radarr, Sonarr and qBittorrent share the `media` group and the one
 `storage/media` dataset so imports are hardlinks, not copies — see "Storage
-pool" for why `downloads/` must stay inside that dataset. Every service that
+pool" for why `downloads/` must stay inside that dataset. All three run with
+`UMask=0002` (forced on the servarr modules, which hard-set `0022`) — `0022` would leave each file writable only by the
+service that created it, defeating the setgid tree. Every service that
 touches `/srv/media` carries `RequiresMountsFor`, which is what makes the
 `nofail` ZFS mounts safe: if the pool fails to import, the services fail
 individually instead of writing into the bare directory on the NVMe.
