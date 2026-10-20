@@ -125,10 +125,12 @@ sops filestatus secrets/calliope/wg-qb.conf     # {"encrypted":true}
 Drop the `--input-type`/`--output-type` flags for the `.env` secrets, whose
 format sops infers. To genuinely *read* a calliope secret on calliope, go
 through the host key as root — and chown it back afterwards, since sops leaves
-the file root-owned:
+the file root-owned. The key goes through `ssh-to-age` for the same reason as
+on nixnotdix; `SOPS_AGE_SSH_PRIVATE_KEY_FILE` hands sops the raw SSH key and
+fails with "identity did not match any of the recipients":
 
 ```bash
-sudo SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key EDITOR=vim $(which sops) secrets/calliope/cloudflare.env
+sudo SOPS_AGE_KEY_CMD="$(which ssh-to-age) -private-key -i /etc/ssh/ssh_host_ed25519_key" EDITOR=vim $(which sops) secrets/calliope/cloudflare.env
 sudo chown luke:users secrets/calliope/cloudflare.env
 ```
 
