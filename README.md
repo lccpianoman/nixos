@@ -504,6 +504,27 @@ dd if=/dev/sdX of=/dev/null bs=1M status=progress
 Record the result somewhere outside this repo — a label on the chassis is best.
 Then replacing a failure is `zpool replace storage <old-wwn> <new-wwn>`.
 
+### Fans
+
+`hosts/calliope/fans.nix` runs `fanctl`, which talks to the iDRAC8 over in-band
+IPMI (`/dev/ipmi0`), so the iDRAC needs no network cable. It shows inlet,
+exhaust, CPU and per-drive temperatures and fan RPM, and switches between the
+iDRAC's automatic control and one fixed speed for all fans. It is at
+`https://dash.jukeluke.com/fans/` and also embedded as the dashboard's
+"Fans" card.
+
+Manual mode turns off the iDRAC's thermal management, so `fanctl` hands control
+back to auto as soon as any sensor reaches its "hot" band or a CPU or drive
+reading goes missing. It also does this when the service stops. The bands, and
+why they sit where they do, are in `fans.nix`. By hand:
+
+```bash
+sudo ipmitool sdr type temperature; sudo ipmitool sdr type fan
+sudo ipmitool raw 0x30 0x30 0x01 0x00          # manual
+sudo ipmitool raw 0x30 0x30 0x02 0xff 0x14     # all fans 20% (hex percent)
+sudo ipmitool raw 0x30 0x30 0x01 0x01          # back to auto
+```
+
 ### Media services
 
 One module per service under `hosts/calliope/`, all localhost-only except Plex,
@@ -513,6 +534,7 @@ all reached through Caddy (`caddy.nix`) — the only module that exposes anythin
 |---|---|---|
 | Seerr (requests) | `127.0.0.1:5055` | `https://request.jukeluke.com` — **public**, Cloudflare-proxied |
 | homepage dashboard | `127.0.0.1:8082` | `https://dash.jukeluke.com` — LAN only |
+| fanctl (`fans.nix`) | `127.0.0.1:8085` | `https://dash.jukeluke.com/fans/` — LAN only |
 | qBittorrent | `127.0.0.1:8090` | `https://qb.jukeluke.com` — LAN only |
 | Radarr | `127.0.0.1:7878` | `https://radarr.jukeluke.com` — LAN only |
 | Sonarr | `127.0.0.1:8989` | `https://sonarr.jukeluke.com` — LAN only |

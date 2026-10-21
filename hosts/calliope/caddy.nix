@@ -33,8 +33,10 @@ let
   # name at 192.168.0.10 hides nothing: anyone can connect to the home IP with
   # that SNI and Host header. remote_ip is the socket address — not a header,
   # not spoofable — and is what actually keeps these vhosts off the internet.
+  lanRanges = "192.168.0.0/24 127.0.0.1/8 ::1";
+
   lanOnly = upstream: ''
-    @wan not remote_ip 192.168.0.0/24 127.0.0.1/8 ::1
+    @wan not remote_ip ${lanRanges}
     abort @wan
     ${securityHeaders}
     reverse_proxy ${upstream}
@@ -87,10 +89,25 @@ in
 
     # LAN-only. homepage-dashboard has no auth of its own, and the *arr UIs
     # and qBittorrent are admin surfaces — none of these may answer the WAN.
-    virtualHosts."dash.jukeluke.com".extraConfig     = lanOnly "127.0.0.1:8082";
     virtualHosts."qb.jukeluke.com".extraConfig       = lanOnly "127.0.0.1:8090";
     virtualHosts."radarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:7878";
     virtualHosts."sonarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:8989";
     virtualHosts."prowlarr.jukeluke.com".extraConfig = lanOnly "127.0.0.1:9696";
+
+    # fanctl (fans.nix) rides under the dashboard's origin so homepage can
+    # iframe it past X-Frame-Options SAMEORIGIN. `route` keeps written order:
+    # left to Caddy's sorting, handle_path would run before the abort.
+    virtualHosts."dash.jukeluke.com".extraConfig = ''
+      @wan not remote_ip ${lanRanges}
+      ${securityHeaders}
+      route {
+        abort @wan
+        redir /fans /fans/
+        handle_path /fans/* {
+          reverse_proxy 127.0.0.1:8085
+        }
+        reverse_proxy 127.0.0.1:8082
+      }
+    '';
   };
 }

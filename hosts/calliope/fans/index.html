@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calliope Fans</title>
+<script>
+  // ?embed is the homepage iframe: no header or ranges table, and a transparent
+  // background so the card shows through.
+  if (new URLSearchParams(location.search).has("embed")) document.documentElement.classList.add("embed");
+</script>
+<style>
+  :root {
+    --fg: #e2e8f0; --muted: #94a3b8; --line: rgba(148, 163, 184, .18);
+    --tile: rgba(30, 41, 59, .55); --accent: #38bdf8;
+    --cool: #60a5fa; --normal: #4ade80; --warm: #facc15; --hot: #fb923c; --danger: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html:not(.embed) { color-scheme: dark; }
+  body { margin: 0 auto; max-width: 720px; padding: 16px; color: var(--fg); background: #0f172a;
+         font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .embed body { background: transparent; padding: 4px 6px; }
+  .embed .full { display: none; }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+  h1 { font-size: 18px; margin: 0; }
+  h2 { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+       color: var(--muted); margin: 12px 0 6px; }
+  .muted { color: var(--muted); }
+
+  .banner { border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; font-size: 12px; }
+  .banner.trip { background: rgba(251, 146, 60, .15); border: 1px solid var(--hot); }
+  .banner.err  { background: rgba(248, 113, 113, .15); border: 1px solid var(--danger); }
+
+  .control { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .seg button { border: 0; background: transparent; color: var(--muted); padding: 5px 12px; font: inherit; cursor: pointer; }
+  .seg button.on { background: var(--accent); color: #0f172a; font-weight: 600; }
+  .manual { display: none; flex: 1; min-width: 160px; gap: 8px; align-items: center; }
+  .manual.show { display: flex; }
+  .manual input { flex: 1; accent-color: var(--accent); min-width: 60px; }
+  .manual output { width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+  .apply { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px;
+           padding: 4px 10px; font: inherit; cursor: pointer; }
+  .apply:disabled { opacity: .35; cursor: default; }
+  .summary { width: 100%; font-size: 12px; }
+
+  .grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .grid.small { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
+  .tile { background: var(--tile); border-radius: 6px; padding: 4px 7px; border-left: 3px solid var(--c, var(--line)); }
+  .tile .n { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile .v { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--c, inherit); }
+  .small .tile .v { font-size: 14px; }
+  .tile .v small { font-size: 11px; font-weight: 400; color: var(--muted); }
+  .cool   { --c: var(--cool); }   .normal { --c: var(--normal); } .warm { --c: var(--warm); }
+  .hot    { --c: var(--hot); }    .danger { --c: var(--danger); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.cool, th.cool { color: var(--cool); } td.normal, th.normal { color: var(--normal); }
+  td.warm, th.warm { color: var(--warm); } td.hot, th.hot { color: var(--hot); }
+  td.danger, th.danger { color: var(--danger); }
+  .scroll { overflow-x: auto; }
+  p.note { font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="full">
+  <h1>Calliope fans</h1>
+  <span class="muted" id="updated"></span>
+</header>
+
+<div id="banners"></div>
+
+<div class="control">
+  <div class="seg" role="group" aria-label="Fan mode">
+    <button type="button" data-mode="auto">Auto</button>
+    <button type="button" data-mode="manual">Manual</button>
+  </div>
+  <div class="manual" id="manual">
+    <input type="range" id="speed" min="10" max="100" step="5" aria-label="Fan speed">
+    <output id="speedOut"></output>
+    <button type="button" class="apply" id="apply">Apply</button>
+  </div>
+  <div class="summary muted" id="summary"></div>
+</div>
+
+<h2>System</h2>
+<div class="grid" id="system"></div>
+<h2>Drives</h2>
+<div class="grid small" id="drives"></div>
+<h2>Fans</h2>
+<div class="grid small" id="fans"></div>
+
+<section class="full">
+  <h2>Ranges (°C)</h2>
+  <div class="scroll"><table id="ranges"></table></div>
+  <p class="note">Manual mode hands control back to the iDRAC as soon as anything reaches
+    <span style="color: var(--hot)">hot</span>, or a CPU or drive sensor stops reporting.
+    Pick manual again once it has cooled down.</p>
+</section>
+
+<script>
+const KINDS = { inlet: "Inlet (room air)", exhaust: "Exhaust", cpu: "CPU", hdd: "SAS drives", nvme: "NVMe boot" };
+const NAMES = ["cool", "normal", "warm", "hot", "danger"];
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const clock = (t) => new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+let last = null, choosing = null, dirty = false;
+
+function ranges(b) {
+  return [`≤${b[0]}`, `${b[0] + 1}–${b[1]}`, `${b[1] + 1}–${b[2]}`, `${b[2] + 1}–${b[3]}`, `${b[3] + 1}+`];
+}
+
+function tile(t, bands) {
+  const r = ranges(bands[t.kind])[NAMES.indexOf(t.band)];
+  return `<div class="tile ${t.band}" title="${esc(KINDS[t.kind])}: ${t.band} (${r} °C)">
+    <div class="n">${esc(t.name)}</div><div class="v">${Math.round(t.value)}<small>°C</small></div></div>`;
+}
+
+function render(s) {
+  last = s;
+  const mode = choosing || s.mode;
+  document.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b.dataset.mode === mode));
+  $("manual").classList.toggle("show", mode === "manual");
+
+  const slider = $("speed");
+  slider.min = s.minSpeed;
+  if (!dirty) slider.value = s.speed;
+  $("speedOut").textContent = slider.value + "%";
+  $("apply").disabled = s.mode === "manual" && Number(slider.value) === s.speed;
+
+  const rpm = s.fans.map((f) => f.rpm).filter((x) => x != null);
+  const avg = rpm.length ? Math.round(rpm.reduce((a, b) => a + b, 0) / rpm.length) : null;
+  $("summary").textContent = (s.mode === "manual" ? `Manual, ${s.speed}%` : "Automatic (iDRAC)") +
+    (avg ? ` · avg ${avg.toLocaleString()} RPM` : "");
+
+  let banners = "";
+  if (s.tripped) banners += `<div class="banner trip">Back on automatic since ${clock(s.tripped.at)}: ${esc(s.tripped.reason)}.</div>`;
+  if (s.error) banners += `<div class="banner err">${esc(s.error)}</div>`;
+  $("banners").innerHTML = banners;
+
+  const sys = s.temps.filter((t) => t.kind !== "hdd" && t.kind !== "nvme");
+  const drv = s.temps.filter((t) => t.kind === "hdd" || t.kind === "nvme");
+  $("system").innerHTML = sys.map((t) => tile(t, s.bands)).join("") || '<span class="muted">No readings</span>';
+  $("drives").innerHTML = drv.map((t) => tile(t, s.bands)).join("") || '<span class="muted">No readings</span>';
+  $("fans").innerHTML = s.fans.map((f) => `<div class="tile${f.ok ? "" : " danger"}">
+    <div class="n">${esc(f.name)}</div><div class="v">${f.rpm == null ? "—" : f.rpm.toLocaleString()}</div></div>`).join("");
+
+  $("updated").textContent = s.updated ? "Updated " + new Date(s.updated * 1000).toLocaleTimeString() : "";
+  $("ranges").innerHTML = "<tr><th></th>" + NAMES.map((n) => `<th class="${n}">${n}</th>`).join("") + "</tr>" +
+    Object.entries(s.bands).map(([k, b]) =>
+      `<tr><th>${esc(KINDS[k] || k)}</th>` + ranges(b).map((r, i) => `<td class="${NAMES[i]}">${r}</td>`).join("") + "</tr>").join("");
+}
+
+async function refresh() {
+  try {
+    const r = await fetch("api/status", { cache: "no-store" });
+    render(await r.json());
+  } catch (e) {
+    $("banners").innerHTML = '<div class="banner err">Cannot reach fanctl.</div>';
+  }
+}
+
+async function send(body) {
+  try {
+    const r = await fetch("api/mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+    choosing = null; dirty = false;
+  } catch (e) {
+    $("banners").innerHTML = `<div class="banner err">${esc(e.message)}</div>`;
+  }
+  refresh();
+}
+
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+  if (b.dataset.mode === "auto") { choosing = null; dirty = false; send({ mode: "auto" }); }
+  else { choosing = "manual"; if (last) render(last); }
+}));
+$("speed").addEventListener("input", () => { dirty = true; if (last) render(last); });
+$("apply").addEventListener("click", () => send({ mode: "manual", speed: Number($("speed").value) }));
+
+refresh();
+setInterval(refresh, 5000);
+</script>
+</body>
+</html>

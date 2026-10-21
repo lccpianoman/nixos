@@ -13,6 +13,7 @@ in
     ./ixgbe-bidi.nix
     ./zfs.nix
     ./nfs.nix
+    ./fans.nix
     # Media stack — see README's "Media services". caddy.nix is the only
     # module that exposes anything; the rest bind to localhost and are
     # reached through it.

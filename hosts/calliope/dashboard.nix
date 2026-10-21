@@ -40,6 +40,24 @@
           { Prowlarr    = { href = "https://prowlarr.jukeluke.com"; description = "Indexers"; }; }
         ];
       }
+      # fans.nix. The iframe has to be same-origin with the dashboard, which is
+      # why fanctl lives under /fans/ on this vhost rather than its own name.
+      {
+        Hardware = [
+          {
+            Fans = {
+              href        = "https://dash.jukeluke.com/fans/";
+              description = "Temperatures and fan control";
+              widget = {
+                type    = "iframe";
+                name    = "fans";
+                src     = "https://dash.jukeluke.com/fans/?embed";
+                classes = "h-96 sm:h-96 md:h-96 lg:h-96 xl:h-96 2xl:h-96";
+              };
+            };
+          }
+        ];
+      }
     ];
   };
 }
