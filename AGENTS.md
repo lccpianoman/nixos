@@ -11,7 +11,7 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
-| `calliope` | Dell R720xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see README "Media services") |
+| `calliope` | Dell R730xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see README "Media services") |
 
 ## Repo layout (high-level)
 ```text

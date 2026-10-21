@@ -9,7 +9,7 @@ NixOS flake for four machines, pinned to `nixos-26.05` with `home-manager releas
 | `nixnotdix` | Gaming/dev workstation | x86_64, NVIDIA, Zen kernel |
 | `nixvps` | Linode VPS | x86_64, QEMU/KVM |
 | `nixcraft` | Vultr VPS for Minecraft | x86_64, QEMU/KVM, 8 GB / 3 vCPU |
-| `calliope` | Home file server | Dell R720xd, 2× Xeon E5-2690 v4, 236 GB, 12× 10 TB SAS |
+| `calliope` | Home file server | Dell R730xd, 2× Xeon E5-2690 v4, 236 GB, 12× 10 TB SAS |
 
 ## Layout
 
@@ -285,7 +285,7 @@ reinstall, so the `knownHosts` pin does not break.
 
 ## `calliope`
 
-Home file server on a Dell PowerEdge R720xd. Named hosts are `nixnotdix`'s
+Home file server on a Dell PowerEdge R730xd. Named hosts are `nixnotdix`'s
 knownHosts pin plus an ssh alias, so `ssh calliope` works from the workstation.
 
 - 2× Xeon E5-2690 v4 (56 threads), 236 GB RAM
@@ -489,7 +489,7 @@ To export another dataset, add a line to `nfs.server.exports` in
 
 #### Identifying a disk without SES
 
-The R720xd backplane does not present SES through the SAS3008 —
+The R730xd backplane does not present SES through the SAS3008 —
 `/sys/class/enclosure` is empty — so ZED cannot blink a failed disk and
 `ZED_USE_ENCLOSURE_LEDS` is off. **Build the serial-to-bay map now, while every
 disk still works**, because doing it after a failure means guessing:
@@ -684,7 +684,7 @@ in the world-readable store.
 
 Installed by hand from the NixOS 26.05 minimal ISO — not `nixos-anywhere`.
 
-The R720xd's firmware has no NVMe driver and cannot boot the OS disk directly.
+The R730xd's firmware has no NVMe driver and cannot boot the OS disk directly.
 A separate chainloader device loads `NvmExpressDxe.efi` and then chainloads
 `\EFI\BOOT\BOOTX64.EFI` off the NVMe ESP. That is why
 `boot.loader.efi.canTouchEfiVariables` is `false`: `bootctl` cannot register an

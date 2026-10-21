@@ -78,7 +78,7 @@
 
   services.zfs.zed.settings = {
     ZED_NOTIFY_VERBOSE = true;
-    # The R720xd backplane does not present SES through the SAS3008
+    # The R730xd backplane does not present SES through the SAS3008
     # (/sys/class/enclosure is empty), so ZED cannot blink a failed disk.
     # Identify a replacement by serial instead — see README.
     ZED_USE_ENCLOSURE_LEDS = false;

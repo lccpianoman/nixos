@@ -1,6 +1,6 @@
 { config, lib, ... }:
 
-# Dell PowerEdge R720xd — dual Xeon E5-2690 v4 (56 threads), 236 GB RAM,
+# Dell PowerEdge R730xd — dual Xeon E5-2690 v4 (56 threads), 236 GB RAM,
 # UEFI firmware, Samsung 970 EVO Plus 500 GB NVMe for the OS, twelve 10 TB SAS
 # disks behind an LSI SAS3008 HBA.
 #
