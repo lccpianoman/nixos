@@ -14,6 +14,10 @@
 #   cpu      50 70 80 90   E5-2690 v4 throttles at 93 (coretemp "high")
 #   hdd      30 40 45 50   HUH721010AL4200 is rated to 60; wear climbs past ~45
 #   nvme     40 55 65 70   970 EVO Plus is rated to 70 and throttles there
+#
+# Also toggles the iDRAC's extra cooling for non-Dell PCIe cards — the NVMe
+# adapter is one, and it holds Auto near 8,500 RPM. That setting lives in the
+# iDRAC and outlasts fanctl; while it is off, "hot" turns it back on.
 
 let
   port = 8085;

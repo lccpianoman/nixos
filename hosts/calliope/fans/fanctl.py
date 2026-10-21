@@ -37,7 +37,12 @@ TRIP  = NAMES.index("hot")
 lock   = threading.Lock()
 wake   = threading.Event()
 state  = {"mode": "auto", "speed": 30, "tripped": None}
-status = {"temps": [], "fans": [], "updated": None, "error": None}
+status = {"temps": [], "fans": [], "pcie": None, "pcieError": None, "updated": None, "error": None}
+
+# The iDRAC's extra cooling for non-Dell PCIe cards (here, the NVMe adapter).
+# Stored in the iDRAC itself, so it is read back each sweep, never saved here.
+PCIE = ["raw", "0x30", "0xce"]
+PCIE_KEY = ["0x16", "0x05", "0x00", "0x00", "0x00"]
 
 
 def band(kind, value):
@@ -130,6 +135,18 @@ def apply():
         ipmi("raw", "0x30", "0x30", "0x01", "0x01")
 
 
+# Reply is 16 05 00 00 00 05 00 SS 00 00, SS = 01 when the response is off.
+def pcie_get():
+    reply = ipmi(*PCIE, "0x01", *PCIE_KEY).split()
+    if len(reply) < 8 or reply[:2] != ["16", "05"]:
+        raise ValueError("unexpected PCIe response reply: " + " ".join(reply))
+    return reply[7] == "00"
+
+
+def pcie_set(enabled):
+    ipmi(*PCIE, "0x00", *PCIE_KEY, "0x05", "0x00", "0x00" if enabled else "0x01", "0x00", "0x00")
+
+
 def unsafe(temps, error):
     if error:
         return error
@@ -152,18 +169,34 @@ def tick():
     temps += drive_temps()
 
     with lock:
+        pcie, pcie_error = None, None
         try:
+            pcie = pcie_get()
+        except (subprocess.SubprocessError, OSError, ValueError) as e:
+            pcie_error = str(e)
+        try:
+            reason, undone = unsafe(temps, error), []
             # Manual is re-asserted every sweep: a BMC reset quietly reverts to auto.
             if state["mode"] == "manual":
-                reason = unsafe(temps, error)
                 if reason:
-                    print("tripping to auto:", reason, flush=True)
-                    state.update(mode="auto", tripped={"at": time.time(), "reason": reason})
-                    save()
+                    state["mode"] = "auto"
+                    undone.append("switched back to automatic")
                 apply()
+            # The iDRAC cannot see the NVMe, so with the PCIe response off a hot
+            # card would go unanswered; turning it back on ramps the fans.
+            if reason and pcie is False:
+                pcie_set(True)
+                pcie = True
+                undone.append("turned PCIe card cooling back on")
+            if undone:
+                action = " and ".join(undone)
+                print("%s: %s" % (action, reason), flush=True)
+                state["tripped"] = {"at": time.time(), "reason": reason, "action": action}
+                save()
         except (subprocess.SubprocessError, OSError) as e:
             error = "IPMI write failed: %s" % e
-        status.update(temps=temps, fans=fan, updated=time.time(), error=error)
+        status.update(temps=temps, fans=fan, pcie=pcie, pcieError=pcie_error,
+                      updated=time.time(), error=error)
 
 
 def loop():
@@ -199,7 +232,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send(404, '{"error": "not found"}')
 
     def do_POST(self):
-        if self.path != "/api/mode":
+        if self.path not in ("/api/mode", "/api/pcie"):
             return self.send(404, '{"error": "not found"}')
         # Requiring JSON forces a CORS preflight, which this server never
         # answers, so another site open in a LAN browser cannot POST here.
@@ -207,21 +240,36 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(415, '{"error": "expected application/json"}')
         try:
             req = json.loads(self.rfile.read(min(int(self.headers.get("Content-Length", 0)), 1024)))
-            mode, speed = req["mode"], req.get("speed", state["speed"])
-            if mode not in ("auto", "manual") or type(speed) is not int \
-                    or not MIN_SPEED <= speed <= 100:
-                raise ValueError
+            if self.path == "/api/pcie":
+                enabled = req["enabled"]
+                if type(enabled) is not bool:
+                    raise ValueError
+            else:
+                mode, speed = req["mode"], req.get("speed", state["speed"])
+                if mode not in ("auto", "manual") or type(speed) is not int \
+                        or not MIN_SPEED <= speed <= 100:
+                    raise ValueError
         except (ValueError, KeyError, TypeError):
-            return self.send(400, '{"error": "want {mode: auto} or {mode: manual, speed: %d-100}"}' % MIN_SPEED)
+            return self.send(400, '{"error": "want {mode: auto}, {mode: manual, speed: %d-100} '
+                                  'or {enabled: true|false}"}' % MIN_SPEED)
 
         with lock:
-            state.update(mode=mode, speed=speed, tripped=None)
+            state["tripped"] = None
+            if self.path == "/api/mode":
+                state.update(mode=mode, speed=speed)
             save()
             try:
-                apply()
+                if self.path == "/api/pcie":
+                    pcie_set(enabled)
+                    status["pcie"] = enabled
+                else:
+                    apply()
             except (subprocess.SubprocessError, OSError) as e:
                 return self.send(502, json.dumps({"error": "IPMI write failed: %s" % e}))
-        print("set", mode, "%d%%" % speed if mode == "manual" else "", flush=True)
+        if self.path == "/api/pcie":
+            print("PCIe card cooling", "on" if enabled else "off", flush=True)
+        else:
+            print("set", mode, "%d%%" % speed if mode == "manual" else "", flush=True)
         wake.set()  # check temperatures against the new setting right away
         self.send(200, '{"ok": true}')
 

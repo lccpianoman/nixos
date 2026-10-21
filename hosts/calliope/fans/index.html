@@ -44,6 +44,9 @@
            padding: 4px 10px; font: inherit; cursor: pointer; }
   .apply:disabled { opacity: .35; cursor: default; }
   .summary { width: 100%; font-size: 12px; }
+  .pcie { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 12px; cursor: pointer; }
+  .pcie input { accent-color: var(--accent); margin: 0; }
+  .pcie input:disabled + span { opacity: .5; }
 
   .grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
   .grid.small { grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); }
@@ -85,6 +88,12 @@
   </div>
   <div class="summary muted" id="summary"></div>
 </div>
+<label class="pcie">
+  <input type="checkbox" id="pcie" disabled>
+  <span>Extra PCIe card cooling <span class="muted" id="pcieNote"></span></span>
+</label>
+<p class="note full">Dell's default is on: it runs the fans harder for any non-Dell card, here the
+  NVMe adapter. Off lets Auto run much quieter, and fanctl turns it back on if anything reaches hot.</p>
 
 <h2>System</h2>
 <div class="grid" id="system"></div>
@@ -108,7 +117,7 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const clock = (t) => new Date(t * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-let last = null, choosing = null, dirty = false;
+let last = null, choosing = null, dirty = false, pcieBusy = false;
 
 function ranges(b) {
   return [`≤${b[0]}`, `${b[0] + 1}–${b[1]}`, `${b[1] + 1}–${b[2]}`, `${b[2] + 1}–${b[3]}`, `${b[3] + 1}+`];
@@ -137,8 +146,19 @@ function render(s) {
   $("summary").textContent = (s.mode === "manual" ? `Manual, ${s.speed}%` : "Automatic (iDRAC)") +
     (avg ? ` · avg ${avg.toLocaleString()} RPM` : "");
 
+  const pcie = $("pcie");
+  if (!pcieBusy) {
+    pcie.disabled = s.pcie == null;
+    pcie.checked = s.pcie === true;
+  }
+  $("pcieNote").textContent = s.pcie == null ? "(unknown)" : s.mode === "manual" ? "(affects Auto only)" : "";
+  pcie.parentElement.title = s.pcieError || "";
+
   let banners = "";
-  if (s.tripped) banners += `<div class="banner trip">Back on automatic since ${clock(s.tripped.at)}: ${esc(s.tripped.reason)}.</div>`;
+  if (s.tripped) {
+    const action = s.tripped.action || "switched back to automatic";
+    banners += `<div class="banner trip">${esc(action[0].toUpperCase() + action.slice(1))} at ${clock(s.tripped.at)}: ${esc(s.tripped.reason)}.</div>`;
+  }
   if (s.error) banners += `<div class="banner err">${esc(s.error)}</div>`;
   $("banners").innerHTML = banners;
 
@@ -164,16 +184,23 @@ async function refresh() {
   }
 }
 
-async function send(body) {
+async function send(body, path = "api/mode") {
   try {
-    const r = await fetch("api/mode", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     if (!r.ok) throw new Error((await r.json()).error || r.statusText);
-    choosing = null; dirty = false;
+    if (path === "api/mode") { choosing = null; dirty = false; }
   } catch (e) {
     $("banners").innerHTML = `<div class="banner err">${esc(e.message)}</div>`;
   }
-  refresh();
+  await refresh();
 }
+
+$("pcie").addEventListener("change", async (e) => {
+  pcieBusy = true;
+  await send({ enabled: e.target.checked }, "api/pcie");
+  pcieBusy = false;
+  if (last) render(last);
+});
 
 document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
   if (b.dataset.mode === "auto") { choosing = null; dirty = false; send({ mode: "auto" }); }

@@ -516,13 +516,21 @@ iDRAC's automatic control and one fixed speed for all fans. It is at
 Manual mode turns off the iDRAC's thermal management, so `fanctl` hands control
 back to auto as soon as any sensor reaches its "hot" band or a CPU or drive
 reading goes missing. It also does this when the service stops. The bands, and
-why they sit where they do, are in `fans.nix`. By hand:
+why they sit where they do, are in `fans.nix`.
+
+The page also toggles the iDRAC's extra cooling for non-Dell PCIe cards. Dell
+turns it on by default, and the NVMe's adapter card is enough to trigger it
+and hold Auto near 8,500 RPM. Turning it off lets Auto idle much lower. The
+setting is stored in the iDRAC, so it survives reboots and doesn't depend on
+`fanctl`. While it is off, `fanctl` turns it back on at "hot". By hand:
 
 ```bash
 sudo ipmitool sdr type temperature; sudo ipmitool sdr type fan
 sudo ipmitool raw 0x30 0x30 0x01 0x00          # manual
 sudo ipmitool raw 0x30 0x30 0x02 0xff 0x14     # all fans 20% (hex percent)
 sudo ipmitool raw 0x30 0x30 0x01 0x01          # back to auto
+sudo ipmitool raw 0x30 0xce 0x01 0x16 0x05 0x00 0x00 0x00   # PCIe response: ... 00 on, ... 01 off
+sudo ipmitool raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x01 0x00 0x00   # off (0x00 = on)
 ```
 
 ### Media services
