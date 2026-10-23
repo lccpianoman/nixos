@@ -29,6 +29,9 @@
 
   services.immich = {
     enable = true;
+    # The module default is `localhost`, which node resolves to ::1 — Caddy
+    # proxies to 127.0.0.1 and got connection-refused 502s. Pin v4 loopback.
+    host = "127.0.0.1";
     # Explicit even though it's the default: 2283 is caddy.nix's upstream and
     # a silent default bump in the module would otherwise strand the vhost.
     port = 2283;
