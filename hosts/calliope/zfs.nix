@@ -64,6 +64,9 @@
     "d /srv/media/downloads/incomplete 2775 luke media -"
     "d /srv/media/downloads/complete   2775 luke media -"
     "d /srv/photos                     2775 luke media -"
+    # One-off import dumps (iCloud takeout etc) for immich-cli; immich's own
+    # store is /srv/photos/immich, owned immich:immich by its module.
+    "d /srv/photos/archive             2775 luke media -"
     "d /srv/documents                  2775 luke media -"
     "d /srv/backups                    0770 luke media -"
   ];

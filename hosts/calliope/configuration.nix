@@ -25,6 +25,7 @@ in
     ./recyclarr.nix
     ./sonarr.nix
     ./seerr.nix
+    ./immich.nix
     ./dashboard.nix
   ];
 

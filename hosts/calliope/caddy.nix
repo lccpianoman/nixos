@@ -9,8 +9,8 @@
 # HTTP-01 challenge from the internet. That needs two things set up by hand,
 # both described in README's "Media services":
 #   - DNS: request.jukeluke.com proxied (orange) to the home IP; dash/qb/
-#     radarr/sonarr/prowlarr.jukeluke.com unproxied (grey) A records to
-#     192.168.0.10.
+#     radarr/sonarr/prowlarr/photos.jukeluke.com unproxied (grey) A records
+#     to 192.168.0.10.
 #   - secrets/calliope/cloudflare.env holding a real CLOUDFLARE_API_TOKEN
 #     (Zone:DNS:Edit on jukeluke.com). The committed file is an encrypted
 #     REPLACE_ME placeholder so the config evaluates before the token exists;
@@ -93,6 +93,11 @@ in
     virtualHosts."radarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:7878";
     virtualHosts."sonarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:8989";
     virtualHosts."prowlarr.jukeluke.com".extraConfig = lanOnly "127.0.0.1:9696";
+
+    # Immich has its own auth, but the library behind it is the family photo
+    # archive — it stays off the WAN like the admin UIs. The phones' backup
+    # uploads go through this vhost, so don't cap request bodies here.
+    virtualHosts."photos.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:2283";
 
     # fanctl (fans.nix) rides under the dashboard's origin so homepage can
     # iframe it past X-Frame-Options SAMEORIGIN. `route` keeps written order:

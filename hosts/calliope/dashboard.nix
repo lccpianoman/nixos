@@ -40,6 +40,11 @@
           { Prowlarr    = { href = "https://prowlarr.jukeluke.com"; description = "Indexers"; }; }
         ];
       }
+      {
+        Photos = [
+          { Immich = { href = "https://photos.jukeluke.com"; description = "Photo backup"; }; }
+        ];
+      }
       # fans.nix. The iframe has to be same-origin with the dashboard, which is
       # why fanctl lives under /fans/ on this vhost rather than its own name.
       {

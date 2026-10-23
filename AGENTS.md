@@ -65,10 +65,11 @@ secrets/
 | NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
 | CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
 | ixgbe BiDi SFP patch | `hosts/calliope/ixgbe-bidi.{nix,patch}` | upstream `ixgbe` accepts 1000BASE-BX modules whose SFF-8472 byte 6 is blank (currently it requires the `BASEBX10` bit *and* `bitrate_nominal == 0xD`) |
+| Immich `2.7.5` insecure permit | `hosts/calliope/immich.nix` (`permittedInsecurePackages`) | nixpkgs `immich >= 3.0.3` (expected with 26.11) — then drop the permit; 2.x is EOL with CVE-2026-59258 / CVE-2026-82272, both needing an authenticated account, tolerable LAN-only with two trusted users |
 
 Check with:
 ```bash
-nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; }'
+nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; immich = p.immich.version; }'
 ```
 
 ## Notes
@@ -82,9 +83,9 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 - `nixnotdix` uses home-manager; `nixvps`, `nixcraft` and `calliope` are
   NixOS-only.
 - `calliope`'s media services (`hosts/calliope/{caddy,plex,qbittorrent,
-  prowlarr,radarr,sonarr,seerr,dashboard}.nix`) are localhost-only behind
-  Caddy except Plex; the Caddy vhosts other than request.jukeluke.com carry a
-  `remote_ip` LAN guard that must never be removed, because 80/443 are
+  prowlarr,radarr,sonarr,seerr,immich,dashboard}.nix`) are localhost-only
+  behind Caddy except Plex; the Caddy vhosts other than request.jukeluke.com
+  carry a `remote_ip` LAN guard that must never be removed, because 80/443 are
   forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
   declarative (rewritten every start) and only that service is routed through
   the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch —
@@ -122,6 +123,13 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   mounts race the services reading them. Keep new datasets in `fileSystems`, and
   keep `nofail` on them — an unimportable pool must never hold up this host's
   boot. Services that read the pool get `RequiresMountsFor` instead.
+- Immich (`hosts/calliope/immich.nix`) is LAN-only on purpose — never give it
+  a public/Cloudflare vhost. Its `mediaLocation` is `/srv/photos/immich`, not
+  `/srv/photos`: the module tmpfiles-enforces `immich:immich 0700` on that
+  path, which would fight zfs.nix's `2775 luke media` rule at the dataset
+  root. Keep its `RequiresMountsFor = /srv/photos` — without it the module's
+  tmpfiles rule recreates the store on the bare NVMe when the pool fails to
+  import, and uploads land on the OS disk.
 - `calliope` builds a patched kernel, so ZFS builds its module against it from
   source — a `nix flake update` that moves the LTS kernel past what the packaged
   ZFS supports fails the build. Check `boot.kernelPackages.kernel.version`

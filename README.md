@@ -547,6 +547,7 @@ all reached through Caddy (`caddy.nix`) — the only module that exposes anythin
 | Radarr | `127.0.0.1:7878` | `https://radarr.jukeluke.com` — LAN only |
 | Sonarr | `127.0.0.1:8989` | `https://sonarr.jukeluke.com` — LAN only |
 | Prowlarr | `127.0.0.1:9696` | `https://prowlarr.jukeluke.com` — LAN only |
+| Immich | `127.0.0.1:2283` | `https://photos.jukeluke.com` — LAN only |
 | Plex | `0.0.0.0:32400` | `http://192.168.0.10:32400/web` on the LAN; remote via plex.tv |
 
 Ports 80/443 are forwarded from the router to calliope so Cloudflare can reach
@@ -565,8 +566,8 @@ the replacement value whenever the plugin or Caddy moves).
 Manual setup, once:
 
 1. **Cloudflare DNS**: `request` proxied (orange cloud) to the home IP;
-   `dash`, `qb`, `radarr`, `sonarr`, `prowlarr` as **unproxied** (grey) A
-   records to `192.168.0.10`.
+   `dash`, `qb`, `radarr`, `sonarr`, `prowlarr`, `photos` as **unproxied**
+   (grey) A records to `192.168.0.10`.
 2. **API token**: create a Cloudflare token scoped to Zone → DNS → Edit on
    jukeluke.com, then `sops secrets/calliope/cloudflare.env` and replace the
    placeholder value of `CLOUDFLARE_API_TOKEN`.
@@ -702,6 +703,26 @@ rather than dotenv on purpose: sops-nix ignores `key` for dotenv and hands
 over the whole `KEY=value` line. Run a sync
 by hand with `sudo systemctl start recyclarr` and read it with
 `journalctl -u recyclarr`.
+
+Immich (`immich.nix`) is the photo stack, deliberately **LAN-only**: the
+mobile apps queue new photos while away and back up automatically on home
+wifi, and exposing it would put the family archive's auth on the WAN (a
+Cloudflare proxy would also cap uploads at 100 MB, breaking video backup).
+Its store is `/srv/photos/immich` — not the dataset root, because the module
+enforces `immich:immich 0700` on its mediaLocation via tmpfiles, which would
+fight zfs.nix's `2775 luke media` rule. Don't hand-arrange files in there;
+Immich owns the layout, uploads are checksummed so re-imports dedupe, and
+one-off dumps (iCloud takeout) go in `/srv/photos/archive` for import with
+`immich-cli`. The module runs its own postgres (vectorchord) and redis on
+unix sockets, and machine learning runs CPU-only. Accounts (one per person,
+admin created on first visit) live in its UI, not this repo. This nixpkgs
+ships immich 2.7.5, EOL and marked insecure (CVE-2026-59258,
+CVE-2026-82272 — both require an authenticated account abusing shared-album
+roles or share links, unreachable with two trusted users on a LAN-only
+service), so `immich.nix` carries a `permittedInsecurePackages` permit.
+Drop it when nixpkgs reaches immich ≥ 3.0.3 (expected with 26.11; Immich
+migrates its own database on upgrade) — it is in the pins table in
+`AGENTS.md`.
 
 Other service-level configuration (indexers, root folders, download clients,
 API keys between the *arrs, homepage widgets) is done per service after first
