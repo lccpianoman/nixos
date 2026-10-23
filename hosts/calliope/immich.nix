@@ -15,6 +15,7 @@
 # both on unix sockets. Machine learning (face/object recognition, smart
 # search) runs CPU-only on the R730xd — the first pass over a big import is
 # slow and that is fine.
+{ lib, ... }:
 #
 # This nixpkgs carries immich 2.7.5, marked insecure because the 2.x branch is
 # EOL (3.x arrives with nixpkgs 26.11) and carries CVE-2026-59258 and
@@ -32,6 +33,20 @@
     # a silent default bump in the module would otherwise strand the vhost.
     port = 2283;
     mediaLocation = "/srv/photos/immich";
+  };
+
+  # The module only *adjusts* mediaLocation (tmpfiles type `e` — never
+  # creates); a non-default location is expected to be made by hand. Replace
+  # its entry with a creating `d` rule instead — mkForce rather than a second
+  # rule for the same path, which tmpfiles would warn about and ignore. Same
+  # caveat as the zfs.nix rules: lands on the NVMe if the pool failed to
+  # mount, harmless because RequiresMountsFor keeps immich from writing there.
+  systemd.tmpfiles.settings.immich."/srv/photos/immich" = lib.mkForce {
+    d = {
+      user  = "immich";
+      group = "immich";
+      mode  = "0700";
+    };
   };
 
   # Same guard every /srv service carries: the ZFS mounts are nofail, and the
