@@ -116,7 +116,7 @@ in
     # puts numeric ids on the wire, so both have to keep matching. 1000/3000
     # are what the two hosts already hold.
     uid = 1000;
-    extraGroups = [ "wheel" "networkmanager" "video" "input" "media" ];
+    extraGroups = [ "wheel" "networkmanager" "video" "input" "media" "gamemode" ];
   };
 
   users.groups.media.gid = 3000;
