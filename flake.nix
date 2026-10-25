@@ -3,8 +3,12 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Tracked solely for claude-code, which releases far faster than the stable
-    # channel backports it. Nothing else may be taken from this input.
+    # Tracked solely for claude-code and proton-ge-bin, which release far
+    # faster than the stable channel backports them. claude-code is built
+    # against unstable's stdenv but is a leaf package; proton-ge-bin is a
+    # prebuilt binary run inside Steam's own runtime, so neither mixes
+    # unstable libraries into the rest of the closure. Nothing else may be
+    # taken from this input.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
@@ -62,14 +66,14 @@
       {
         nixpkgs.overlays = [
           nur.overlays.default
-          # claude-code only, straight from unstable — see the input comment.
-          # Imported rather than read from legacyPackages so it picks up this
-          # host's nixpkgs.config (claude-code is unfree).
+          # claude-code and proton-ge-bin only, straight from unstable — see
+          # the input comment. Imported rather than read from legacyPackages
+          # so it picks up this host's nixpkgs.config (claude-code is unfree).
           (final: prev: {
             inherit (import nixpkgs-unstable {
               inherit (prev.stdenv.hostPlatform) system;
               inherit (prev) config;
-            }) claude-code;
+            }) claude-code proton-ge-bin;
           })
         ];
       }
