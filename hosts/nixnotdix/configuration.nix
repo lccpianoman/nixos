@@ -358,6 +358,7 @@ in
 
   programs.steam.enable = true;
   programs.steam.protontricks.enable = true;
+  programs.steam.extraCompatPackages = [ pkgs.proton-ge-bin ];
   programs.gamemode.enable = true;
   programs.noisetorch.enable = true;
 
