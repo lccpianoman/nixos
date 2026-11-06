@@ -64,12 +64,14 @@ secrets/
 |---|---|---|
 | NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
 | CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
+| SwayFX `0.6` + scenefx `0.5` | `hosts/nixnotdix/configuration.nix` overlay | nixpkgs `swayfx-unwrapped >= 0.6` and `scenefx >= 0.5` |
+| Minecraft Java 25 override | `hosts/nixcraft/minecraft/server.nix` (`jre_headless = pkgs.jdk25_headless`) | nix-minecraft's `mkTextileServer` picks its JRE from `java_versions` (it still takes nixpkgs' default `jre_headless`, Java 21 — MC 26.2 needs 25) |
 | ixgbe BiDi SFP patch | `hosts/calliope/ixgbe-bidi.{nix,patch}` | upstream `ixgbe` accepts 1000BASE-BX modules whose SFF-8472 byte 6 is blank (currently it requires the `BASEBX10` bit *and* `bitrate_nominal == 0xD`) |
 | Immich `2.7.5` insecure permit | `hosts/calliope/immich.nix` (`permittedInsecurePackages`) | nixpkgs `immich >= 3.0.3` (expected with 26.11) — then drop the permit; 2.x is EOL with CVE-2026-59258 / CVE-2026-82272, both needing an authenticated account, tolerable LAN-only with two trusted users |
 
 Check with:
 ```bash
-nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; immich = p.immich.version; }'
+nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; immich = p.immich.version; swayfx = p.swayfx-unwrapped.version; scenefx = p.scenefx.version; }'
 ```
 
 ## Notes

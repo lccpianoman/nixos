@@ -15,7 +15,7 @@ in
   # ===== System =====
 
   # Local Clone Hero build until nixpkgs catches up (still 1.1.0.6085 as of
-  # 2026-07). Version lives only in pkgs/clonehero.nix; once nixpkgs reaches
+  # 2026-11). Version lives only in pkgs/clonehero.nix; once nixpkgs reaches
   # it this overlay is a no-op — delete it and pkgs/clonehero.nix then.
   nixpkgs.overlays = [
     (final: prev: {

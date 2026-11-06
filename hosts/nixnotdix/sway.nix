@@ -216,6 +216,13 @@ in
         shadows enable;
         corner_radius 6;
       }
+
+      # Block swayidle while any window is fullscreen. Wayland's idle-inhibit
+      # protocol expects the app to take an inhibitor itself, but XWayland
+      # (Steam/Proton — controllers aren't seat input, so pad play never
+      # resets the timer) can't speak it and Firefox's is flaky; this rule
+      # judges the window instead of trusting the app.
+      for_window [all] inhibit_idle fullscreen
     '';
   };
 
