@@ -8,7 +8,7 @@ systemd-boot. The only host that uses home-manager; its user environment is
 
 | Component | Choice |
 |---|---|
-| Compositor | [SwayFX](https://github.com/WillPower3309/swayfx) 0.6 — sway 1.12 plus blur, shadows, rounded corners and animations |
+| Compositor | [SwayFX](https://github.com/WillPower3309/swayfx) 0.6: sway 1.12 plus blur, shadows, rounded corners and animations |
 | Login | greetd + [ReGreet](https://github.com/rharish101/ReGreet), running under sway |
 | Bar / launcher / notifications | Waybar, Fuzzel, Mako |
 | Lock | swayidle + swaylock-effects (blurred screenshot, 5-minute idle timeout, locks before sleep) |
@@ -16,8 +16,8 @@ systemd-boot. The only host that uses home-manager; its user environment is
 | Browser | Firefox, themed to match with a store-built start page |
 | Theme | A saturated "nebula" palette in `theme.nix`, consumed by every module |
 
-Everything visual reads from `hosts/nixnotdix/theme.nix` — colours, fonts,
-cursor, corner radius — and `constants.nix` holds monitors, wallpaper and
+Everything visual (colours, fonts, cursor, corner radius) reads from
+`hosts/nixnotdix/theme.nix`, and `constants.nix` holds monitors, wallpaper and
 the weather widget's city. Change a colour once and sway, Waybar, Fuzzel,
 Mako, Alacritty, btop, ReGreet, swaylock and Firefox all follow.
 
@@ -38,7 +38,7 @@ is at Ctrl+Alt+F2.
 
 `hosts/nixnotdix/home/firefox.nix` and `home/firefox/` carry `userChrome.css`,
 `userContent.css` and a start page, all templated with at-delimited
-placeholders (`@base@`, `@blue@`, …) substituted from `theme.nix` — colours
+placeholders (`@base@`, `@blue@`, …) substituted from `theme.nix`, so colours
 are never hard-coded in the CSS.
 
 The start page is a single `file://` document in the store used as both the
@@ -46,7 +46,7 @@ homepage and the new tab page. `newtab.cfg` is an autoconfig script that
 reads the `nixos.newtab.url` pref and assigns `AboutNewTab.newTabURL`;
 Firefox blanks the URL bar for any URL equal to that one, which is the
 point. Keep the two prefs identical. `extraPrefsFiles` entries must be
-derivations, not bare paths — the wrapper splices them with `toString`,
+derivations, not bare paths: the wrapper splices them with `toString`,
 which strips the string context a path needs to become a build input.
 
 ### Weather widget
@@ -61,7 +61,7 @@ breaks.
 
 - **NVIDIA**: proprietary driver with modesetting, pinned to `595.99.02`
   because nixpkgs' stable driver fails to build against kernel 7.2. The pin
-  self-expires once nixpkgs catches up — see
+  self-expires once nixpkgs catches up; see
   [Operations › Pinned overrides](operations.md#pinned-overrides).
 - **IPv6 is disabled**: the LAN has link-local only and no default route, but
   DNS still returns AAAA records, so applications would get IPv6-only answers
@@ -72,7 +72,7 @@ breaks.
 
 ## Software
 
-- **Gaming**: Steam with Proton-GE (from the unstable input — see
+- **Gaming**: Steam with Proton-GE (from the unstable input; see
   [Operations](operations.md#the-unstable-input)), protontricks, gamemode,
   NoiseTorch, CloneHero (local build), PrismLauncher
 - **Development**: Claude Code (unstable), GitHub Copilot CLI, VSCodium, Git,
@@ -91,8 +91,8 @@ breaks.
 - `/mnt/media` is an NFSv4.2 automount of `calliope:/srv/media`. It mounts on
   first access and unmounts after ten idle minutes, so the workstation boots
   fine when the file server is off. `luke` is pinned to uid 1000 and the
-  `media` group to gid 3000 to match calliope — NFS puts numeric ids on the
-  wire.
+  `media` group to gid 3000 to match calliope, because NFS puts numeric ids
+  on the wire.
 
 ## Checks
 

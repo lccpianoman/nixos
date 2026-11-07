@@ -5,7 +5,7 @@ let
   c = theme.colors;
 
   # Tokens substituted into the CSS templates in ./firefox. Done in Nix rather
-  # than with pkgs.replaceVars so the result stays a plain string — no
+  # than with pkgs.replaceVars so the result stays a plain string, with no
   # import-from-derivation just to inline the start page's CSS.
   vars = c // {
     radius = toString theme.cornerRadius;

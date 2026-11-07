@@ -11,7 +11,7 @@
   # Notably github-copilot-cli: its shell tool spawns "/bin/bash" directly and
   # dies with "Failed to start bash process" on every command.
   #   Upstream bug: https://github.com/github/copilot-cli/issues/3392
-  #   (open, still broken as of 1.0.61 — recheck on upgrades and drop this)
+  #   (open, still broken as of 1.0.61; recheck on upgrades and drop this)
   # The usual suggested workaround is services.envfs.enable, but that
   # FUSE-mounts all of /bin and /usr/bin; a single symlink is far less invasive.
   systemd.tmpfiles.rules = [

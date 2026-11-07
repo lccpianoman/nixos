@@ -12,7 +12,7 @@
 
 Private keys never leave the machine that generated them. Servers pull this
 repo over HTTPS (it is public), so they hold no key for it at all. Pinning
-the host keys means a reinstalled server fails loudly instead of prompting —
+the host keys means a reinstalled server fails loudly instead of prompting,
 and that a reinstall must seed the old host key, or the pin has to be
 updated. See each host's install notes.
 
@@ -45,8 +45,8 @@ hands over the whole `KEY=value` line, and Recyclarr needs the bare key.
 
 `cloudflare.env` and `wg-qb.conf` were committed as encrypted `REPLACE_ME`
 placeholders so the configuration evaluates before the real values exist.
-Fill them in before expecting certificates or the torrent tunnel to work —
-see [calliope — media services](calliope-media.md#one-time-setup).
+Fill them in before expecting certificates or the torrent tunnel to work;
+see [calliope: media services](calliope-media.md#one-time-setup).
 
 ### Editing a secret
 
@@ -72,7 +72,7 @@ places:
   sudo chown luke:users secrets/calliope/cloudflare.env
   ```
 
-  Don't use `SOPS_AGE_SSH_PRIVATE_KEY_FILE` for this — it hands sops the raw
+  Don't use `SOPS_AGE_SSH_PRIVATE_KEY_FILE` for this; it hands sops the raw
   SSH key and fails with the same recipient mismatch.
 
 *Encryption* needs only the public recipients in `.sops.yaml`, so a secret
@@ -99,8 +99,8 @@ whose format sops infers from the extension.
 
 ### The pre-commit hook
 
-`secrets/` cannot be guarded by `.gitignore` — re-including the encrypted
-files re-includes everything — so a tracked hook,
+`secrets/` cannot be guarded by `.gitignore` (re-including the encrypted
+files re-includes everything), so a tracked hook,
 [`.githooks/pre-commit`](../.githooks/pre-commit), rejects any staged file
 under `secrets/` that `sops filestatus` does not report as encrypted. It
 checks the staged blob, not the working tree. Enable it once per clone:

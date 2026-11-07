@@ -17,7 +17,7 @@ in
 
 {
   # ===== Weather Script =====
-  # The API key lives in ~/.config/openweathermap/api_key — outside the
+  # The API key lives in ~/.config/openweathermap/api_key, outside the
   # Nix store and outside git; it is read at runtime, never at build time.
 
   xdg.configFile."${weatherSubdir}/weather.sh" = {
@@ -29,7 +29,7 @@ in
         export OPENWEATHER_API_KEY="$(${pkgs.coreutils}/bin/cat "$keyfile")"
       fi
       # Waybar hides a custom module's output when the exec exits non-zero,
-      # which would swallow the script's "N/A" fallback — so swallow the
+      # which would swallow the script's "N/A" fallback, so swallow the
       # exit code here (the script keeps honest exit codes for CLI use).
       ${weatherPy}/bin/python3 "${weatherDir}/main.py" \
         -u ${weatherConfig.units} \

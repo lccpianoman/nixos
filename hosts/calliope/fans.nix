@@ -1,8 +1,8 @@
 { pkgs, ... }:
 
 # fanctl: temperatures, fan speeds and an auto/manual fan switch for the
-# dashboard, talking to the iDRAC8 over in-band IPMI (/dev/ipmi0) — the iDRAC
-# needs no network for this. Served on localhost and reached at
+# dashboard, talking to the iDRAC8 over in-band IPMI (/dev/ipmi0), so the
+# iDRAC needs no network for this. Served on localhost and reached at
 # https://dash.jukeluke.com/fans/ (caddy.nix), iframed into the dashboard.
 #
 # Manual mode switches the iDRAC's thermal control off entirely, so fanctl
@@ -15,7 +15,7 @@
 #   hdd      30 40 45 50   HUH721010AL4200 is rated to 60; wear climbs past ~45
 #   nvme     40 55 65 70   970 EVO Plus is rated to 70 and throttles there
 #
-# Also toggles the iDRAC's extra cooling for non-Dell PCIe cards — the NVMe
+# Also toggles the iDRAC's extra cooling for non-Dell PCIe cards. The NVMe
 # adapter is one, and it holds Auto near 8,500 RPM. That setting lives in the
 # iDRAC and outlasts fanctl; while it is off, "hot" turns it back on.
 

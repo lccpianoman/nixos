@@ -18,7 +18,7 @@
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Declarative partitioning — used by nixos-anywhere to install nixcraft.
+    # Declarative partitioning, used by nixos-anywhere to install nixcraft.
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -66,7 +66,7 @@
       {
         nixpkgs.overlays = [
           nur.overlays.default
-          # claude-code and proton-ge-bin only, straight from unstable — see
+          # claude-code and proton-ge-bin only, straight from unstable; see
           # the input comment. Imported rather than read from legacyPackages
           # so it picks up this host's nixpkgs.config (claude-code is unfree).
           (final: prev: {

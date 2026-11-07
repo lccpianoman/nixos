@@ -4,7 +4,7 @@
 # the datasets, permissions and maintenance timers that go with it.
 #
 # The pool and its datasets are NOT declared here. They are created once by
-# hand — see docs/calliope-storage.md — and that is deliberate:
+# hand (see docs/calliope-storage.md), and that is deliberate:
 # hosts/calliope/disko.nix covers only the boot NVMe, so a
 # `disko --mode destroy,format,mount` run can never reach these twelve disks.
 # Describing them in Nix would trade that standing guarantee for a convenience
@@ -44,7 +44,7 @@
     };
 
   # One group for everything that touches the libraries: luke now, the service
-  # users later. The gid is pinned because NFS puts numeric ids on the wire —
+  # users later. The gid is pinned because NFS puts numeric ids on the wire;
   # an auto-allocated gid that differs between hosts silently denies writes.
   users.groups.media.gid = 3000;
 
@@ -52,7 +52,7 @@
   # is what lets luke and the services share one tree without chowning. Re-run
   # every boot, so a service that chmods something has it corrected.
   #
-  # These land on the root filesystem if the pool failed to mount. Harmless —
+  # These land on the root filesystem if the pool failed to mount. Harmless:
   # they stay empty, because nothing writes without RequiresMountsFor passing.
   systemd.tmpfiles.rules = [
     "d /srv/media                      2775 luke media -"
@@ -72,7 +72,7 @@
   ];
 
   # Monthly. A scrub reads every allocated block, so on a loaded 82 TiB pool it
-  # runs for most of a day — weekly would leave it scrubbing a third of the time.
+  # runs for most of a day; weekly would leave it scrubbing a third of the time.
   services.zfs.autoScrub.enable = true;
 
   # Defaults to true, which is for SSDs. `zpool trim` errors out on all twelve
@@ -83,7 +83,7 @@
     ZED_NOTIFY_VERBOSE = true;
     # The R730xd backplane does not present SES through the SAS3008
     # (/sys/class/enclosure is empty), so ZED cannot blink a failed disk.
-    # Identify a replacement by serial instead — see docs/calliope-storage.md.
+    # Identify a replacement by serial instead; see docs/calliope-storage.md.
     ZED_USE_ENCLOSURE_LEDS = false;
   };
 

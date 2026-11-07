@@ -16,7 +16,7 @@
 #   ident=0x03  comp_1g=0x00  comp_10g=0x00  cable_tech=0x00  bitrate=0x0d
 #
 # The nominal bitrate is exactly the 0x0D the check wants, but SFF-8472 byte 6
-# is left entirely blank — no BX10 bit, no SX/LX/T, no Ethernet compliance
+# is left entirely blank: no BX10 bit, no SX/LX/T, no Ethernet compliance
 # codes of any kind. So the bit test fails, the module falls through to
 # ixgbe_sfp_type_unknown, probe aborts with -EOPNOTSUPP, and no interface is
 # created. One unset bit in the vendor's EEPROM coding.
@@ -38,8 +38,8 @@
     patch = ./ixgbe-bidi.patch;
   }];
 
-  # Strictly redundant once the module classifies as one of the bx types — the
-  # OUI enforcement block explicitly exempts them. Kept because this link is
+  # Strictly redundant once the module classifies as one of the bx types, since
+  # the OUI enforcement block explicitly exempts them. Kept because this link is
   # the machine's only route in, and the cost of being wrong is a drive to the
   # console. It also covers swapping in some other third-party optic later.
   boot.kernelParams = [ "ixgbe.allow_unsupported_sfp=1" ];

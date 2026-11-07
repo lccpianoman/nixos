@@ -3,9 +3,9 @@
 # Declarative disk layout, consumed by nixos-anywhere at install time.
 #
 # Vultr Cloud Compute boots via UEFI (EDK II), so this is a GPT table with an
-# EF00 EFI System Partition plus an ext4 root. Nothing here is read at runtime
-# — it exists so the disk can be recreated from scratch with no manual fdisk
-# work.
+# EF00 EFI System Partition plus an ext4 root. Nothing here is read at
+# runtime; it exists so the disk can be recreated from scratch with no manual
+# fdisk work.
 #
 # Do not "simplify" this to a BIOS/EF02 bios_grub layout: the firmware ignores
 # the MBR gap entirely, finds nothing bootable, and drops to the UEFI shell.
@@ -26,7 +26,7 @@
             type = "filesystem";
             format = "vfat";
             mountpoint = "/boot";
-            # The ESP is FAT, which has no permission bits — without this the
+            # The ESP is FAT, which has no permission bits; without this the
             # whole thing is world-readable and systemd-boot/GRUB complain.
             mountOptions = [ "umask=0077" ];
           };
@@ -45,7 +45,7 @@
 
   # 8 GB is plenty for the JVM heap, but a swapfile gives the kernel somewhere
   # to push cold pages instead of OOM-killing the server during a chunk-gen
-  # spike. Kept small and low-priority — swapping the heap would be worse than
+  # spike. Kept small and low-priority, since swapping the heap would be worse than
   # the problem it solves (see vm.swappiness in configuration.nix).
   swapDevices = [
     {

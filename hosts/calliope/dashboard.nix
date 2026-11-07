@@ -1,6 +1,6 @@
-# homepage-dashboard at dash.jukeluke.com — LAN-only via caddy.nix, because it
+# homepage-dashboard at dash.jukeluke.com. LAN-only via caddy.nix, because it
 # has no authentication of its own and its widgets will eventually carry
-# service API keys (put those in environmentFiles, never in settings — the
+# service API keys (put those in environmentFiles, never in settings, because
 # settings land in the world-readable store).
 {
   services.homepage-dashboard = {
@@ -27,8 +27,8 @@
     ];
 
     # Links only for now; per-service API widgets come when each service is
-    # configured. Everything except Plex goes through the Caddy vhosts — the
-    # services themselves are localhost-only and unreachable by IP:port.
+    # configured. Everything except Plex goes through the Caddy vhosts, since
+    # the services themselves are localhost-only and unreachable by IP:port.
     services = [
       {
         Media = [

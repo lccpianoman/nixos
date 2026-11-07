@@ -175,7 +175,7 @@ in
       bars = [];
     };
 
-    # SwayFX-only options — home-manager has no typed options for these.
+    # SwayFX-only options; home-manager has no typed options for these.
     extraConfig = ''
       animation_duration_ms 250
 
@@ -199,7 +199,7 @@ in
       default_dim_inactive 0.1
       dim_inactive_colors.unfocused ${c.base}
 
-      # Brace blocks are required — a single line would be split on `;` into
+      # Brace blocks are required: a single line would be split on `;` into
       # separate global commands. Namespaces confirmed via WAYLAND_DEBUG.
       layer_effects "waybar" {
         blur enable;
@@ -219,7 +219,7 @@ in
 
       # Block swayidle while any window is fullscreen. Wayland's idle-inhibit
       # protocol expects the app to take an inhibitor itself, but XWayland
-      # (Steam/Proton — controllers aren't seat input, so pad play never
+      # (Steam/Proton: controllers aren't seat input, so pad play never
       # resets the timer) can't speak it and Firefox's is flaky; this rule
       # judges the window instead of trusting the app.
       for_window [all] inhibit_idle fullscreen

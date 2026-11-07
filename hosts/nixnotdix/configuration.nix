@@ -16,7 +16,7 @@ in
 
   # Local Clone Hero build until nixpkgs catches up (still 1.1.0.6085 as of
   # 2026-11). Version lives only in pkgs/clonehero.nix; once nixpkgs reaches
-  # it this overlay is a no-op — delete it and pkgs/clonehero.nix then.
+  # it this overlay is a no-op; delete it and pkgs/clonehero.nix then.
   nixpkgs.overlays = [
     (final: prev: {
       clonehero =
@@ -63,7 +63,7 @@ in
     })
   ];
 
-  # Release this host was first installed with — pins on-disk data formats.
+  # Release this host was first installed with; pins on-disk data formats.
   # Intentionally NOT bumped when nixpkgs moves (currently 26.05); only
   # change after reading that release's stateVersion migration notes.
   system.stateVersion = "25.11";
@@ -166,7 +166,7 @@ in
 
   programs.sway = {
     enable = true;
-    # SwayFX — sway plus blur/shadows/rounded corners/animations.
+    # SwayFX: sway plus blur/shadows/rounded corners/animations.
     package = pkgs.swayfx;
     wrapperFeatures.gtk = true;
   };
@@ -332,7 +332,7 @@ in
       nvidiaSettings = true;
       # nixpkgs' stable driver (595.71.05) fails to build against kernel 7.2
       # (implicit strncpy in os-interface.c); 595.99.02 has the fix. Self-expires
-      # once nixpkgs reaches it — delete this block then.
+      # once nixpkgs reaches it; delete this block then.
       package = let
         nv = config.boot.kernelPackages.nvidiaPackages;
         fixed = nv.mkDriver {

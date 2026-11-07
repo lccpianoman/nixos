@@ -1,21 +1,21 @@
-# calliope — media services
+# calliope: media services
 
 One module per service under `hosts/calliope/`. Everything binds to
 localhost and is reached through Caddy (`caddy.nix`), the only module that
-exposes anything — except Plex, which clients talk to directly.
+exposes anything. The exception is Plex, which clients talk to directly.
 
 | Service | Module | Listens | Reached at |
 |---|---|---|---|
-| Seerr (requests) | `seerr.nix` | `127.0.0.1:5055` | `https://request.jukeluke.com` — **public**, Cloudflare-proxied |
-| homepage dashboard | `dashboard.nix` | `127.0.0.1:8082` | `https://dash.jukeluke.com` — LAN only |
-| fanctl | `fans.nix` | `127.0.0.1:8085` | `https://dash.jukeluke.com/fans/` — LAN only |
-| qBittorrent | `qbittorrent.nix` | `127.0.0.1:8090` | `https://qb.jukeluke.com` — LAN only |
-| Radarr | `radarr.nix` | `127.0.0.1:7878` | `https://radarr.jukeluke.com` — LAN only |
-| Sonarr | `sonarr.nix` | `127.0.0.1:8989` | `https://sonarr.jukeluke.com` — LAN only |
-| Prowlarr | `prowlarr.nix` | `127.0.0.1:9696` | `https://prowlarr.jukeluke.com` — LAN only |
-| Immich | `immich.nix` | `127.0.0.1:2283` | `https://photos.jukeluke.com` — LAN only |
+| Seerr (requests) | `seerr.nix` | `127.0.0.1:5055` | `https://request.jukeluke.com` (**public**, Cloudflare-proxied) |
+| homepage dashboard | `dashboard.nix` | `127.0.0.1:8082` | `https://dash.jukeluke.com` (LAN only) |
+| fanctl | `fans.nix` | `127.0.0.1:8085` | `https://dash.jukeluke.com/fans/` (LAN only) |
+| qBittorrent | `qbittorrent.nix` | `127.0.0.1:8090` | `https://qb.jukeluke.com` (LAN only) |
+| Radarr | `radarr.nix` | `127.0.0.1:7878` | `https://radarr.jukeluke.com` (LAN only) |
+| Sonarr | `sonarr.nix` | `127.0.0.1:8989` | `https://sonarr.jukeluke.com` (LAN only) |
+| Prowlarr | `prowlarr.nix` | `127.0.0.1:9696` | `https://prowlarr.jukeluke.com` (LAN only) |
+| Immich | `immich.nix` | `127.0.0.1:2283` | `https://photos.jukeluke.com` (LAN only) |
 | Plex | `plex.nix` | `0.0.0.0:32400` | `http://192.168.0.10:32400/web` on the LAN; remote via plex.tv |
-| Recyclarr | `recyclarr.nix` | — | daily timer syncing TRaSH Guides into Radarr and Sonarr |
+| Recyclarr | `recyclarr.nix` | none | daily timer syncing TRaSH Guides into Radarr and Sonarr |
 
 Every service that touches `/srv/media` or `/srv/photos` carries
 `RequiresMountsFor`, which is what makes the `nofail` ZFS mounts safe: if the
@@ -25,8 +25,8 @@ the bare directory on the NVMe. Radarr, Sonarr and qBittorrent share the
 and all run with `UMask=0002` (forced on the servarr modules, which hard-set
 `0022` and would leave each file writable only by its creator).
 
-Service-level configuration — indexers, root folders, download clients, API
-keys between the \*arrs, dashboard widgets — is done in each UI after first
+Service-level configuration (indexers, root folders, download clients, API
+keys between the \*arrs, dashboard widgets) is done in each UI after first
 boot and is not in this repo, except where noted below. Dashboard widget API
 keys must go through `services.homepage-dashboard.environmentFiles`, never
 `settings`, because `settings` lands in the world-readable store.
@@ -36,7 +36,7 @@ keys must go through `services.homepage-dashboard.environmentFiles`, never
 Ports 80/443 are forwarded from the router to calliope so Cloudflare can
 reach Seerr. That forwarding is why "LAN only" cannot be left to DNS: anyone
 can connect to the home IP with the right SNI, so every non-public vhost
-carries a `remote_ip` guard (the socket address — unspoofable, unlike
+carries a `remote_ip` guard (the socket address, which is unspoofable, unlike
 headers) and the public vhost accepts only Cloudflare's edge ranges
 (`common/cloudflare-ranges.nix`, shared with nixvps). **Never remove those
 guards.**
@@ -77,7 +77,7 @@ it) stays down by design.
 
 ## qBittorrent over WireGuard
 
-qBittorrent — and nothing else — is routed through the `wg-qb` tunnel.
+qBittorrent, and nothing else, is routed through the `wg-qb` tunnel.
 Because the interface carries `Table = off`, it is inert until this host
 puts traffic on it, which `qbittorrent.nix` does per uid:
 
@@ -91,7 +91,7 @@ puts traffic on it, which `qbittorrent.nix` does per uid:
    v4-only).
 
 (3) is what makes (1) safe to get wrong: if the rule or route is ever
-missing, the packets fall back to `eno1` and are rejected — an outage, never
+missing, the packets fall back to `eno1` and are rejected: an outage, never
 a leak.
 
 ### Why uid, not fwmark
@@ -103,7 +103,7 @@ deliberate. A mark is applied as the packet is transmitted, long after
 source, the kernel refuses it, and it falls back to `eno1` where the kill
 switch rejects it. That failed silently and selectively: libtorrent's own
 sockets are explicitly bound to `wg-qb` (`Session\Interface`) so they always
-worked, while everything unbound — DNS above all — was rejected. A uid rule
+worked, while everything unbound (DNS above all) was rejected. A uid rule
 is consulted during the *original* route lookup, so source selection is
 right from the start. `MASQUERADE` on `wg-qb` is kept only as a cheap no-op
 safety net.
@@ -113,7 +113,7 @@ safety net.
 Split routing needs the tunnel exempted from rpfilter.
 `networking.firewall.checkReversePath` defaults to strict, and packets
 arriving on `wg-qb` carry no mark, so NixOS's `rpfilter --validmark` test
-resolves their source through the main table, finds `eno1`, and drops them —
+resolves their source through the main table, finds `eno1`, and drops them,
 killing every reply to qBittorrent's own connections. The exemption is a
 `RETURN` at the head of `nixos-fw-rpfilter` for `wg-qb`; safe because
 WireGuard has already authenticated every packet on that interface, and
@@ -140,14 +140,14 @@ WireGuard's output precisely and survives the endpoint or port changing.
 ### Port forwarding
 
 `torrentPort` in `qbittorrent.nix` must match the port TorGuard forwards and
-is the single place to change it — the `wg-qb` firewall hole derives from it.
+is the single place to change it; the `wg-qb` firewall hole derives from it.
 Request the port as **both TCP and UDP** (TCP for the peer wire protocol, UDP
 for µTP and DHT), and re-request it after changing endpoints, since the
 forward is issued per server.
 
 ### Configuration and access
 
-`qBittorrent.conf` is **fully declarative** — the module reinstalls it on
+`qBittorrent.conf` is **fully declarative**: the module reinstalls it on
 every service start, so settings changed in the WebUI revert on restart.
 Change them in `serverConfig` instead. Torrent state, categories and RSS live
 in separate files and survive.
@@ -156,7 +156,7 @@ The WebUI has **no login**: `WebUI\AuthSubnetWhitelist` is `127.0.0.1/32`,
 and since Caddy proxies from loopback, every request that can reach it is
 exempt. (This is not `LocalHostAuth`, which was removed in qBittorrent 5.x
 and would be silently ignored.) All access control therefore rests on the LAN
-guard on the `qb.jukeluke.com` vhost — a bigger grant than it appears, since
+guard on the `qb.jukeluke.com` vhost. That is a bigger grant than it appears, since
 the WebUI can run a program on torrent completion, so reaching it means code
 execution as `qbittorrent` with write access to the whole library. If the
 LAN ever stops being a trust boundary, set `Password_PBKDF2` in
@@ -177,8 +177,8 @@ the key Recyclarr uses can never drift from the one the service serves.
 
 Quality profiles, custom formats, file-size limits, naming and the
 propers/repacks setting come from [TRaSH Guides] via Recyclarr
-(`recyclarr.nix`), which re-syncs daily and overwrites anything it manages —
-change those there, not in the UIs. Two profiles each, chosen per movie or
+(`recyclarr.nix`), which re-syncs daily and overwrites anything it manages,
+so change those there, not in the UIs. Two profiles each, chosen per movie or
 show:
 
 | | Profile | |
@@ -222,7 +222,7 @@ Never give it a public vhost.
 - The store is `/srv/photos/immich`, **not** the dataset root: the module
   tmpfiles-enforces `immich:immich 0700` on `mediaLocation`, which would
   fight zfs.nix's `2775 luke media` rule at `/srv/photos`. Keep its
-  `RequiresMountsFor = /srv/photos` — without it the module recreates the
+  `RequiresMountsFor = /srv/photos`; without it the module recreates the
   store on the bare NVMe when the pool fails to import.
 - Don't hand-arrange files in the store; Immich owns the layout. Uploads are
   checksummed so re-imports dedupe. One-off dumps (iCloud takeout) go in

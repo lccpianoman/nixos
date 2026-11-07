@@ -12,8 +12,8 @@ uncommitted files, shows the diff, and asks for confirmation.
 ./rebuild --boot     # activate on next boot
 ```
 
-It refuses to build a configuration for any other host — `nh` would activate
-it on the local machine. To rebuild a server, SSH in and run it there.
+It refuses to build a configuration for any other host, because `nh` would
+activate it on the local machine. To rebuild a server, SSH in and run it there.
 
 With `just`:
 
@@ -35,7 +35,7 @@ each host. Two things need checking after every update.
 `calliope`'s only network link depends on
 [`hosts/calliope/ixgbe-bidi.patch`](../hosts/calliope/ixgbe-bidi.patch),
 which is pinned to the `ixgbe` source layout. A kernel bump can stop it
-applying — which fails the build loudly rather than booting the host with no
+applying, which fails the build loudly rather than booting the host with no
 network, and that is the intended failure mode. Confirm it still applies:
 
 ```bash
@@ -55,8 +55,8 @@ against `pkgs.zfs` before assuming a kernel bump is safe.
 ### Pinned overrides
 
 Several packages are overridden locally until nixpkgs catches up. Each is
-written to self-expire — the overlay compares versions and falls back to
-nixpkgs once it is newer — but the dead code should be removed once that
+written to self-expire (the overlay compares versions and falls back to
+nixpkgs once it is newer), but the dead code should be removed once that
 happens.
 
 | Pin | Where | Remove when |
@@ -64,10 +64,10 @@ happens.
 | NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
 | CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
 | SwayFX `0.6` + scenefx `0.5` | `hosts/nixnotdix/configuration.nix` overlay | nixpkgs `swayfx-unwrapped >= 0.6` and `scenefx >= 0.5` |
-| Minecraft Java 25 override | `hosts/nixcraft/minecraft/server.nix` (`jre_headless = pkgs.jdk25_headless`) | nix-minecraft's `mkTextileServer` picks its JRE from `java_versions` (it still takes nixpkgs' default `jre_headless`, Java 21 — MC 26.2 needs 25) |
+| Minecraft Java 25 override | `hosts/nixcraft/minecraft/server.nix` (`jre_headless = pkgs.jdk25_headless`) | nix-minecraft's `mkTextileServer` picks its JRE from `java_versions` (it still takes nixpkgs' default `jre_headless`, Java 21, and MC 26.2 needs 25) |
 | ixgbe BiDi SFP patch | `hosts/calliope/ixgbe-bidi.{nix,patch}` | upstream `ixgbe` accepts 1000BASE-BX modules whose SFF-8472 byte 6 is blank (currently it requires the `BASEBX10` bit *and* `bitrate_nominal == 0xD`) |
 | Immich `2.7.5` insecure permit | `hosts/calliope/immich.nix` (`permittedInsecurePackages`) | nixpkgs `immich >= 3.0.3` (expected with 26.11). 2.x is EOL with CVE-2026-59258 / CVE-2026-82272; both need an authenticated account, so it is tolerable LAN-only with two trusted users |
-| Caddy `withPlugins` hash | `hosts/calliope/caddy.nix` | Never — it is a vendor hash, not a version pin. A flake update that moves Caddy or the cloudflare plugin fails the build with the replacement hash in the error |
+| Caddy `withPlugins` hash | `hosts/calliope/caddy.nix` | Never; it is a vendor hash, not a version pin. A flake update that moves Caddy or the cloudflare plugin fails the build with the replacement hash in the error |
 
 Check what nixpkgs currently ships:
 
@@ -80,8 +80,8 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 `flake.nix` carries a second nixpkgs, `nixpkgs-unstable`, feeding exactly one
 overlay on `nixnotdix`: `claude-code` and `proton-ge-bin`. Both release far
 faster than the stable channel backports them, and both are safe to take from
-another channel — `claude-code` is a leaf package, and `proton-ge-bin` is a
-prebuilt binary that runs inside Steam's own runtime — so neither mixes
+another channel (`claude-code` is a leaf package, and `proton-ge-bin` is a
+prebuilt binary that runs inside Steam's own runtime), so neither mixes
 unstable libraries into the rest of the closure.
 
 Keep it to those two. Anything else pulled from unstable mixes two channels'
@@ -121,6 +121,6 @@ There is deliberately no Nix formatter and no `formatter` flake output.
 whole-tree run rewrites 18 of 30 files for no change in output. Match the
 surrounding style by hand.
 
-Comments explain *why*, not *what* — especially for anything that was
+Comments explain *why*, not *what*, especially for anything that was
 learned the hard way. If a setting exists because something broke, the
 comment says what broke.

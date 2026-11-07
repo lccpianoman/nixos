@@ -24,7 +24,7 @@ nix run github:Infinidoge/nix-minecraft#nix-modrinth-prefetch -- <versionId>
 Current mods: Fabric API, Carpet, Carpet Extra, Carpet TIS Addition, Servux,
 Lithium, FerriteCore, Krypton, spark.
 
-The JVM heap must never be paged out, so `vm.swappiness` is 10 — swap exists
+The JVM heap must never be paged out, so `vm.swappiness` is 10; swap exists
 only as an OOM backstop.
 
 ### Console
@@ -53,7 +53,7 @@ Backups are local to the VPS; there is no offsite copy.
 ## Users and secrets
 
 `luke` has a password so `wheel` can `sudo` and the Vultr web console is
-usable — SSH is key-only and root login is disabled everywhere, so without it
+usable. SSH is key-only and root login is disabled everywhere, so without it
 there would be no recovery path. The hash is a sops secret
 (`secrets/nixcraft/users.yaml`) marked `neededForUsers`, which lands it in
 `/run/secrets-for-users` before users are created.

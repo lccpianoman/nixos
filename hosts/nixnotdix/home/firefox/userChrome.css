@@ -1,5 +1,5 @@
 /* Firefox chrome. At-delimited placeholders are substituted from theme.nix by
-   firefox.nix — never hard-code a colour here. */
+   firefox.nix; never hard-code a colour here. */
 
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
@@ -166,7 +166,7 @@ findbar,
 /* ===== Clutter ===== */
 /* Pocket, Firefox View and the import nag are Mozilla surfacing its own
    products; the sponsored urlbar rows are ads. The prefs in firefox.nix turn
-   the features off — these rules cover the buttons the prefs leave behind. */
+   the features off; these rules cover the buttons the prefs leave behind. */
 #save-to-pocket-button,
 #pocket-button,
 #import-button,

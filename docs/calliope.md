@@ -5,7 +5,7 @@ Home file and media server on a Dell PowerEdge R730xd.
 | | |
 |---|---|
 | CPU / RAM | 2× Xeon E5-2690 v4 (56 threads), 236 GB |
-| OS disk | Samsung 970 EVO Plus 500 GB NVMe — wiped and managed by disko |
+| OS disk | Samsung 970 EVO Plus 500 GB NVMe, wiped and managed by disko |
 | Data | 12× 10 TB SAS (HUH721010AL4200) behind an LSI SAS3008 HBA, one raidz2 pool |
 | Network | Fibre only: 1000BASE-BX BiDi SFP in the onboard X520, static `192.168.0.10` |
 | Management | iDRAC8 over in-band IPMI (no network cable needed) |
@@ -15,11 +15,11 @@ The host is split into one module per concern under `hosts/calliope/`:
 
 | Module | |
 |---|---|
-| `disko.nix` | Boot NVMe layout — **only** the NVMe, on purpose |
+| `disko.nix` | Boot NVMe layout; **only** the NVMe, on purpose |
 | `ixgbe-bidi.nix` + `.patch` | Kernel patch that makes the fibre link work |
-| `zfs.nix`, `nfs.nix` | The `storage` pool and its export — see [Storage](calliope-storage.md) |
+| `zfs.nix`, `nfs.nix` | The `storage` pool and its export; see [Storage](calliope-storage.md) |
 | `fans.nix` + `fans/` | iDRAC fan control and temperatures |
-| `caddy.nix`, `plex.nix`, `qbittorrent.nix`, `prowlarr.nix`, `radarr.nix`, `sonarr.nix`, `recyclarr.nix`, `seerr.nix`, `immich.nix`, `dashboard.nix` | The media stack — see [Media services](calliope-media.md) |
+| `caddy.nix`, `plex.nix`, `qbittorrent.nix`, `prowlarr.nix`, `radarr.nix`, `sonarr.nix`, `recyclarr.nix`, `seerr.nix`, `immich.nix`, `dashboard.nix` | The media stack; see [Media services](calliope-media.md) |
 
 Claude Code and the GitHub Copilot CLI are installed so this repo can be
 edited on the server. Pushes use `git@github.com:lccpianoman/nixos.git` over
@@ -34,7 +34,7 @@ left unconfigured. A second configured interface on the same subnet means
 two default routes and replies leaving the wrong NIC, which reverse-path
 filtering then drops. Recovery from a dead link is the physical console.
 
-The router must never hand `192.168.0.10` to anything else — either move the
+The router must never hand `192.168.0.10` to anything else: either move the
 DHCP pool to start at `192.168.0.100` or reserve the address for
 `ec:f4:bb:c8:8d:78`.
 
@@ -52,7 +52,7 @@ debugging: openresolv signs them, and an unsigned file makes
 
 `eno1` runs over a pair of 10Gtek 1000BASE-BX BiDi SFPs (`GLC-BX-U`/`-D`,
 1310/1550 nm, single strand). Stock `ixgbe` refuses them and the port never
-gets a netdev — on a fibre-only host, an unreachable machine.
+gets a netdev, which on a fibre-only host means an unreachable machine.
 
 The driver does support BiDi. The problem is that these modules leave
 SFF-8472 byte 6 blank, so the `IXGBE_SFF_BASEBX10_CAPABLE` bit the driver
@@ -62,7 +62,7 @@ and a three-line patch relaxing that check. `allow_unsupported_sfp` does
 function) but is set anyway.
 
 Because the patch is pinned to the `ixgbe` source layout, a kernel bump can
-stop it applying. That fails the build — the intended failure mode. Check it
+stop it applying. That fails the build, which is the intended failure mode. Check it
 after every flake update ([Operations](operations.md#the-ixgbe-kernel-patch)).
 
 ```bash
@@ -120,7 +120,7 @@ Boot the installer in **UEFI** mode, get it online (temporary copper is
 fine), then from a clone of this repo:
 
 ```bash
-# 1. Partition, format and mount under /mnt. Targets the NVMe by-id — the
+# 1. Partition, format and mount under /mnt. Targets the NVMe by-id; the
 #    twelve SAS disks are not in disko.nix and cannot be touched.
 nix --extra-experimental-features 'nix-command flakes' \
   run github:nix-community/disko -- \
@@ -132,7 +132,7 @@ install -d -m 0755 /mnt/etc/ssh
 install -m 0600 /tmp/calliope_host_ed25519     /mnt/etc/ssh/ssh_host_ed25519_key
 install -m 0644 /tmp/calliope_host_ed25519.pub /mnt/etc/ssh/ssh_host_ed25519_key.pub
 
-# 3. Install. Prompts for a root password at the end — set one; it is the
+# 3. Install. Prompts for a root password at the end. Set one; it is the
 #    console recovery path, and SSH root login is disabled regardless.
 nixos-install --flake .#calliope
 
@@ -149,7 +149,7 @@ Unplug the copper, point the chainloader at the NVMe ESP, reboot, and
 If the host key was regenerated rather than seeded, replace
 `keys/calliope.host.pub` with the new `/etc/ssh/ssh_host_ed25519_key.pub`,
 update `.sops.yaml` and `sops updatekeys` the calliope secrets, and rebuild
-nixnotdix — otherwise the pin rejects the connection and sops cannot decrypt.
+nixnotdix. Otherwise the pin rejects the connection and sops cannot decrypt.
 
-After the OS is installed, the pool is created by hand — see
+After the OS is installed, the pool is created by hand; see
 [Storage › Creating the pool](calliope-storage.md#creating-the-pool).

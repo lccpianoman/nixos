@@ -1,7 +1,7 @@
-# calliope — storage
+# calliope: storage
 
 The twelve SAS disks form one ZFS pool, `storage`, exported to the LAN over
-NFSv4. The NixOS side — mounts, permissions, scrub, ZED, snapshots — is
+NFSv4. The NixOS side (mounts, permissions, scrub, ZED, snapshots) is
 `hosts/calliope/zfs.nix` and `nfs.nix`. The pool itself is created by hand.
 
 ## Design
@@ -16,7 +16,7 @@ failures.
   to preserve either.
 - **The cost is resilver time.** Rebuilding one disk reads every other disk
   in the vdev and runs for most of a day at one parity. That is the right
-  trade for replaceable media and the wrong one for anything irreplaceable —
+  trade for replaceable media and the wrong one for anything irreplaceable;
   for that the answer is `storage/documents` plus an offsite copy, not more
   parity. **The pool is not a backup.**
 - **Not declared in Nix.** `hosts/calliope/disko.nix` describes only the
@@ -62,14 +62,14 @@ because NFS puts numeric ids on the wire.
 - **Scrub** monthly (`services.zfs.autoScrub`). A scrub reads every allocated
   block and runs most of a day; weekly would leave the pool scrubbing a third
   of the time.
-- **TRIM** disabled — `zpool trim` errors out on spinning SAS disks.
+- **TRIM** disabled, because `zpool trim` errors out on spinning SAS disks.
 - **Snapshots** via sanoid: `media` 7 daily / 2 monthly; `photos` 14 daily /
   6 monthly; `documents` 24 hourly / 30 daily / 12 monthly; `backups`
   7 daily / 3 monthly. They stand between a misconfigured \*arr and the
   library, and let a compromised backup client not prune its own repo. They
   are not a backup: a pool-wide failure takes them too.
 - **ZED** with verbose notifications. Enclosure LEDs are off because the
-  backplane presents no SES — see [Replacing a disk](#replacing-a-disk).
+  backplane presents no SES; see [Replacing a disk](#replacing-a-disk).
 
 ## Creating the pool
 
@@ -80,7 +80,7 @@ activates.
 
 ```bash
 # 1. Rebuild. This installs ZFS, then exits 4 with
-#    "the following units failed: zfs-import-storage.service" — the pool does
+#    "the following units failed: zfs-import-storage.service". The pool does
 #    not exist yet, so the import cannot succeed and the four /srv mounts never
 #    start. Expected. Two consequences:
 #      - ./rebuild stops before its commit. Nothing is stranded.
@@ -131,14 +131,14 @@ zpool create \
   storage raidz2 "${disks[@]}"
 
 # 7. Datasets. mountpoint=legacy because they are mounted from zfs.nix, not by
-#    zfs-mount.service — see "Mounting" above.
+#    zfs-mount.service; see "Mounting" above.
 zfs create -o mountpoint=legacy -o recordsize=1M                      storage/media
 zfs create -o mountpoint=legacy -o recordsize=1M                      storage/photos
 zfs create -o mountpoint=legacy -o recordsize=128K -o compression=zstd storage/documents
 zfs create -o mountpoint=legacy -o recordsize=1M   -o compression=off  storage/backups
 
 # 8. Mount them and let tmpfiles build the directory tree. Not
-#    `systemctl restart systemd-tmpfiles-setup.service` — that unit sets
+#    `systemctl restart systemd-tmpfiles-setup.service`; that unit sets
 #    RefuseManualStart and will decline.
 systemctl start srv-media.mount srv-photos.mount srv-documents.mount srv-backups.mount
 systemd-tmpfiles --create
@@ -170,7 +170,7 @@ is why the firewall needs a single port: v3 drags in `mountd`, `statd` and
 client and automounts it at `/mnt/media`.
 
 AUTH_SYS trusts whatever uid the client sends, so the export is only as safe
-as the LAN — hence the `192.168.0.0/24` restriction and `root_squash`.
+as the LAN, hence the `192.168.0.0/24` restriction and `root_squash`.
 Anything beyond the LAN should go through a tunnel, not a wider CIDR.
 
 The export carries the `mountpoint` option, the required companion to the
@@ -179,7 +179,7 @@ exporting the bare directory on the root NVMe, and clients would write into
 the OS disk believing they were writing to the pool. Keep it on every export
 added here.
 
-To export another dataset, add a line to `services.nfs.server.exports` — no
+To export another dataset, add a line to `services.nfs.server.exports`; no
 new ports are needed under v4.
 
 ## Replacing a disk
@@ -196,7 +196,7 @@ ls -l /dev/disk/by-id/wwn-0x*        # wwn -> /dev/sdX
 dd if=/dev/sdX of=/dev/null bs=1M status=progress
 ```
 
-Record the result outside this repo — a label on the chassis is best. Then
+Record the result outside this repo; a label on the chassis is best. Then
 replacing a failure is:
 
 ```bash

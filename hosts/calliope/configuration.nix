@@ -14,7 +14,7 @@ in
     ./zfs.nix
     ./nfs.nix
     ./fans.nix
-    # Media stack — see docs/calliope-media.md. caddy.nix is the only
+    # Media stack; see docs/calliope-media.md. caddy.nix is the only
     # module that exposes anything; the rest bind to localhost and are
     # reached through it.
     ./caddy.nix
@@ -41,7 +41,7 @@ in
   #
   # Recovery if the link ever fails is the physical console, not another NIC.
   # The most likely way to lose it is ./ixgbe-bidi.nix failing to apply after a
-  # kernel bump — which breaks the build loudly rather than booting unreachable.
+  # kernel bump, which breaks the build loudly rather than booting unreachable.
   networking.useDHCP = false;
   networking.interfaces.eno1.ipv4.addresses = [{
     address      = "192.168.0.10";
@@ -54,7 +54,7 @@ in
   # Quad9, primary and secondary. Neither the router nor 1.1.1.1 is used:
   # 1.1.1.1 answers ICMP from here but its port 53 is a black hole
   # (CenturyLink intercepts third-party DNS), so as a *secondary* it was a
-  # resolver that could never answer. That mattered more than it sounds — the
+  # resolver that could never answer. That mattered more than it sounds: the
   # router's forwarder intermittently loses the A half of a dual-family
   # lookup, glibc then retried the A against 1.1.1.1 and timed out, so the
   # name resolved to its AAAA alone. This host has no IPv6 route, so anything
@@ -65,7 +65,7 @@ in
 
   networking.firewall.enable = true;
   # 80/443 are Caddy's. They are also forwarded from the router so Cloudflare
-  # can reach request.jukeluke.com — which is why every other vhost in
+  # can reach request.jukeluke.com, which is why every other vhost in
   # caddy.nix carries a LAN-only guard rather than trusting DNS to hide it.
   networking.firewall.allowedTCPPorts = [ sshPort 80 443 ];
 

@@ -2,7 +2,7 @@
 
 Called by Waybar (via weather.sh) every 30 minutes with an explicit
 `-c` city, so the IP-geolocation lookup below only runs for ad-hoc CLI
-use without `-c` — and may pick the wrong city (VPN, ISP routing); it
+use without `-c`, and may pick the wrong city (VPN, ISP routing); it
 warns on stderr when it falls back. Prints `N/A` and exits non-zero on
 any failure so the bar shows something sensible.
 """

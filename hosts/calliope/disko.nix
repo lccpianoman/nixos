@@ -1,7 +1,7 @@
 { ... }:
 
 # Declarative disk layout for calliope's boot/root NVMe, consumed by disko at
-# install time. Nothing here is read at runtime — it exists so the disk can be
+# install time. Nothing here is read at runtime; it exists so the disk can be
 # recreated from scratch with no manual fdisk work.
 #
 # Only the NVMe is declared. The twelve 10 TB SAS disks behind the LSI SAS3008
@@ -51,6 +51,6 @@
 
   # No swap. The machine has 236 GB of RAM for a file server, and once the
   # `storage` pool is adopted the ARC is the thing that should be free to grow
-  # into spare memory — a swapfile on root would only give the kernel somewhere
+  # into spare memory. A swapfile on root would only give the kernel somewhere
   # to push ARC-adjacent pages it should have evicted instead.
 }

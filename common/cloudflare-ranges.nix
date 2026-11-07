@@ -1,7 +1,7 @@
 # Cloudflare's published edge ranges (https://www.cloudflare.com/ips/), as a
 # list so each importer can join or filter them as its consumer needs. Used by
 # every Caddy that sits behind the orange cloud (trusted_proxies) and by
-# fail2ban ignoreip on nixvps — keep those consumers on this one list so they
+# fail2ban ignoreip on nixvps. Keep those consumers on this one list so they
 # can never drift apart. Cloudflare changes these rarely, but check the URL
 # above if proxied requests start logging edge IPs instead of client IPs.
 [

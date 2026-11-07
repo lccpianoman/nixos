@@ -5,19 +5,19 @@ Operational documentation for the hosts in this flake. The top-level
 
 ## General
 
-- [Operations](operations.md) — rebuilding, updating, pinned overrides,
+- [Operations](operations.md): rebuilding, updating, pinned overrides,
   checks, code style
-- [Keys and secrets](secrets.md) — SSH key layout, sops workflow, the
+- [Keys and secrets](secrets.md): SSH key layout, sops workflow, the
   pre-commit hook
 
 ## Hosts
 
-- [nixnotdix](nixnotdix.md) — gaming / dev workstation
-- [nixvps](nixvps.md) — Linode VPS running Vaultwarden
-- [nixcraft](nixcraft.md) — Vultr VPS running a Minecraft server
-- [calliope](calliope.md) — Dell R730xd home server
-  - [Storage](calliope-storage.md) — ZFS pool, NFS export, disk replacement
-  - [Media services](calliope-media.md) — Caddy, qBittorrent over WireGuard,
+- [nixnotdix](nixnotdix.md): gaming / dev workstation
+- [nixvps](nixvps.md): Linode VPS running Vaultwarden
+- [nixcraft](nixcraft.md): Vultr VPS running a Minecraft server
+- [calliope](calliope.md): Dell R730xd home server
+  - [Storage](calliope-storage.md): ZFS pool, NFS export, disk replacement
+  - [Media services](calliope-media.md): Caddy, qBittorrent over WireGuard,
     the \*arr stack, Plex, Seerr, Immich
 
 Agent-facing notes (hard rules, pins to re-check, things that have broken

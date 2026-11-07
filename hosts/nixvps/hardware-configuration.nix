@@ -19,7 +19,7 @@
     { device = "/dev/sdb"; }
   ];
 
-  # Serial console for Linode's Lish (reviewed 2026-07: kept as-is — Lish is
+  # Serial console for Linode's Lish (reviewed 2026-07: kept as-is, since Lish is
   # gated by the Linode account, and a GRUB password would hinder recovery
   # without stopping anyone who already has account access).
   boot.kernelParams = [ "console=ttyS0,19200n8" ];

@@ -167,7 +167,7 @@ function render(s) {
   $("system").innerHTML = sys.map((t) => tile(t, s.bands)).join("") || '<span class="muted">No readings</span>';
   $("drives").innerHTML = drv.map((t) => tile(t, s.bands)).join("") || '<span class="muted">No readings</span>';
   $("fans").innerHTML = s.fans.map((f) => `<div class="tile${f.ok ? "" : " danger"}">
-    <div class="n">${esc(f.name)}</div><div class="v">${f.rpm == null ? "—" : f.rpm.toLocaleString()}</div></div>`).join("");
+    <div class="n">${esc(f.name)}</div><div class="v">${f.rpm == null ? "n/a" : f.rpm.toLocaleString()}</div></div>`).join("");
 
   $("updated").textContent = s.updated ? "Updated " + new Date(s.updated * 1000).toLocaleTimeString() : "";
   $("ranges").innerHTML = "<tr><th></th>" + NAMES.map((n) => `<th class="${n}">${n}</th>`).join("") + "</tr>" +

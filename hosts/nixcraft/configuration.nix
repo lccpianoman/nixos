@@ -29,7 +29,7 @@ in
     # server console tmux socket without sudo.
     extraGroups = [ "wheel" "minecraft" ];
     # Without a password luke could not sudo (wheel needs one) and the Vultr
-    # web console would be unusable, since root login is disabled everywhere —
+    # web console would be unusable, since root login is disabled everywhere:
     # a key-only box with no recovery path.
     hashedPasswordFile = config.sops.secrets."luke-hashed-password".path;
   };
@@ -42,7 +42,7 @@ in
     neededForUsers = true;
   };
 
-  # The JVM heap must never be swapped — a paged-out heap turns a GC pause
+  # The JVM heap must never be swapped: a paged-out heap turns a GC pause
   # into a multi-second freeze for everyone online. Swap exists only as an
   # OOM backstop, so make the kernel reach for it as late as possible.
   boot.kernel.sysctl."vm.swappiness" = 10;

@@ -30,7 +30,7 @@ Plus a Vaultwarden-specific fail2ban jail that watches the journal for failed
 logins (5 tries).
 
 Vaultwarden's secret environment is a sops secret mounted at
-`/run/secrets/vaultwarden.env` — see [Keys and secrets](secrets.md).
+`/run/secrets/vaultwarden.env`; see [Keys and secrets](secrets.md).
 
 ## Backups
 

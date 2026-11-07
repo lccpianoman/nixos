@@ -1,5 +1,5 @@
 /* Start page styling. At-delimited placeholders are substituted from
-   theme.nix by firefox.nix. No JS runs here — new-tab-override injects this
+   theme.nix by firefox.nix. No JS runs here: new-tab-override injects this
    page with insertAdjacentHTML, which drops <script>, so keep it CSS-only. */
 
 * {

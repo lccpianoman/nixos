@@ -6,7 +6,7 @@
 # The tunnel is deliberately inert: secrets/calliope/wg-qb.conf carries
 # `Table = off`, so wg-quick brings the interface up without installing any
 # route or rule. Left to itself, nothing on this host would use it. That is
-# the point — the provider's stock config has `AllowedIPs = 0.0.0.0/0` and no
+# the point: the provider's stock config has `AllowedIPs = 0.0.0.0/0` and no
 # Table line, which makes wg-quick install a host-wide default route and drag
 # every service onto the VPN. It also breaks inbound Seerr outright: Cloudflare
 # connects on eno1, and Caddy's reply to a public address would egress via
@@ -23,7 +23,7 @@
 #      to leave by another interface.
 #
 # (3) is what makes (1) safe to get wrong. If the rule or route is ever
-# missing, qBittorrent's packets fall back to eno1 and are rejected — the
+# missing, qBittorrent's packets fall back to eno1 and are rejected, so the
 # failure mode is an outage, never a leak.
 #
 # This deliberately keys on the uid rather than on an fwmark set in mangle
@@ -34,7 +34,7 @@
 # which the kernel then refuses, so the packet falls back to eno1 and is
 # rejected. It worked for libtorrent's own sockets only because those are
 # explicitly bound to wg-qb (Session\Interface below) and so had the right
-# source all along — while everything unbound, DNS lookups most importantly,
+# source all along, while everything unbound, DNS lookups most importantly,
 # was silently rejected. A uid rule is consulted during the *original* route
 # lookup, so source selection is correct from the start and no reroute,
 # marking or address rewriting is involved.
@@ -50,7 +50,7 @@ let
   routeTable = 51820;
 
   # Pinned so the routing rule can name it. The module leaves this to dynamic
-  # allocation, which would silently stop matching if it ever shifted — and a
+  # allocation, which would silently stop matching if it ever shifted, and a
   # rule that no longer matches means qBittorrent is cut off by the kill
   # switch. 996 is what it already holds, so pinning changes nothing on disk.
   qbtUid = 996;
@@ -62,7 +62,7 @@ let
   # Every packet qBittorrent sends crosses the OUTPUT chain twice: once as
   # plaintext routed to wg-qb, then again as the encrypted outer UDP packet
   # addressed to the VPN endpoint and routed out eno1. WireGuard does not
-  # orphan the skb in between, so that outer packet still carries uid 996 —
+  # orphan the skb in between, so that outer packet still carries uid 996,
   # and a naive per-uid kill switch rejects the tunnel's own traffic. The
   # symptom is unmistakable once you know it: the ACCEPT and REJECT counters
   # stay exactly equal, because each accepted inner packet produces one
@@ -85,7 +85,7 @@ let
     set -eu
     ip="${pkgs.iproute2}/bin/ip"
     # Tag WireGuard's encrypted output so the kill switch can tell it apart
-    # from qBittorrent's own traffic. No `ip rule` matches this mark — it is
+    # from qBittorrent's own traffic. No `ip rule` matches this mark; it is
     # purely a label for the firewall.
     ${pkgs.wireguard-tools}/bin/wg set wg-qb fwmark ${toString wgFwMark}
     # `replace` and the del/add pair keep this idempotent across restarts.
@@ -150,7 +150,7 @@ in
       LegalNotice.Accepted = true;
       BitTorrent.Session = {
         # Binds libtorrent's sockets to the tunnel, which also gives them the
-        # right source address. These are the qBittorrent 5.x keys — the old
+        # right source address. These are the qBittorrent 5.x keys; the old
         # Preferences\Connection\InterfaceName location is dead.
         Interface       = "wg-qb";
         InterfaceName   = "wg-qb";
@@ -178,7 +178,7 @@ in
         ServerDomains = "qb.jukeluke.com";
 
         # No login prompt. Caddy connects from 127.0.0.1, so whitelisting
-        # that single address bypasses auth for every request it proxies —
+        # that single address bypasses auth for every request it proxies,
         # which is all of them, the WebUI being bound to loopback.
         #
         # Deliberately NOT LocalHostAuth, the option usually cited for this:
@@ -202,7 +202,7 @@ in
   # case and only rewrites an address that somehow arrived wrong. Cheap
   # insurance against the exact failure the fwmark approach had.
   #
-  # No IPv6 equivalent on purpose — TorGuard issues a v4-only tunnel
+  # No IPv6 equivalent on purpose: TorGuard issues a v4-only tunnel
   # (AllowedIPs is 0.0.0.0/0, with no ::/0), so there is nowhere for v6 to go
   # and the ip6tables REJECT below is the whole v6 policy.
   networking.firewall.extraCommands = lib.mkAfter ''
@@ -227,7 +227,7 @@ in
 
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -o lo    -j ACCEPT
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent -o wg-qb -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -o wg-qb -j ACCEPT
-    # The tunnel's own encrypted output, which still carries uid 996 — see
+    # The tunnel's own encrypted output, which still carries uid 996; see
     # wgFwMark above. Without this the kill switch strangles the tunnel.
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent -m mark --mark ${toString wgFwMark} -j ACCEPT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent -m mark --mark ${toString wgFwMark} -j ACCEPT
     iptables  -C OUTPUT -m owner --uid-owner qbittorrent          -j REJECT 2>/dev/null || iptables  -A OUTPUT -m owner --uid-owner qbittorrent          -j REJECT

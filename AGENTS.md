@@ -12,7 +12,7 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
-| `calliope` | Dell R730xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see `docs/calliope-media.md`) |
+| `calliope` | Dell R730xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy; see `docs/calliope-media.md`) |
 
 ## Repo layout (high-level)
 ```text
@@ -40,7 +40,7 @@ secrets/
 ```
 
 ## Keys and secrets
-- `keys/` is public keys only — safe to commit, safe to publish.
+- `keys/` is public keys only: safe to commit, safe to publish.
 - Private keys never leave the machine that generated them; servers pull this
   repo over HTTPS, so they hold no key.
 - Secrets are sops-nix encrypted under `secrets/`, decrypted at activation with
@@ -53,14 +53,17 @@ secrets/
 ## Hard rules
 - Never run `./rebuild` or `nix flake update` in automation; Luke runs those manually.
 - After any Luke-run `nix flake update`, re-check pin removal conditions and report.
-- No Nix formatter, on purpose — don't run `nix fmt` and don't re-add a
+- No Nix formatter, on purpose: don't run `nix fmt` and don't re-add a
   `formatter` output. `nixfmt` collapses the aligned `=` blocks this repo uses
   and rewrites 18 of 30 files for zero change in output. Match local style by
   hand; see `docs/operations.md` "Code style".
 - Never add calliope's twelve SAS disks to `hosts/calliope/disko.nix`, and never
   describe the `storage` pool declaratively. That file covering only the boot
   NVMe is what makes `disko --mode destroy,format,mount` unable to wipe 82 TiB
-  of data. The pool is created by hand — see `docs/calliope-storage.md`.
+  of data. The pool is created by hand; see `docs/calliope-storage.md`.
+- No em dashes anywhere: not in docs, not in code comments, not in commit
+  messages. Use a comma, colon, semicolon, parentheses or a new sentence
+  instead. `git grep -P '\x{2014}'` must match nothing.
 
 ## Active pins to re-check after flake updates
 The table of pinned overrides, where each lives and when it can be removed,
@@ -74,7 +77,7 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 - `rebuild` only applies to the local host where it runs.
 - `flake.nix` has a second nixpkgs input, `nixpkgs-unstable`, feeding exactly
   one overlay on `nixnotdix`: `claude-code` and `proton-ge-bin`. Keep it to
-  those two — both are leaf/prebuilt packages; pulling anything else from
+  those two, both leaf/prebuilt packages; pulling anything else from
   unstable mixes two channels' stdenv into one closure. It is `import`ed with
   `prev.config` rather than read from `legacyPackages` because `claude-code`
   is unfree and `legacyPackages` carries its own config. See
@@ -87,7 +90,7 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   carry a `remote_ip` LAN guard that must never be removed, because 80/443 are
   forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
   declarative (rewritten every start) and only that service is routed through
-  the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch —
+  the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch;
   details in `docs/calliope-media.md`. Do not "simplify" that to an fwmark
   set in `mangle OUTPUT`: a mark lands after `connect()` has already pinned
   the socket's source address, so the reroute is refused and everything not
@@ -99,7 +102,7 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   orphan the skb, so the outer packet still carries uid 996. Without the
   exemption the kill switch strangles the tunnel: nothing reaches the VPN
   while `wg show` looks perfectly healthy. Diagnose with
-  `sudo iptables -L OUTPUT -nvx | grep 996` — exactly equal ACCEPT and REJECT
+  `sudo iptables -L OUTPUT -nvx | grep 996`: exactly equal ACCEPT and REJECT
   counters mean the outer packets are being killed.
 - `secrets/calliope/wg-qb.conf` MUST carry `Table = off` and MUST NOT carry a
   `DNS =` line. Without the first, `AllowedIPs = 0.0.0.0/0` gives wg-quick a
@@ -120,27 +123,27 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   `hosts/calliope/zfs.nix`, not by `zfs-mount.service`: `systemd.targets.zfs` is
   only `wantedBy` multi-user.target, never ordered before it, so ZFS-native
   mounts race the services reading them. Keep new datasets in `fileSystems`, and
-  keep `nofail` on them — an unimportable pool must never hold up this host's
+  keep `nofail` on them; an unimportable pool must never hold up this host's
   boot. Services that read the pool get `RequiresMountsFor` instead.
-- Immich (`hosts/calliope/immich.nix`) is LAN-only on purpose — never give it
+- Immich (`hosts/calliope/immich.nix`) is LAN-only on purpose. Never give it
   a public/Cloudflare vhost. Its `mediaLocation` is `/srv/photos/immich`, not
   `/srv/photos`: the module tmpfiles-enforces `immich:immich 0700` on that
   path, which would fight zfs.nix's `2775 luke media` rule at the dataset
-  root. Keep its `RequiresMountsFor = /srv/photos` — without it the module's
+  root. Keep its `RequiresMountsFor = /srv/photos`; without it the module's
   tmpfiles rule recreates the store on the bare NVMe when the pool fails to
   import, and uploads land on the OS disk.
 - `calliope` builds a patched kernel, so ZFS builds its module against it from
-  source — a `nix flake update` that moves the LTS kernel past what the packaged
+  source, so a `nix flake update` that moves the LTS kernel past what the packaged
   ZFS supports fails the build. Check `boot.kernelPackages.kernel.version`
   against `pkgs.zfs` before assuming a kernel bump is safe.
 - Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
-  The CSS files carry at-delimited placeholders substituted from `theme.nix` —
+  The CSS files carry at-delimited placeholders substituted from `theme.nix`;
   never hard-code a colour in them. One store-written `file://` document is both
   the homepage and the new tab page: `home/firefox/newtab.cfg` is an autoconfig
   script (appended to the wrapper's `mozilla.cfg` via `extraPrefsFiles`) that
   reads the `nixos.newtab.url` pref and assigns `AboutNewTab.newTabURL`. Firefox
   blanks the URL bar for any URL equal to that one (`isInitialPage` in
-  `browser.js`), which is the whole point — keep the two prefs identical.
+  `browser.js`), which is the whole point, so keep the two prefs identical.
   `extraPrefsFiles` entries must be derivations, not bare paths: the wrapper
   splices them with `toString`, which strips the string context a path needs to
   become a build input.

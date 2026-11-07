@@ -50,7 +50,7 @@ if [ "$TARGET_HOST" != "$(hostname)" ]; then
 fi
 
 if $BOOT_ONLY; then
-    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${YELLOW} (boot only — reboot to activate)${NC}"
+    echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${YELLOW} (boot only; reboot to activate)${NC}"
 else
     echo -e "${BLUE}Rebuilding NixOS configuration for: ${GREEN}${TARGET_HOST}${NC}"
 fi
@@ -94,14 +94,14 @@ else
     NH_CMD=(nh os switch)
 fi
 if ! "${NH_CMD[@]}" . -H "${TARGET_HOST}"; then
-    echo -e "\n${RED}Rebuild failed — changes are staged but not committed${NC}" >&2
+    echo -e "\n${RED}Rebuild failed: changes are staged but not committed${NC}" >&2
     exit 1
 fi
 
 GENERATION=$(nh os info | awk '/\(current\)/ {print $1; exit}' || true)
 if [[ ! "$GENERATION" =~ ^[0-9]+$ ]]; then
     echo -e "${RED}Error: could not determine current generation from 'nh os info'${NC}" >&2
-    echo -e "${YELLOW}Rebuild succeeded — commit and push manually${NC}" >&2
+    echo -e "${YELLOW}Rebuild succeeded; commit and push manually${NC}" >&2
     exit 1
 fi
 
@@ -115,6 +115,6 @@ else
 fi
 
 echo -e "${BLUE}Pushing changes...${NC}"
-git push || echo -e "${YELLOW}Push failed — push manually with: git push${NC}"
+git push || echo -e "${YELLOW}Push failed; push manually with: git push${NC}"
 
 echo -e "${GREEN}Done!${NC}"

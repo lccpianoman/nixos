@@ -3,8 +3,8 @@
 [![checks](https://github.com/lccpianoman/nixos/actions/workflows/check.yml/badge.svg)](https://github.com/lccpianoman/nixos/actions/workflows/check.yml)
 [![NixOS 26.05](https://img.shields.io/badge/NixOS-26.05-5277C3?logo=nixos&logoColor=white)](https://nixos.org)
 
-Declarative [NixOS](https://nixos.org) configuration for four machines — a
-desktop, two VPSes and a home file server — managed from a single flake.
+Declarative [NixOS](https://nixos.org) configuration for four machines (a
+desktop, two VPSes and a home file server), managed from a single flake.
 Secrets are encrypted into the repo with [sops-nix], so the whole thing is
 public and still rebuilds every host from a clean clone.
 
@@ -27,7 +27,7 @@ rebuild              build, switch, commit and push the local host
 justfile             task runner: rebuild, checks, hooks, console helpers
 common/              settings shared by every host (and every server)
 hosts/<name>/        one directory per machine
-keys/                public SSH keys only — admin key and server host keys
+keys/                public SSH keys only: admin key and server host keys
 secrets/             sops-encrypted secrets, one directory per host
 .sops.yaml           sops recipients
 .githooks/           pre-commit guard against plaintext in secrets/
@@ -57,8 +57,8 @@ and the pinned overrides to re-check after a flake update.
 | [nixvps](docs/nixvps.md) | Vaultwarden, backups and restore |
 | [nixcraft](docs/nixcraft.md) | Minecraft server, console, backups, install |
 | [calliope](docs/calliope.md) | Hardware, fibre link, fans, install |
-| [calliope — storage](docs/calliope-storage.md) | ZFS pool design and creation, NFS, replacing a disk |
-| [calliope — media services](docs/calliope-media.md) | Caddy, VPN-routed qBittorrent, Radarr/Sonarr/Prowlarr, Plex, Seerr, Immich |
+| [calliope: storage](docs/calliope-storage.md) | ZFS pool design and creation, NFS, replacing a disk |
+| [calliope: media services](docs/calliope-media.md) | Caddy, VPN-routed qBittorrent, Radarr/Sonarr/Prowlarr, Plex, Seerr, Immich |
 
 ## Conventions
 

@@ -1,11 +1,11 @@
-# Host constants for nixnotdix — monitors, workspace layout, weather.
+# Host constants for nixnotdix: monitors, workspace layout, weather.
 # Theme values (colors, fonts) live in theme.nix; keep host facts here so
 # sway.nix / waybar.nix don't each hard-code them.
 rec {
   # Single-monitor setup: ASUS VG278 on DP-1. The panel's top mode reports as
   # 144.001Hz; sway picks the nearest match, so "144Hz" resolves to it.
   # To add a monitor back, add an entry here and give it a slice of
-  # workspaceOutputs — sway.nix builds its output block from this attrset.
+  # workspaceOutputs; sway.nix builds its output block from this attrset.
   monitors = {
     primary = {
       name = "DP-1";

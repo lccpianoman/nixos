@@ -6,7 +6,7 @@
 {
   services.nfs.server = {
     enable = true;
-    # root_squash and a subnet restriction do the real work here — AUTH_SYS
+    # root_squash and a subnet restriction do the real work here. AUTH_SYS
     # trusts whatever uid the client sends, so this export is only as safe as
     # the LAN. Anything beyond it should go through a tunnel, not a wider CIDR.
     #

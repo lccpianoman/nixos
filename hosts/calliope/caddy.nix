@@ -31,8 +31,8 @@ let
 
   # 443 is forwarded from the router for the public vhost, so DNS pointing a
   # name at 192.168.0.10 hides nothing: anyone can connect to the home IP with
-  # that SNI and Host header. remote_ip is the socket address — not a header,
-  # not spoofable — and is what actually keeps these vhosts off the internet.
+  # that SNI and Host header. remote_ip is the socket address (not a header,
+  # not spoofable) and is what actually keeps these vhosts off the internet.
   lanRanges = "192.168.0.0/24 127.0.0.1/8 ::1";
 
   lanOnly = upstream: ''
@@ -58,7 +58,7 @@ in
 
     # Stock caddy has no DNS providers; this rebuilds it with the cloudflare
     # module so acme_dns works. The hash pins the vendored Go dependencies and
-    # must be refreshed whenever the plugin version or caddy itself moves —
+    # must be refreshed whenever the plugin version or caddy itself moves;
     # the build fails loudly with the new hash when it does.
     package = pkgs.caddy.withPlugins {
       plugins = [ "github.com/caddy-dns/cloudflare@v0.2.4" ];
@@ -76,8 +76,8 @@ in
     '';
 
     # Public, via Cloudflare. The matcher drops anything that reaches the
-    # forwarded port directly instead of through Cloudflare's edge — same
-    # ranges the global trusted_proxies uses.
+    # forwarded port directly instead of through Cloudflare's edge, using the
+    # same ranges the global trusted_proxies uses.
     virtualHosts."request.jukeluke.com".extraConfig = ''
       @direct not remote_ip ${cloudflareRanges}
       abort @direct
@@ -88,14 +88,14 @@ in
     '';
 
     # LAN-only. homepage-dashboard has no auth of its own, and the *arr UIs
-    # and qBittorrent are admin surfaces — none of these may answer the WAN.
+    # and qBittorrent are admin surfaces. None of these may answer the WAN.
     virtualHosts."qb.jukeluke.com".extraConfig       = lanOnly "127.0.0.1:8090";
     virtualHosts."radarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:7878";
     virtualHosts."sonarr.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:8989";
     virtualHosts."prowlarr.jukeluke.com".extraConfig = lanOnly "127.0.0.1:9696";
 
     # Immich has its own auth, but the library behind it is the family photo
-    # archive — it stays off the WAN like the admin UIs. The phones' backup
+    # archive, so it stays off the WAN like the admin UIs. The phones' backup
     # uploads go through this vhost, so don't cap request bodies here.
     virtualHosts."photos.jukeluke.com".extraConfig   = lanOnly "127.0.0.1:2283";
 
