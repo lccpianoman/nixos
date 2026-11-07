@@ -1,9 +1,10 @@
 # nixos config (agent notes)
 
 ## Source of truth
-- `README.md` is the human/operational source of truth.
+- `README.md` is the overview; `docs/` is the human/operational source of
+  truth (one page per host, plus `docs/operations.md` and `docs/secrets.md`).
 - This file is for agent instructions and quick repo context.
-- If they drift, trust `README.md` and update this file.
+- If they drift, trust `docs/` and update this file.
 
 ## Hosts
 | Host | Role |
@@ -11,13 +12,15 @@
 | `nixnotdix` | Gaming/dev workstation (Sway, NVIDIA, Zen kernel) |
 | `nixvps` | Linode VPS (Vaultwarden behind Caddy) |
 | `nixcraft` | Vultr VPS (Minecraft server) |
-| `calliope` | Dell R730xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see README "Media services") |
+| `calliope` | Dell R730xd home file server (fibre-only, patched ixgbe, 12-disk raidz2 `storage` pool, media stack behind Caddy — see `docs/calliope-media.md`) |
 
 ## Repo layout (high-level)
 ```text
 flake.nix
 flake.lock
 rebuild
+justfile
+docs/
 common/
   default.nix
   server-base.nix
@@ -53,23 +56,16 @@ secrets/
 - No Nix formatter, on purpose — don't run `nix fmt` and don't re-add a
   `formatter` output. `nixfmt` collapses the aligned `=` blocks this repo uses
   and rewrites 18 of 30 files for zero change in output. Match local style by
-  hand; see README's Checks section.
+  hand; see `docs/operations.md` "Code style".
 - Never add calliope's twelve SAS disks to `hosts/calliope/disko.nix`, and never
   describe the `storage` pool declaratively. That file covering only the boot
   NVMe is what makes `disko --mode destroy,format,mount` unable to wipe 82 TiB
-  of data. The pool is created by hand — see README's "Storage pool".
+  of data. The pool is created by hand — see `docs/calliope-storage.md`.
 
 ## Active pins to re-check after flake updates
-| Pin | Where | Remove when |
-|---|---|---|
-| NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
-| CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
-| SwayFX `0.6` + scenefx `0.5` | `hosts/nixnotdix/configuration.nix` overlay | nixpkgs `swayfx-unwrapped >= 0.6` and `scenefx >= 0.5` |
-| Minecraft Java 25 override | `hosts/nixcraft/minecraft/server.nix` (`jre_headless = pkgs.jdk25_headless`) | nix-minecraft's `mkTextileServer` picks its JRE from `java_versions` (it still takes nixpkgs' default `jre_headless`, Java 21 — MC 26.2 needs 25) |
-| ixgbe BiDi SFP patch | `hosts/calliope/ixgbe-bidi.{nix,patch}` | upstream `ixgbe` accepts 1000BASE-BX modules whose SFF-8472 byte 6 is blank (currently it requires the `BASEBX10` bit *and* `bitrate_nominal == 0xD`) |
-| Immich `2.7.5` insecure permit | `hosts/calliope/immich.nix` (`permittedInsecurePackages`) | nixpkgs `immich >= 3.0.3` (expected with 26.11) — then drop the permit; 2.x is EOL with CVE-2026-59258 / CVE-2026-82272, both needing an authenticated account, tolerable LAN-only with two trusted users |
-
-Check with:
+The table of pinned overrides, where each lives and when it can be removed,
+is `docs/operations.md` "Pinned overrides". Keep that table current when
+adding or removing a pin. Check what nixpkgs ships with:
 ```bash
 nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs.nixpkgs.legacyPackages.x86_64-linux; in { nvidia = p.linuxPackages_zen.nvidiaPackages.stable.version; clonehero = p.clonehero.version; immich = p.immich.version; swayfx = p.swayfx-unwrapped.version; scenefx = p.scenefx.version; }'
 ```
@@ -77,11 +73,12 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 ## Notes
 - `rebuild` only applies to the local host where it runs.
 - `flake.nix` has a second nixpkgs input, `nixpkgs-unstable`, feeding exactly
-  one overlay: `claude-code` on `nixnotdix`. Keep it to that one package —
-  pulling anything else from unstable mixes two channels' stdenv into one
-  closure. It is `import`ed with `prev.config` rather than read from
-  `legacyPackages` because `claude-code` is unfree and `legacyPackages` carries
-  its own config. See README's "The unstable input".
+  one overlay on `nixnotdix`: `claude-code` and `proton-ge-bin`. Keep it to
+  those two — both are leaf/prebuilt packages; pulling anything else from
+  unstable mixes two channels' stdenv into one closure. It is `import`ed with
+  `prev.config` rather than read from `legacyPackages` because `claude-code`
+  is unfree and `legacyPackages` carries its own config. See
+  `docs/operations.md` "The unstable input".
 - `nixnotdix` uses home-manager; `nixvps`, `nixcraft` and `calliope` are
   NixOS-only.
 - `calliope`'s media services (`hosts/calliope/{caddy,plex,qbittorrent,
@@ -91,7 +88,7 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
   declarative (rewritten every start) and only that service is routed through
   the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch —
-  details in README's "Media services". Do not "simplify" that to an fwmark
+  details in `docs/calliope-media.md`. Do not "simplify" that to an fwmark
   set in `mangle OUTPUT`: a mark lands after `connect()` has already pinned
   the socket's source address, so the reroute is refused and everything not
   explicitly bound to `wg-qb` (DNS especially) silently falls back to `eno1`

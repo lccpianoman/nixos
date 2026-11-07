@@ -7,7 +7,7 @@
 # Certificates come from Let's Encrypt via DNS-01 (`acme_dns cloudflare`),
 # because the LAN-only names resolve to 192.168.0.10 and can never answer an
 # HTTP-01 challenge from the internet. That needs two things set up by hand,
-# both described in README's "Media services":
+# both described in docs/calliope-media.md "One-time setup":
 #   - DNS: request.jukeluke.com proxied (orange) to the home IP; dash/qb/
 #     radarr/sonarr/prowlarr/photos.jukeluke.com unproxied (grey) A records
 #     to 192.168.0.10.

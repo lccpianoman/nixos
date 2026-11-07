@@ -14,7 +14,7 @@ in
     ./zfs.nix
     ./nfs.nix
     ./fans.nix
-    # Media stack — see README's "Media services". caddy.nix is the only
+    # Media stack — see docs/calliope-media.md. caddy.nix is the only
     # module that exposes anything; the rest bind to localhost and are
     # reached through it.
     ./caddy.nix
@@ -82,9 +82,9 @@ in
     # has to keep matching nixnotdix. 1000 is what both hosts already hold.
     uid          = 1000;
     extraGroups  = [ "wheel" "media" ];
-    # No password is declared here. This repo is public, and calliope has no
-    # sops recipient yet (see README). users.mutableUsers keeps its default of
-    # true, so set one once from the installer:
+    # No password is declared here: this repo is public and, unlike nixcraft,
+    # calliope's hash was never moved into sops. users.mutableUsers keeps its
+    # default of true, so set one once from the installer:
     #     nixos-enter --root /mnt -c 'passwd luke'
     # SSH stays key-only either way (common/server-base.nix); the password
     # exists so wheel can sudo and so the console is usable.

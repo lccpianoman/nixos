@@ -4,7 +4,7 @@
 # the datasets, permissions and maintenance timers that go with it.
 #
 # The pool and its datasets are NOT declared here. They are created once by
-# hand — see README's "Storage pool" section — and that is deliberate:
+# hand — see docs/calliope-storage.md — and that is deliberate:
 # hosts/calliope/disko.nix covers only the boot NVMe, so a
 # `disko --mode destroy,format,mount` run can never reach these twelve disks.
 # Describing them in Nix would trade that standing guarantee for a convenience
@@ -83,7 +83,7 @@
     ZED_NOTIFY_VERBOSE = true;
     # The R730xd backplane does not present SES through the SAS3008
     # (/sys/class/enclosure is empty), so ZED cannot blink a failed disk.
-    # Identify a replacement by serial instead — see README.
+    # Identify a replacement by serial instead — see docs/calliope-storage.md.
     ZED_USE_ENCLOSURE_LEDS = false;
   };
 

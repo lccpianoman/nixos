@@ -103,7 +103,7 @@ in
 {
   # The provider-issued tunnel, kept whole as one secret because the key,
   # address and endpoint arrive together. Committed as a REPLACE_ME
-  # placeholder (see README's "Media services"), so until it is real wg-qb
+  # placeholder (see docs/calliope-media.md), so until it is real wg-qb
   # fails to start and qBittorrent, which bindsTo it, stays down.
   # restartUnits is what makes editing this secret take effect: the unit text
   # does not change when only the secret's contents do, so without it a
