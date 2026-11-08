@@ -3,10 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # Tracked solely for claude-code and proton-ge-bin, which release far
-    # faster than the stable channel backports them. claude-code is built
-    # against unstable's stdenv but is a leaf package; proton-ge-bin is a
-    # prebuilt binary run inside Steam's own runtime, so neither mixes
+    # Tracked solely for claude-code, github-copilot-cli and proton-ge-bin,
+    # which release far faster than the stable channel backports them.
+    # claude-code is built against unstable's stdenv but is a leaf package;
+    # github-copilot-cli is GitHub's prebuilt release tarball; proton-ge-bin
+    # is a prebuilt binary run inside Steam's own runtime, so none mixes
     # unstable libraries into the rest of the closure. Nothing else may be
     # taken from this input.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -66,14 +67,15 @@
       {
         nixpkgs.overlays = [
           nur.overlays.default
-          # claude-code and proton-ge-bin only, straight from unstable; see
-          # the input comment. Imported rather than read from legacyPackages
-          # so it picks up this host's nixpkgs.config (claude-code is unfree).
+          # claude-code, github-copilot-cli and proton-ge-bin only, straight
+          # from unstable; see the input comment. Imported rather than read
+          # from legacyPackages so it picks up this host's nixpkgs.config
+          # (claude-code and github-copilot-cli are unfree).
           (final: prev: {
             inherit (import nixpkgs-unstable {
               inherit (prev.stdenv.hostPlatform) system;
               inherit (prev) config;
-            }) claude-code proton-ge-bin;
+            }) claude-code github-copilot-cli proton-ge-bin;
           })
         ];
       }

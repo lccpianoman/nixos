@@ -8,10 +8,12 @@
 
   # NixOS ships only /bin/sh, but some tools hardcode an absolute /bin/bash
   # instead of resolving bash from PATH, and fail outright without it.
-  # Notably github-copilot-cli: its shell tool spawns "/bin/bash" directly and
-  # dies with "Failed to start bash process" on every command.
+  # Notably github-copilot-cli: up to 1.0.61 its shell tool spawns "/bin/bash"
+  # directly and dies with "Failed to start bash process" on every command.
   #   Upstream bug: https://github.com/github/copilot-cli/issues/3392
-  #   (open, still broken as of 1.0.61; recheck on upgrades and drop this)
+  #   (closed as fixed in 1.0.88; 1.0.98 uses $SHELL, falling back to
+  #   /bin/bash. nixnotdix takes it from unstable and is fine, but nixvps and
+  #   calliope still get 1.0.61 from stable; drop this once stable passes 1.0.88)
   # The usual suggested workaround is services.envfs.enable, but that
   # FUSE-mounts all of /bin and /usr/bin; a single symlink is far less invasive.
   systemd.tmpfiles.rules = [

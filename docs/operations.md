@@ -78,21 +78,24 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
 ### The unstable input
 
 `flake.nix` carries a second nixpkgs, `nixpkgs-unstable`, feeding exactly one
-overlay on `nixnotdix`: `claude-code` and `proton-ge-bin`. Both release far
-faster than the stable channel backports them, and both are safe to take from
-another channel (`claude-code` is a leaf package, and `proton-ge-bin` is a
-prebuilt binary that runs inside Steam's own runtime), so neither mixes
-unstable libraries into the rest of the closure.
+overlay on `nixnotdix`: `claude-code`, `github-copilot-cli` and
+`proton-ge-bin`. All three release far faster than the stable channel
+backports them, and all three are safe to take from another channel
+(`claude-code` is a leaf package, `github-copilot-cli` is GitHub's prebuilt
+release tarball, and `proton-ge-bin` is a prebuilt binary that runs inside
+Steam's own runtime), so none mixes unstable libraries into the rest of the
+closure.
 
-Keep it to those two. Anything else pulled from unstable mixes two channels'
-glibc and stdenv into one system. The overlay `import`s unstable with the
-host's `nixpkgs.config` rather than reading `legacyPackages`, because
-`claude-code` is unfree and `legacyPackages` carries its own config. Check
-what the overlay is actually serving:
+Keep it to those three. Anything else pulled from unstable mixes two
+channels' glibc and stdenv into one system. The overlay `import`s unstable
+with the host's `nixpkgs.config` rather than reading `legacyPackages`,
+because `claude-code` and `github-copilot-cli` are unfree and
+`legacyPackages` carries its own config. Check what the overlay is actually
+serving:
 
 ```bash
 nix eval .#nixosConfigurations.nixnotdix.config.home-manager.users.luke.home.packages \
-  --apply 'ps: map (p: p.name) (builtins.filter (p: (p.pname or "") == "claude-code") ps)'
+  --apply 'ps: map (p: p.name) (builtins.filter (p: builtins.elem (p.pname or "") [ "claude-code" "github-copilot-cli" ]) ps)'
 ```
 
 The other three hosts use stable `claude-code`.

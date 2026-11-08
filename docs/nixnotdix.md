@@ -75,8 +75,8 @@ breaks.
 - **Gaming**: Steam with Proton-GE (from the unstable input; see
   [Operations](operations.md#the-unstable-input)), protontricks, gamemode,
   NoiseTorch, CloneHero (local build), PrismLauncher
-- **Development**: Claude Code (unstable), GitHub Copilot CLI, VSCodium, Git,
-  Vim, direnv + nix-direnv, `nix-ld`
+- **Development**: Claude Code (unstable), GitHub Copilot CLI (unstable),
+  VSCodium, Git, Vim, direnv + nix-direnv, `nix-ld`
 - **Apps**: Firefox, VLC, Vesktop, Plex Desktop, Spotify, pavucontrol
 - **CLI**: eza, tree, btop, fastfetch, glow, ripgrep, jq, `nh`, `just`,
   sops + ssh-to-age, wl-clipboard, grimshot
