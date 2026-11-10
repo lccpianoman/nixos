@@ -1,24 +1,30 @@
 {
   colors = {
-    # ===== Saturated nebula =====
+    # ===== Dusk =====
+    # Violet-tinted ink with one warm accent. Low saturation everywhere except
+    # `accent`, so the UI reads as calm surfaces with a single point of focus.
 
-    base    = "#0b1022";
-    surface = "#151d34";
-    overlay = "#223258";
-    muted   = "#6e7fb0";
-    text    = "#f5f7ff";
-    subtext = "#d0dbff";
+    base    = "#14121c";
+    surface = "#1c1926";
+    overlay = "#2a2639";
+    muted   = "#6e6886";
+    text    = "#ebe6f2";
+    subtext = "#bdb5cf";
 
-    blue    = "#6fa8ff";
-    blueLight = "#9dd7ff";
-    teal    = "#43e8d8";
-    green   = "#8fff7a";
-    purple  = "#c781ff";
-    red     = "#ff6b8b";
-    redLight = "#ff9cb0";
-    orange  = "#ffb45c";
-    gold    = "#ffd76a";
-    pink    = "#ff75d5";
+    # The one colour allowed to shout: focus borders, active workspace,
+    # selection, links. Everything that used to be "blue" for emphasis.
+    accent  = "#efa88e";
+
+    blue    = "#8fb4e8";
+    blueLight = "#b6d0f2";
+    teal    = "#8fd3c6";
+    green   = "#a9d4a0";
+    purple  = "#c1a8ec";
+    red     = "#ec8b9b";
+    redLight = "#f3b3bf";
+    orange  = "#eeb07a";
+    gold    = "#e9cb8d";
+    pink    = "#eaa6cf";
   };
 
   # ===== Color helpers =====
@@ -60,10 +66,33 @@
 
   # Window corner radius. swayfx clips window content to this arc, so anything
   # drawing flush to its edge (terminal padding, mako) must match it.
-  cornerRadius = 8;
+  cornerRadius = 12;
+
+  # Window gaps. Waybar's side margins match `outer` so the bar's islands line
+  # up with the window edges below them.
+  gaps = {
+    inner = 10;
+    outer = 6;
+  };
 
   fontUI = {
     name = "Inter";
     size = 11;
+  };
+
+  # Wallpaper washes, rendered by wallpaper.nix into soft blurred blobs over
+  # `base`. Deep versions of the palette hues, so the blur lands between
+  # `surface` and `overlay` in brightness and the UI still floats above it.
+  wallpaper = {
+    width  = 2560;
+    height = 1440;
+    washes = [
+      # x y (fraction of canvas), radius x/y (px), colour; painted in order
+      { x = 0.10; y = 0.14; rx = 860; ry = 560; color = "#3b2a52"; } # plum, top-left
+      { x = 0.80; y = 0.12; rx = 640; ry = 400; color = "#26294d"; } # indigo, top-right
+      { x = 0.88; y = 0.86; rx = 980; ry = 520; color = "#5a383c"; } # ember, bottom-right
+      { x = 0.38; y = 0.96; rx = 720; ry = 260; color = "#45293f"; } # rose, bottom
+      { x = 0.84; y = 0.78; rx = 300; ry = 300; color = "#8a5a50"; } # the setting sun
+    ];
   };
 }

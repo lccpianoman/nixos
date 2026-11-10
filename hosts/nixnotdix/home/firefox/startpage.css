@@ -15,12 +15,13 @@ body {
   font-family: "@fontUI@", sans-serif;
   color: @text@;
   background-color: @base@;
-  /* Nebula wash: the same hues as the wallpaper, as gradients so the page
+  /* Dusk wash: the wallpaper's washes redrawn as gradients, so the page
      needs no external image (extension pages cannot load file:// assets). */
   background-image:
-    radial-gradient(ellipse 70% 55% at 18% 12%, @purple@2e, transparent 70%),
-    radial-gradient(ellipse 60% 50% at 85% 20%, @blue@33, transparent 70%),
-    radial-gradient(ellipse 80% 60% at 50% 105%, @pink@1f, transparent 70%);
+    radial-gradient(ellipse 60% 50% at 10% 14%, @purple@26, transparent 70%),
+    radial-gradient(ellipse 45% 40% at 80% 12%, @blue@1f, transparent 70%),
+    radial-gradient(ellipse 70% 50% at 88% 86%, @accent@2b, transparent 70%),
+    radial-gradient(ellipse 50% 35% at 38% 100%, @pink@1a, transparent 70%);
   background-attachment: fixed;
 }
 
@@ -49,15 +50,15 @@ form {
   gap: 0.75rem;
   padding: 0 1.25rem;
   border: 1px solid @overlay@;
-  border-radius: @radius@px;
-  background-color: @surface@b8;
-  backdrop-filter: blur(12px);
+  border-radius: 999px;
+  background-color: @surface@b3;
+  backdrop-filter: blur(16px);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 form:focus-within {
-  border-color: @blue@;
-  box-shadow: 0 0 0 1px @blue@;
+  border-color: @accent@;
+  box-shadow: 0 0 0 3px @accent@33;
 }
 
 form svg {
@@ -70,7 +71,7 @@ form svg {
 }
 
 form:focus-within svg {
-  stroke: @blue@;
+  stroke: @accent@;
 }
 
 input {
@@ -106,7 +107,8 @@ a {
   padding: 0.85rem 1rem;
   border: 1px solid @overlay@;
   border-radius: @radius@px;
-  background-color: @surface@a6;
+  background-color: @surface@99;
+  backdrop-filter: blur(16px);
   color: @subtext@;
   text-decoration: none;
   font-size: 0.95rem;
@@ -117,8 +119,8 @@ a {
 a:hover,
 a:focus-visible {
   transform: translateY(-2px);
-  border-color: @blue@;
-  background-color: @overlay@;
+  border-color: @accent@80;
+  background-color: @overlay@cc;
   color: @text@;
   outline: none;
 }

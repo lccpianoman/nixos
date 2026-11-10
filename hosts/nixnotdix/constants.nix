@@ -1,6 +1,6 @@
 # Host constants for nixnotdix: monitors, workspace layout, weather.
-# Theme values (colors, fonts) live in theme.nix; keep host facts here so
-# sway.nix / waybar.nix don't each hard-code them.
+# Theme values (colors, fonts, wallpaper) live in theme.nix; keep host facts
+# here so sway.nix / waybar.nix don't each hard-code them.
 rec {
   # Single-monitor setup: ASUS VG278 on DP-1. The panel's top mode reports as
   # 144.001Hz; sway picks the nearest match, so "144Hz" resolves to it.
@@ -13,10 +13,6 @@ rec {
       pos = "0 0";
     };
   };
-
-  # Desktop + greeter share one wallpaper; keep it a store path so it resolves
-  # for both sway and regreet.
-  wallpaper = ./assets/wallpapers/a_space_shuttle_in_the_sky.jpg;
 
   # All workspaces on the single output
   workspaceOutputs = {

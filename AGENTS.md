@@ -136,6 +136,13 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   source, so a `nix flake update` that moves the LTS kernel past what the packaged
   ZFS supports fails the build. Check `boot.kernelPackages.kernel.version`
   against `pkgs.zfs` before assuming a kernel bump is safe.
+- `nixnotdix`'s wallpaper is rendered at build time by
+  `hosts/nixnotdix/wallpaper.nix` from `theme.wallpaper` in `theme.nix`;
+  ImageMagick is a build input of that derivation only, not a system package.
+  `sway.nix` and `configuration.nix` both `import ./wallpaper.nix { inherit
+  pkgs; }`; home-manager uses `useGlobalPkgs`, so that is one derivation.
+  `theme.colors.accent` is the single emphasis colour; use it (not `blue`) for
+  focus, selection and active states so the look stays one-accent.
 - Firefox theming lives in `hosts/nixnotdix/home/firefox.nix` + `home/firefox/`.
   The CSS files carry at-delimited placeholders substituted from `theme.nix`;
   never hard-code a colour in them. One store-written `file://` document is both

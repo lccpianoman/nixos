@@ -4,54 +4,54 @@
 @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 :root {
-  --neb-base: @base@;
-  --neb-surface: @surface@;
-  --neb-overlay: @overlay@;
-  --neb-muted: @muted@;
-  --neb-text: @text@;
-  --neb-subtext: @subtext@;
-  --neb-blue: @blue@;
-  --neb-red: @red@;
-  --neb-radius: @radius@px;
+  --dusk-base: @base@;
+  --dusk-surface: @surface@;
+  --dusk-overlay: @overlay@;
+  --dusk-muted: @muted@;
+  --dusk-text: @text@;
+  --dusk-subtext: @subtext@;
+  --dusk-accent: @accent@;
+  --dusk-red: @red@;
+  --dusk-radius: @radius@px;
 }
 
 /* Lightweight-theme variables are the widest lever Firefox exposes; setting
    them here recolours most of the chrome without per-widget selectors. */
 :root {
-  --lwt-accent-color: var(--neb-base) !important;
-  --lwt-accent-color-inactive: var(--neb-base) !important;
-  --lwt-text-color: var(--neb-text) !important;
+  --lwt-accent-color: var(--dusk-base) !important;
+  --lwt-accent-color-inactive: var(--dusk-base) !important;
+  --lwt-text-color: var(--dusk-text) !important;
 
-  --toolbar-bgcolor: var(--neb-surface) !important;
-  --toolbar-color: var(--neb-text) !important;
-  --toolbar-field-background-color: var(--neb-base) !important;
-  --toolbar-field-focus-background-color: var(--neb-base) !important;
-  --toolbar-field-color: var(--neb-text) !important;
-  --toolbar-field-focus-color: var(--neb-text) !important;
+  --toolbar-bgcolor: var(--dusk-surface) !important;
+  --toolbar-color: var(--dusk-text) !important;
+  --toolbar-field-background-color: var(--dusk-base) !important;
+  --toolbar-field-focus-background-color: var(--dusk-base) !important;
+  --toolbar-field-color: var(--dusk-text) !important;
+  --toolbar-field-focus-color: var(--dusk-text) !important;
   --toolbar-field-border-color: transparent !important;
-  --toolbar-field-focus-border-color: var(--neb-blue) !important;
+  --toolbar-field-focus-border-color: var(--dusk-accent) !important;
 
-  --tab-selected-bgcolor: var(--neb-overlay) !important;
-  --tab-selected-textcolor: var(--neb-text) !important;
-  --tabpanel-background-color: var(--neb-base) !important;
+  --tab-selected-bgcolor: var(--dusk-overlay) !important;
+  --tab-selected-textcolor: var(--dusk-text) !important;
+  --tabpanel-background-color: var(--dusk-base) !important;
 
-  --toolbarbutton-icon-fill: var(--neb-subtext) !important;
-  --toolbarbutton-hover-background: var(--neb-overlay) !important;
-  --toolbarbutton-active-background: var(--neb-overlay) !important;
-  --toolbarbutton-border-radius: var(--neb-radius) !important;
-  --button-hover-bgcolor: var(--neb-overlay) !important;
+  --toolbarbutton-icon-fill: var(--dusk-subtext) !important;
+  --toolbarbutton-hover-background: var(--dusk-overlay) !important;
+  --toolbarbutton-active-background: var(--dusk-overlay) !important;
+  --toolbarbutton-border-radius: var(--dusk-radius) !important;
+  --button-hover-bgcolor: var(--dusk-overlay) !important;
 
-  --arrowpanel-background: var(--neb-surface) !important;
-  --arrowpanel-color: var(--neb-text) !important;
-  --arrowpanel-border-color: var(--neb-overlay) !important;
-  --panel-background: var(--neb-surface) !important;
-  --panel-color: var(--neb-text) !important;
-  --panel-border-color: var(--neb-overlay) !important;
-  --panel-separator-color: var(--neb-overlay) !important;
-  --panel-border-radius: var(--neb-radius) !important;
+  --arrowpanel-background: var(--dusk-surface) !important;
+  --arrowpanel-color: var(--dusk-text) !important;
+  --arrowpanel-border-color: var(--dusk-overlay) !important;
+  --panel-background: var(--dusk-surface) !important;
+  --panel-color: var(--dusk-text) !important;
+  --panel-border-color: var(--dusk-overlay) !important;
+  --panel-separator-color: var(--dusk-overlay) !important;
+  --panel-border-radius: var(--dusk-radius) !important;
 
-  --focus-outline-color: var(--neb-blue) !important;
-  --link-color: var(--neb-blue) !important;
+  --focus-outline-color: var(--dusk-accent) !important;
+  --link-color: var(--dusk-accent) !important;
 
   font-family: "@fontUI@", sans-serif !important;
 }
@@ -61,106 +61,106 @@
    separated by a hairline instead of Firefox's gradient + inner shadow. */
 #titlebar,
 #TabsToolbar {
-  background-color: var(--neb-base) !important;
+  background-color: var(--dusk-base) !important;
 }
 
 #nav-bar,
 #PersonalToolbar {
-  background-color: var(--neb-surface) !important;
+  background-color: var(--dusk-surface) !important;
   box-shadow: none !important;
 }
 
 #navigator-toolbox {
-  border-bottom: 1px solid var(--neb-overlay) !important;
+  border-bottom: 1px solid var(--dusk-overlay) !important;
 }
 
 /* ===== Tabs ===== */
 .tab-background {
-  border-radius: var(--neb-radius) !important;
+  border-radius: var(--dusk-radius) !important;
   margin-block: 4px !important;
   border: none !important;
   box-shadow: none !important;
 }
 
 .tabbrowser-tab:not([selected]):hover .tab-background {
-  background-color: var(--neb-surface) !important;
+  background-color: var(--dusk-surface) !important;
 }
 
 /* Accent underline marks the active tab, matching swayfx focus borders. */
 .tabbrowser-tab[selected] .tab-background {
-  background-color: var(--neb-overlay) !important;
-  box-shadow: inset 0 -2px 0 0 var(--neb-blue) !important;
+  background-color: var(--dusk-overlay) !important;
+  box-shadow: inset 0 -2px 0 0 var(--dusk-accent) !important;
 }
 
 .tab-label {
-  color: var(--neb-muted) !important;
+  color: var(--dusk-muted) !important;
 }
 
 .tabbrowser-tab:hover .tab-label {
-  color: var(--neb-subtext) !important;
+  color: var(--dusk-subtext) !important;
 }
 
 .tabbrowser-tab[selected] .tab-label {
-  color: var(--neb-text) !important;
+  color: var(--dusk-text) !important;
 }
 
 /* ===== Address bar ===== */
 #urlbar-background {
-  border-radius: var(--neb-radius) !important;
-  border: 1px solid var(--neb-overlay) !important;
+  border-radius: var(--dusk-radius) !important;
+  border: 1px solid var(--dusk-overlay) !important;
 }
 
 #urlbar[focused="true"] > #urlbar-background,
 #urlbar[open] > #urlbar-background {
-  border-color: var(--neb-blue) !important;
-  box-shadow: 0 0 0 1px var(--neb-blue) !important;
+  border-color: var(--dusk-accent) !important;
+  box-shadow: 0 0 0 1px var(--dusk-accent) !important;
 }
 
 #urlbar-input::placeholder,
 #searchbar .searchbar-textbox::placeholder {
-  color: var(--neb-muted) !important;
+  color: var(--dusk-muted) !important;
 }
 
 #identity-box,
 #tracking-protection-icon-container,
 #urlbar .urlbar-page-action,
 .urlbar-icon {
-  border-radius: var(--neb-radius) !important;
+  border-radius: var(--dusk-radius) !important;
 }
 
 /* ===== Address bar results ===== */
 .urlbarView {
-  background-color: var(--neb-surface) !important;
+  background-color: var(--dusk-surface) !important;
 }
 
 .urlbarView-row:hover,
 .urlbarView-row[selected] {
-  background-color: var(--neb-overlay) !important;
-  border-radius: var(--neb-radius) !important;
+  background-color: var(--dusk-overlay) !important;
+  border-radius: var(--dusk-radius) !important;
 }
 
 .urlbarView-url,
 .urlbarView-title-separator {
-  color: var(--neb-muted) !important;
+  color: var(--dusk-muted) !important;
 }
 
 .urlbarView-title strong,
 .urlbarView-url strong {
-  color: var(--neb-blue) !important;
+  color: var(--dusk-accent) !important;
 }
 
 /* ===== Menus, panels, sidebar, findbar ===== */
 menupopup > menuitem[_moz-menuactive="true"],
 menupopup > menu[_moz-menuactive="true"] {
-  background-color: var(--neb-overlay) !important;
-  color: var(--neb-text) !important;
+  background-color: var(--dusk-overlay) !important;
+  color: var(--dusk-text) !important;
 }
 
 findbar,
 #sidebar-box,
 #sidebar-header {
-  background-color: var(--neb-surface) !important;
-  color: var(--neb-text) !important;
+  background-color: var(--dusk-surface) !important;
+  color: var(--dusk-text) !important;
 }
 
 /* ===== Clutter ===== */

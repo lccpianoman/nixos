@@ -14,12 +14,38 @@ systemd-boot. The only host that uses home-manager; its user environment is
 | Lock | swayidle + swaylock-effects (blurred screenshot, 5-minute idle timeout, locks before sleep) |
 | Terminal | Alacritty |
 | Browser | Firefox, themed to match with a store-built start page |
-| Theme | A saturated "nebula" palette in `theme.nix`, consumed by every module |
+| Theme | A muted "dusk" palette in `theme.nix`, consumed by every module |
 
-Everything visual (colours, fonts, cursor, corner radius) reads from
-`hosts/nixnotdix/theme.nix`, and `constants.nix` holds monitors, wallpaper and
-the weather widget's city. Change a colour once and sway, Waybar, Fuzzel,
-Mako, Alacritty, btop, ReGreet, swaylock and Firefox all follow.
+Everything visual (colours, fonts, cursor, corner radius, gaps, wallpaper)
+reads from `hosts/nixnotdix/theme.nix`, and `constants.nix` holds monitors
+and the weather widget's city. Change a colour once and sway, Waybar, Fuzzel,
+Mako, Alacritty, btop, ReGreet, swaylock, Firefox and the wallpaper all
+follow.
+
+### Theme
+
+The palette is violet-tinted ink (`base`, `surface`, `overlay`) with muted
+pastels for syntax-style roles and exactly one colour allowed to be loud:
+`accent`, a peach. Focus borders, the active workspace pill, selections,
+links and the terminal cursor all use it; the rest of the UI is deliberately
+quiet so that one colour reads as "where you are".
+
+The wallpaper is not a file. `hosts/nixnotdix/wallpaper.nix` renders it at
+build time with ImageMagick from `theme.wallpaper` in `theme.nix`: a few
+elliptical colour washes over `base`, blurred heavily, with a soft vignette
+and a little grain. Move or recolour a wash there and the next rebuild
+redraws the desktop and the greeter. ImageMagick is a build input of that
+derivation only; it is not installed on the system. The old photo wallpapers
+under `assets/wallpapers/` are still there if you want a real image back:
+point `wallpaper` in `sway.nix` and `configuration.nix` at one of them.
+
+SwayFX does the eye candy: three-pass blur behind every translucent surface
+(terminal at 78% opacity, Waybar islands, Mako cards, Fuzzel), wide soft
+shadows, 12px corners, 300ms animations and a light dim on unfocused
+windows. Waybar sits at the top as three detached pill "islands" on a
+transparent window; `blur_ignore_transparent` in its `layer_effects` keeps
+the gaps between islands clear, which is why its shadows and rounding are
+done in its own CSS rather than by swayfx.
 
 ### Greeter
 
@@ -38,7 +64,7 @@ is at Ctrl+Alt+F2.
 
 `hosts/nixnotdix/home/firefox.nix` and `home/firefox/` carry `userChrome.css`,
 `userContent.css` and a start page, all templated with at-delimited
-placeholders (`@base@`, `@blue@`, …) substituted from `theme.nix`, so colours
+placeholders (`@base@`, `@accent@`, …) substituted from `theme.nix`, so colours
 are never hard-coded in the CSS.
 
 The start page is a single `file://` document in the store used as both the

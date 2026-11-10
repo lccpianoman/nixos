@@ -5,6 +5,7 @@ let
   c = theme.colors;
   font = theme.font;
   fontUI = theme.fontUI;
+  gaps = theme.gaps;
 
   weatherConfig = (import ./constants.nix).weather;
 
@@ -51,38 +52,45 @@ in
     settings = [{
       # "top", not "bottom": swayfx cannot apply layer_effects to the bottom layer.
       layer         = "top";
-      position      = "bottom";
-      height        = 30;
+      position      = "top";
+      height        = 32;
       spacing       = 0;
-      margin-bottom = 4;
-      margin-left   = 6;
-      margin-right  = 6;
+      # Match the window gaps so the islands line up with the tiles below.
+      margin-top    = gaps.outer;
+      margin-left   = gaps.outer;
+      margin-right  = gaps.outer;
 
-      "modules-left"   = [ "sway/workspaces" ];
-      "modules-center" = [ "sway/window" ];
-      "modules-right"  = [ "custom/weather" "clock" "tray" ];
+      "modules-left"   = [ "sway/workspaces" "sway/mode" "sway/window" ];
+      "modules-center" = [ "clock" ];
+      "modules-right"  = [ "custom/weather" "pulseaudio" "tray" ];
 
       "sway/workspaces" = {
         format = "{icon}";
+        # Every state is a dot; CSS stretches the focused one into a pill
+        # and paints the glyph the same colour as the pill to hide it.
         "format-icons" = {
-          focused = "◉";
+          focused = "●";
           urgent  = "●";
-          default = "○";
+          default = "●";
         };
         "persistent-workspaces" = {
           "*" = [ 1 2 3 4 5 6 ];
         };
       };
 
+      "sway/mode" = {
+        format = "{}";
+      };
+
       "sway/window" = {
-        "max-length"  = 60;
+        "max-length"  = 48;
         "all-outputs" = false;
         "format"      = "{}";
       };
 
       clock = {
-        format     = " {:%H:%M}";
-        "format-alt" = " {:%a, %b %d %H:%M:%S}";
+        format     = "{:%H:%M}";
+        "format-alt" = "{:%a %d %b   %H:%M:%S}";
         interval   = 1;
         tooltip    = false;
       };
@@ -90,13 +98,26 @@ in
       "custom/weather" = {
         exec     = weatherSh;
         interval = weatherConfig.interval;
-        format   = " {}";
+        format   = "<span color='${c.accent}'></span>  {}";
         tooltip  = false;
+      };
+
+      pulseaudio = {
+        format        = "<span color='${c.accent}'>{icon}</span>  {volume}%";
+        "format-muted" = "<span color='${c.muted}'>󰝟</span>  {volume}%";
+        "format-icons" = {
+          headphone = "󰋋";
+          default   = [ "󰕿" "󰖀" "󰕾" ];
+        };
+        "scroll-step"    = 2;
+        "on-click"       = "${pkgs.pavucontrol}/bin/pavucontrol";
+        "on-click-right" = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+        tooltip          = false;
       };
 
       tray = {
         "icon-size" = 16;
-        spacing     = 6;
+        spacing     = 8;
       };
     }];
 
@@ -107,12 +128,8 @@ in
       @define-color muted   ${c.muted};
       @define-color text    ${c.text};
       @define-color subtext ${c.subtext};
-      @define-color blue    ${c.blue};
-      @define-color teal    ${c.teal};
-      @define-color green   ${c.green};
-      @define-color purple  ${c.purple};
+      @define-color accent  ${c.accent};
       @define-color red     ${c.red};
-      @define-color gold    ${c.gold};
       @define-color orange  ${c.orange};
 
       * {
@@ -125,67 +142,104 @@ in
         padding: 0;
       }
 
+      /* The window itself is transparent; the three module groups float as
+         separate glass islands. swayfx blurs only the painted pixels
+         (blur_ignore_transparent), so the gap between islands stays clear. */
       window#waybar {
-        background-color: alpha(@base, 0.88);
-        border-radius: 8px;
-        border: 1px solid @overlay;
+        background: transparent;
         color: @text;
+      }
+
+      .modules-left,
+      .modules-center,
+      .modules-right {
+        background-color: alpha(@base, 0.72);
+        border: 1px solid alpha(@overlay, 0.9);
+        border-radius: 999px;
+        padding: 0 6px;
+        box-shadow: 0 6px 20px alpha(#0a0810, 0.45);
       }
 
       /* ===== Workspaces ===== */
 
       #workspaces {
-        padding: 0 4px;
+        padding: 0 2px;
       }
 
       #workspaces button {
-        padding: 0 7px;
+        padding: 0 6px;
+        margin: 7px 2px;
         color: @muted;
         background: transparent;
         box-shadow: none;
-        border-radius: 0;
-        transition: color 0.1s ease;
+        border-radius: 999px;
+        transition: all 250ms cubic-bezier(0.2, 0.8, 0.2, 1);
       }
 
       #workspaces button.focused {
-        color: @text;
+        padding: 0 14px;
+        color: @accent;
+        background: @accent;
       }
 
       #workspaces button.urgent {
         color: @red;
       }
 
-      #workspaces button.visible {
-        color: @subtext;
-      }
-
       #workspaces button:hover {
-        background: transparent;
-        color: @blue;
+        background: alpha(@overlay, 0.9);
+        color: @subtext;
         box-shadow: none;
       }
 
-      /* ===== Window title ===== */
+      #workspaces button.focused:hover {
+        color: @accent;
+        background: @accent;
+      }
+
+      /* ===== Mode and window title ===== */
+
+      #mode {
+        padding: 0 12px;
+        color: @accent;
+        font-weight: 600;
+      }
 
       #window {
         padding: 0 12px;
-        color: @subtext;
+        color: @muted;
+      }
+
+      window#waybar.empty #window {
+        padding: 0;
+      }
+
+      /* ===== Clock ===== */
+
+      #clock {
+        padding: 0 16px;
+        color: @text;
+        font-weight: 600;
+        letter-spacing: 0.5px;
       }
 
       /* ===== Right modules ===== */
 
-      #clock {
-        padding: 0 10px;
-        color: @gold;
-      }
-
-      #custom-weather {
-        padding: 0 10px;
-        color: @teal;
-      }
-
+      #custom-weather,
+      #pulseaudio,
       #tray {
-        padding: 0 8px;
+        padding: 0 12px;
+        color: @subtext;
+        transition: color 150ms ease;
+      }
+
+      #pulseaudio:hover,
+      #custom-weather:hover {
+        color: @text;
+      }
+
+      #pulseaudio.muted {
+        color: @muted;
       }
 
       #tray > .passive {
@@ -195,6 +249,17 @@ in
       #tray > .needs-attention {
         -gtk-icon-effect: highlight;
         color: @orange;
+      }
+
+      tooltip {
+        background-color: alpha(@surface, 0.96);
+        border: 1px solid @overlay;
+        border-radius: ${toString theme.cornerRadius}px;
+      }
+
+      tooltip label {
+        color: @text;
+        padding: 4px 8px;
       }
     '';
   };

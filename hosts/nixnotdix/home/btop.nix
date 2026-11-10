@@ -8,28 +8,28 @@ in
   programs.btop = {
     enable = true;
     settings = {
-      color_theme = "nebula";
+      color_theme = "dusk";
       theme_background = false;
       truecolor = true;
       rounded_corners = true;
       graph_symbol = "braille";
       proc_gradient = true;
     };
-    themes.nebula = ''
+    themes.dusk = ''
       theme[main_bg]="${c.base}"
       theme[main_fg]="${c.text}"
-      theme[title]="${c.blueLight}"
-      theme[hi_fg]="${c.blue}"
+      theme[title]="${c.accent}"
+      theme[hi_fg]="${c.accent}"
       theme[selected_bg]="${c.overlay}"
       theme[selected_fg]="${c.text}"
       theme[inactive_fg]="${c.muted}"
       theme[graph_text]="${c.subtext}"
       theme[meter_bg]="${c.surface}"
       theme[proc_misc]="${c.purple}"
-      theme[cpu_box]="${c.blue}"
+      theme[cpu_box]="${c.purple}"
       theme[mem_box]="${c.green}"
       theme[net_box]="${c.teal}"
-      theme[proc_box]="${c.orange}"
+      theme[proc_box]="${c.accent}"
       theme[div_line]="${c.overlay}"
       theme[temp_start]="${c.green}"
       theme[temp_mid]="${c.orange}"
@@ -63,6 +63,6 @@ in
 
   xdg.configFile = {
     "btop/btop.conf".force = true;
-    "btop/themes/nebula.theme".force = true;
+    "btop/themes/dusk.theme".force = true;
   };
 }

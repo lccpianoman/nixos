@@ -12,24 +12,24 @@ let
 
   mod = "Mod4";
 
-  wallpaper = constants.wallpaper;
+  wallpaper = import ./wallpaper.nix { inherit pkgs; };
 
   swaylock-cmd = "${pkgs.swaylock-effects}/bin/swaylock -f "
-    + "--screenshots --effect-blur 7x5 --effect-vignette 0.5:0.5 "
+    + "--screenshots --effect-blur 12x6 --effect-vignette 0.4:0.6 "
     + "--fade-in 0.3 --grace 2 --grace-no-mouse "
-    + "--clock --indicator --indicator-radius 110 --indicator-thickness 10 "
+    + "--clock --indicator --indicator-radius 120 --indicator-thickness 6 "
     + "--timestr '%H:%M' --datestr '%a, %b %d' "
     + "--font '${fontUI.name}' --font-size 24 "
     + "--color ${hex c.base} "
-    + "--inside-color ${hex c.surface} "
-    + "--inside-clear-color ${hex c.surface} "
-    + "--inside-ver-color ${hex c.surface} "
-    + "--inside-wrong-color ${hex c.surface} "
-    + "--ring-color ${hex c.blue} "
+    + "--inside-color ${hex c.base}cc "
+    + "--inside-clear-color ${hex c.base}cc "
+    + "--inside-ver-color ${hex c.base}cc "
+    + "--inside-wrong-color ${hex c.base}cc "
+    + "--ring-color ${hex c.overlay} "
     + "--ring-clear-color ${hex c.teal} "
-    + "--ring-ver-color ${hex c.purple} "
+    + "--ring-ver-color ${hex c.accent} "
     + "--ring-wrong-color ${hex c.red} "
-    + "--key-hl-color ${hex c.green} "
+    + "--key-hl-color ${hex c.accent} "
     + "--bs-hl-color ${hex c.redLight} "
     + "--text-color ${hex c.text} "
     + "--text-clear-color ${hex c.text} "
@@ -74,8 +74,8 @@ in
         constants.workspaceOutputs);
 
       gaps = {
-        inner = 4;
-        outer = 0;
+        inner = theme.gaps.inner;
+        outer = theme.gaps.outer;
         smartGaps = false;
         smartBorders = "off";
       };
@@ -97,11 +97,11 @@ in
 
       colors = {
         focused = {
-          border      = c.blue;
+          border      = c.accent;
           background  = c.surface;
           text        = c.text;
-          indicator   = c.teal;
-          childBorder = c.blue;
+          indicator   = c.purple;
+          childBorder = c.accent;
         };
         focusedInactive = {
           border      = c.overlay;
@@ -111,11 +111,11 @@ in
           childBorder = c.overlay;
         };
         unfocused = {
-          border      = c.overlay;
+          border      = c.surface;
           background  = c.base;
           text        = c.muted;
-          indicator   = c.overlay;
-          childBorder = c.overlay;
+          indicator   = c.surface;
+          childBorder = c.surface;
         };
         urgent = {
           border      = c.red;
@@ -177,44 +177,54 @@ in
 
     # SwayFX-only options; home-manager has no typed options for these.
     extraConfig = ''
-      animation_duration_ms 250
+      animation_duration_ms 300
 
       corner_radius ${radius}
       smart_corner_radius enable
 
+      # Three passes at radius 6 is the frosted-glass sweet spot: enough that
+      # text behind a window dissolves into tone, not so much that the blur
+      # ghosts past window edges. Brightness and saturation lift the glass
+      # slightly so the dusk washes show through translucent surfaces.
       blur enable
-      blur_passes 2
-      blur_radius 5
-      blur_noise 0.02
-      blur_brightness 0.9
-      blur_saturation 1.1
+      blur_passes 3
+      blur_radius 6
+      blur_noise 0.03
+      blur_brightness 1.05
+      blur_contrast 1.0
+      blur_saturation 1.2
 
+      # Soft, wide, barely offset: a window should look lifted, not lit.
       shadows enable
       shadows_on_csd disable
-      shadow_blur_radius 20
-      shadow_color #000000aa
-      shadow_inactive_color #00000066
-      shadow_offset 0 2
+      shadow_blur_radius 36
+      shadow_color #0a0810b3
+      shadow_inactive_color #0a081059
+      shadow_offset 0 6
 
-      default_dim_inactive 0.1
+      default_dim_inactive 0.08
       dim_inactive_colors.unfocused ${c.base}
 
       # Brace blocks are required: a single line would be split on `;` into
       # separate global commands. Namespaces confirmed via WAYLAND_DEBUG.
+      # Waybar paints detached islands on a transparent window, so blur only
+      # the painted pixels and leave shadows/rounding to its own CSS.
       layer_effects "waybar" {
         blur enable;
-        shadows enable;
-        corner_radius ${radius};
+        blur_ignore_transparent enable;
       }
 
       layer_effects "notifications" {
+        blur enable;
+        blur_ignore_transparent enable;
         shadows enable;
         corner_radius ${radius};
       }
 
       layer_effects "launcher" {
+        blur enable;
         shadows enable;
-        corner_radius 6;
+        corner_radius ${radius};
       }
 
       # Block swayidle while any window is fullscreen. Wayland's idle-inhibit

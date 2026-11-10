@@ -39,9 +39,9 @@ in
     initExtra = ''
       # Named by role, not by hue, so a palette swap can't strand these.
       # Never use c.text here: alacritty already paints normal output with it.
-      C_HOST="\e[38;2;${ansi c.teal}m"
-      C_PATH="\e[38;2;${ansi c.blueLight}m"
-      C_GIT="\e[38;2;${ansi c.purple}m"
+      C_HOST="\e[38;2;${ansi c.accent}m"
+      C_PATH="\e[38;2;${ansi c.purple}m"
+      C_GIT="\e[38;2;${ansi c.blue}m"
       C_OK="\e[38;2;${ansi c.green}m"
       C_ERR="\e[38;2;${ansi c.red}m"
       C_DIM="\e[38;2;${ansi c.muted}m"

@@ -2,9 +2,9 @@
 
 let
   theme = import ./theme.nix;
-  constants = import ./constants.nix;
   c = theme.colors;
   fontUI = theme.fontUI;
+  wallpaper = import ./wallpaper.nix { inherit pkgs; };
 in
 {
   imports = [
@@ -184,7 +184,7 @@ in
     let
       greeterConfig = pkgs.writeText "greeter-sway.conf" ''
         seat * xcursor_theme ${theme.cursor.name} ${toString theme.cursor.size}
-        output * bg ${constants.wallpaper} fill
+        output * bg ${wallpaper} fill
         default_border none
         exec "${pkgs.regreet}/bin/regreet; ${pkgs.swayfx}/bin/swaymsg exit"
       '';
@@ -204,27 +204,27 @@ in
     theme = { name = "Adwaita-dark"; package = pkgs.gnome-themes-extra; };
 
     settings = {
-      background = { path = constants.wallpaper; fit = "Cover"; };
+      background = { path = "${wallpaper}"; fit = "Cover"; };
       GTK.application_prefer_dark_theme = true;
       appearance.greeting_msg = "Welcome back, Luke";
       widget.clock.format = "%A, %B %d   %H:%M";
     };
 
-    # Nebula palette over the wallpaper: a translucent card, themed entry and
-    # buttons, blue focus ring.
+    # Dusk palette over the wallpaper: a translucent card, themed entry and
+    # buttons, accent focus ring.
     extraCss = ''
       window {
         background: transparent;
       }
 
       .background {
-        background-color: alpha(${c.base}, 0.55);
+        background-color: alpha(${c.base}, 0.35);
       }
 
       box.horizontal > frame,
       frame > box,
       .login-box {
-        background-color: alpha(${c.surface}, 0.92);
+        background-color: alpha(${c.surface}, 0.85);
         border: 1px solid ${c.overlay};
         border-radius: ${toString theme.cornerRadius}px;
         padding: 24px;
@@ -243,8 +243,8 @@ in
       }
 
       entry:focus, entry:focus-within {
-        border-color: ${c.blue};
-        box-shadow: 0 0 0 2px alpha(${c.blue}, 0.35);
+        border-color: ${c.accent};
+        box-shadow: 0 0 0 2px alpha(${c.accent}, 0.3);
       }
 
       button {
@@ -257,12 +257,12 @@ in
       }
 
       button:hover {
-        background-color: ${c.blue};
+        background-color: ${c.accent};
         color: ${c.base};
       }
 
       #clock_label {
-        color: ${c.blueLight};
+        color: ${c.accent};
         font-size: 20pt;
       }
 

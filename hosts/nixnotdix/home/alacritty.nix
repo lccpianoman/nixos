@@ -9,7 +9,10 @@ in
   programs.alacritty = {
     enable = true;
     settings = {
-      window.opacity = 0.85;
+      # Low enough that swayfx's blur does the work; the wallpaper washes
+      # show through as tone, not as readable shapes.
+      window.opacity = 0.78;
+      window.dynamic_padding = true;
       # Keep text clear of swayfx's rounded corners, which clip flush content.
       window.padding = { x = theme.cornerRadius; y = theme.cornerRadius; };
       font = {
@@ -45,7 +48,7 @@ in
         };
         cursor = {
           text = c.base;
-          cursor = c.blue;
+          cursor = c.accent;
         };
         selection = {
           text = c.text;
