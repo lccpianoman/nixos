@@ -208,7 +208,8 @@ in
       # Brace blocks are required: a single line would be split on `;` into
       # separate global commands. Namespaces confirmed via WAYLAND_DEBUG.
       # Waybar paints detached islands on a transparent window, so blur only
-      # the painted pixels and leave shadows/rounding to its own CSS.
+      # the painted pixels and leave rounding to its own CSS. The islands
+      # have no shadow at all: see the note in waybar.nix.
       layer_effects "waybar" {
         blur enable;
         blur_ignore_transparent enable;

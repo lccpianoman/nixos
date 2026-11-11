@@ -44,8 +44,9 @@ SwayFX does the eye candy: three-pass blur behind every translucent surface
 shadows, 12px corners, 300ms animations and a light dim on unfocused
 windows. Waybar sits at the top as three detached pill "islands" on a
 transparent window; `blur_ignore_transparent` in its `layer_effects` keeps
-the gaps between islands clear, which is why its shadows and rounding are
-done in its own CSS rather than by swayfx.
+the gaps between islands clear, which is why its rounding is done in its
+own CSS rather than by swayfx. The islands have no shadow: swayfx blurs a
+CSS `box-shadow` too, which paints an off-colour box behind each island.
 
 ### Greeter
 

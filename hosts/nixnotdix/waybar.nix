@@ -144,7 +144,11 @@ in
 
       /* The window itself is transparent; the three module groups float as
          separate glass islands. swayfx blurs only the painted pixels
-         (blur_ignore_transparent), so the gap between islands stays clear. */
+         (blur_ignore_transparent), so the gap between islands stays clear.
+         That is also why the islands carry no box-shadow: a shadow's faint
+         pixels count as painted, so swayfx blurs (and noise-dithers) the
+         whole shadow extent, clipped to the bar's rectangle, which shows up
+         as an off-colour box behind each island. */
       window#waybar {
         background: transparent;
         color: @text;
@@ -157,7 +161,6 @@ in
         border: 1px solid alpha(@overlay, 0.9);
         border-radius: 999px;
         padding: 0 6px;
-        box-shadow: 0 6px 20px alpha(#0a0810, 0.45);
       }
 
       /* ===== Workspaces ===== */
