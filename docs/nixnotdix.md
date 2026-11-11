@@ -30,6 +30,10 @@ pastels for syntax-style roles and exactly one colour allowed to be loud:
 links and the terminal cursor all use it; the rest of the UI is deliberately
 quiet so that one colour reads as "where you are".
 
+Text inside a terminal is the exception. Pastels read flat there, so
+`theme.terminal` holds the same hues at close to full saturation, and
+Alacritty's ANSI colours, the bash prompt and btop use those instead.
+
 The wallpaper is not a file. `hosts/nixnotdix/wallpaper.nix` renders it at
 build time with ImageMagick from `theme.wallpaper` in `theme.nix`: a few
 elliptical colour washes over `base`, blurred heavily, with a soft vignette

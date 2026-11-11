@@ -3,6 +3,7 @@
 let
   theme = import ../theme.nix;
   c = theme.colors;
+  t = theme.terminal;
   font = theme.font;
 in
 {
@@ -28,22 +29,22 @@ in
         };
         normal = {
           black = c.overlay;
-          red = c.red;
-          green = c.green;
-          yellow = c.gold;
-          blue = c.blue;
-          magenta = c.purple;
-          cyan = c.teal;
+          red = t.red;
+          green = t.green;
+          yellow = t.gold;
+          blue = t.blue;
+          magenta = t.purple;
+          cyan = t.teal;
           white = c.subtext;
         };
         bright = {
           black = c.muted;
-          red = c.redLight;
-          green = c.green;
-          yellow = c.orange;
-          blue = c.blueLight;
-          magenta = c.pink;
-          cyan = c.teal;
+          red = t.redLight;
+          green = t.green;
+          yellow = t.orange;
+          blue = t.blueLight;
+          magenta = t.pink;
+          cyan = t.teal;
           white = c.text;
         };
         cursor = {

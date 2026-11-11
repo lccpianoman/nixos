@@ -27,6 +27,27 @@
     pink    = "#eaa6cf";
   };
 
+  # ===== Terminal hues =====
+  # The pastels above read flat as terminal text: plenty of brightness
+  # contrast, very little saturation. These are the same hues (same OKLCH hue
+  # angle, same key names) pushed to roughly the most chroma sRGB can show,
+  # giving up a little lightness where the gamut demands it. Use them for
+  # anything drawn inside a terminal (alacritty's ANSI colours, the prompt,
+  # btop); the desktop UI keeps `colors`, so `accent` stays the only loud
+  # colour out there.
+  terminal = {
+    blue      = "#4a95fc";
+    blueLight = "#7fb5fb";
+    teal      = "#21e1c9";
+    green     = "#82e16e";
+    purple    = "#b078fc";
+    red       = "#fc3270";
+    redLight  = "#fc7b9a";
+    orange    = "#fd951b";
+    gold      = "#fec11e";
+    pink      = "#fd6fcd";
+  };
+
   # ===== Color helpers =====
   # Use these instead of re-implementing hex munging in each module.
 
