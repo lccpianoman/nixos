@@ -15,7 +15,7 @@ public and still rebuilds every host from a clean clone.
 | [`nixnotdix`](docs/nixnotdix.md) | Gaming / dev workstation | SwayFX on NVIDIA, Zen kernel, home-manager |
 | [`nixvps`](docs/nixvps.md) | Linode VPS | Vaultwarden behind Caddy, nightly restic backups to B2 |
 | [`nixcraft`](docs/nixcraft.md) | Vultr VPS | Fabric Minecraft server with nightly world snapshots |
-| [`calliope`](docs/calliope.md) | Dell R730xd home server | 82 TiB raidz2 pool, NFS, Plex, \*arr stack, Immich |
+| [`calliope`](docs/calliope.md) | Dell R730xd home server | 82 TiB raidz2 pool, NFS, Plex, \*arr stack, Immich, test Minecraft server |
 
 All hosts track `nixos-26.05`; `nixnotdix` adds `home-manager` `release-26.05`.
 
@@ -56,7 +56,7 @@ and the pinned overrides to re-check after a flake update.
 | [nixnotdix](docs/nixnotdix.md) | Desktop stack, NVIDIA, theming |
 | [nixvps](docs/nixvps.md) | Vaultwarden, backups and restore |
 | [nixcraft](docs/nixcraft.md) | Minecraft server, console, backups, install |
-| [calliope](docs/calliope.md) | Hardware, fibre link, fans, install |
+| [calliope](docs/calliope.md) | Hardware, fibre link, fans, Minecraft, install |
 | [calliope: storage](docs/calliope-storage.md) | ZFS pool design and creation, NFS, replacing a disk |
 | [calliope: media services](docs/calliope-media.md) | Caddy, VPN-routed qBittorrent, Radarr/Sonarr/Prowlarr, Plex, Seerr, Immich |
 

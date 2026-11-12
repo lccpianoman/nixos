@@ -27,6 +27,8 @@ in
     ./seerr.nix
     ./immich.nix
     ./dashboard.nix
+    # Test Fabric server, LAN-only; see docs/calliope.md.
+    ./minecraft.nix
   ];
 
   networking.hostName = "calliope";

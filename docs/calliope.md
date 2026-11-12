@@ -19,6 +19,7 @@ The host is split into one module per concern under `hosts/calliope/`:
 | `ixgbe-bidi.nix` + `.patch` | Kernel patch that makes the fibre link work |
 | `zfs.nix`, `nfs.nix` | The `storage` pool and its export; see [Storage](calliope-storage.md) |
 | `fans.nix` + `fans/` | iDRAC fan control and temperatures |
+| `minecraft.nix` | Test Fabric server, LAN-only; see [Minecraft](#minecraft) |
 | `caddy.nix`, `plex.nix`, `qbittorrent.nix`, `prowlarr.nix`, `radarr.nix`, `sonarr.nix`, `recyclarr.nix`, `seerr.nix`, `immich.nix`, `dashboard.nix` | The media stack; see [Media services](calliope-media.md) |
 
 Claude Code and the GitHub Copilot CLI are installed so this repo can be
@@ -102,6 +103,42 @@ sudo ipmitool raw 0x30 0x30 0x02 0xff 0x14     # all fans 20% (hex percent)
 sudo ipmitool raw 0x30 0x30 0x01 0x01          # back to auto
 sudo ipmitool raw 0x30 0xce 0x01 0x16 0x05 0x00 0x00 0x00   # read PCIe response: ... 00 on, ... 01 off
 sudo ipmitool raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x01 0x00 0x00   # off (0x00 = on)
+```
+
+## Minecraft
+
+A test Fabric 26.3 server, managed by nix-minecraft like
+[nixcraft](nixcraft.md), to see how the R730xd handles it before anything
+moves here. Fresh world, LAN-only: port 25565 is open in the firewall but the
+router forwards only 80/443.
+
+| | |
+|---|---|
+| Address | `192.168.0.10:25565` |
+| Data | `/srv/minecraft/survival` (NVMe root, not the pool) |
+| Heap | fixed 10 GB, ZGC |
+| Pinning | socket 0 only (`NUMAPolicy=bind`, `NUMAMask=0`, `CPUAffinity=numa`) |
+| Console | `just minecraft calliope` |
+| Backups | nightly 04:00 to `/srv/backups/minecraft`, 14 days, plus sanoid snapshots |
+
+Mods: Fabric API, Carpet, Carpet Extra, Carpet TIS Addition, Servux, Lithium,
+FerriteCore, C2ME, VMP, Krypton, Chunky, spark. Whitelist and operators come
+from `common/minecraft-players.nix`, shared with nixcraft.
+
+- **Carpet Extra is a fork** (`vvcDaDa/carpet-extra`): upstream has no 26.3
+  build and pins `minecraft: 26.2.x`. The fork is upstream plus a small API
+  port, built and released by its own CI. Swap back when upstream ships 26.3.
+- **No ScalableLux or Moonrise.** Both are Starlight-based, which reorders
+  light updates and breaks light suppression. C2ME alone still provides the
+  multicore chunk generation.
+- C2ME and VMP are alpha/beta devbuilds; keep backups current.
+
+Pre-generate before anyone explores, then measure before tuning:
+
+```
+chunky radius 5000
+chunky start
+spark profiler start      # ... play ...  spark profiler stop
 ```
 
 ## Installation

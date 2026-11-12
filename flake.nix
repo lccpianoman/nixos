@@ -51,7 +51,9 @@
 
     nixosConfigurations.calliope = mkHost [
       disko.nixosModules.disko
+      nix-minecraft.nixosModules.minecraft-servers
       sops-nix.nixosModules.sops
+      { nixpkgs.overlays = [ nix-minecraft.overlay ]; }
       ./hosts/calliope/configuration.nix
     ];
 

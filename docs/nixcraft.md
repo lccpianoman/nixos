@@ -13,8 +13,9 @@ server for version 26.2, managed by [nix-minecraft].
 | Mode | survival, hard, whitelist enforced, online mode |
 | Console | tmux session on `/run/minecraft/survival.sock` |
 
-Whitelist, operators and `server.properties` are declarative in
-`hosts/nixcraft/minecraft/server.nix`. Mods are pinned by URL and SHA-512 in
+`server.properties` is declarative in `hosts/nixcraft/minecraft/server.nix`;
+the whitelist and operators are shared with calliope's server in
+`common/minecraft-players.nix`. Mods are pinned by URL and SHA-512 in
 the same file; to add or update one:
 
 ```bash
