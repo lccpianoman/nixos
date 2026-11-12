@@ -125,6 +125,20 @@ in
     configFile = config.sops.secrets."wg-qb.conf".path;
   };
 
+  # The module's stop reads a copy in the unit's private /tmp, which a systemd
+  # re-exec mid-rebuild lost; the failed stop stranded wg-qb and the restart
+  # then hit "already exists". Re-copy before `down`, fall back to deleting the
+  # link, and clear any leftover before `up`.
+  systemd.services.wg-quick-wg-qb = {
+    preStart = ''
+      ${pkgs.iproute2}/bin/ip link delete wg-qb 2>/dev/null || true
+    '';
+    preStop = lib.mkForce ''
+      cp ${config.sops.secrets."wg-qb.conf".path} /tmp/wg-qb.conf || true
+      wg-quick down /tmp/wg-qb.conf || ${pkgs.iproute2}/bin/ip link delete wg-qb 2>/dev/null || true
+    '';
+  };
+
   # Only this service resolves through the VPN; the host keeps its own
   # resolv.conf. /etc/resolv.conf is a regular file here, not a symlink, so the
   # bind below lands on the file itself and stays inside the unit's private
