@@ -42,6 +42,13 @@ let
       url = "https://github.com/vvcDaDa/carpet-extra/releases/download/v26.3/carpet-extra-26.3.jar";
       sha256 = "f3f7a39a3525c32bc364c14a53efd08ec2a22cd66c976ae4e71f7aee1d33cf20";
     };
+    # Fixes MC-311727: 26.3 checks support blocks before applying the player's
+    # move, so it force-resends blocks and logs "standing on air" every ~10 s.
+    # One mixin, reviewed; GitHub-only. Drop once Mojang fixes MC-311727.
+    standing-on-air = pkgs.fetchurl {
+      url = "https://github.com/syrupderg/standing-on-air/releases/download/1.0.0/standing_on_air-fabric-26.3-1.0.0.jar";
+      sha256 = "916d6d70b86b852f5d733fc628728237d62add969997989b77828e58b3cf6e7a";
+    };
     carpet-tis-addition = pkgs.fetchurl {
       url = "https://cdn.modrinth.com/data/jE0SjGuf/versions/EkoQdQKl/carpet-tis-addition-v1.83.2-mc26.3.jar";
       sha512 = "12df137d6ac7f6796eec9570821d2d4d610d0844259281921d1f2718617675157c554bb8a97a1d878c4be2a534003611eee9e38f72da0ae67e768eebfc1428a5";

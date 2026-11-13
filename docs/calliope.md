@@ -122,7 +122,8 @@ router forwards only 80/443.
 | Backups | nightly 04:00 to `/srv/backups/minecraft`, 14 days, plus sanoid snapshots |
 
 Mods: Fabric API, Carpet, Carpet Extra, Carpet TIS Addition, Servux, Lithium,
-FerriteCore, C2ME, Async (alpha, on trial), VMP, Krypton, Chunky, spark.
+FerriteCore, C2ME, Async (alpha, on trial), VMP, Krypton, Chunky, spark,
+Standing On Air (fixes MC-311727, see below).
 Whitelist and operators come
 from `common/minecraft-players.nix`, shared with nixcraft.
 
@@ -132,6 +133,10 @@ from `common/minecraft-players.nix`, shared with nixcraft.
 - **No ScalableLux or Moonrise.** Both are Starlight-based, which reorders
   light updates and breaks light suppression. C2ME alone still provides the
   multicore chunk generation.
+- **Standing On Air** (`syrupderg/standing-on-air`, GitHub only) fixes
+  MC-311727: vanilla 26.3 checks the blocks under a player before applying
+  their move, so it misfires every ~10 s and logs "standing on air". Drop it
+  once Mojang fixes the bug.
 - C2ME, Async and VMP are alpha/beta devbuilds; keep backups current. Async
   can be flipped live with `async config toggle` for A/B profiling.
 
