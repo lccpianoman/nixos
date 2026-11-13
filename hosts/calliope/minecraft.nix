@@ -149,6 +149,10 @@ in
     NUMAPolicy   = "bind";
     NUMAMask     = "0";
     CPUAffinity  = "numa";
+    # C2ME demotes its workers to SCHED_BATCH|RESET_ON_FORK so the tick and Async
+    # threads win; RestrictRealtime's seccomp rejects the flagged policy. Real-time
+    # stays blocked regardless: LimitRTPRIO is 0.
+    RestrictRealtime = lib.mkForce false;
   };
 
   # Console socket and server files without sudo, as on nixcraft.
