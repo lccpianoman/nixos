@@ -63,6 +63,12 @@ let
       url = "https://cdn.modrinth.com/data/VSNURh3q/versions/aOP6eqZA/c2me-fabric-mc26.3-0.4.2-alpha.0.116.jar";
       sha512 = "5db513d05f909d7b09d035b40f0d31945ec8911f4d7b75fa258bb6e6338761b8847c9d1804d40b647e1781cfc143ff7dd0e0a4389f19ec46e031be7bbb7b5052";
     };
+    # Alpha, on trial: ticks entities in parallel, which is most of this box's
+    # tick cost. `async config toggle` flips it live for A/B profiling.
+    async = pkgs.fetchurl {
+      url = "https://cdn.modrinth.com/data/vEC2jm6I/versions/gcduhoHv/async-fabric-0.2.5%2Balpha-26.3.jar";
+      sha512 = "dc7662973c1493ccd29ccf390583192bc49d33782dfd5245002427d160a2752fb6b4b09e9e1c7a3dd0f3f373454ed0ea4f9ae9a23752994dcb389662506489dc";
+    };
     vmp = pkgs.fetchurl {
       url = "https://cdn.modrinth.com/data/wnEe9KBa/versions/2TFDVjDf/vmp-fabric-mc26.3-0.2.0%2Bbeta.7.238-all.jar";
       sha512 = "c8658ccf8818a258e1160a2d394c80fd52708611570dc28d6bc391671a23e193760766ef77ddc5907e1a3a757cf20f4def67ae2bc184269effa547da1f377667";

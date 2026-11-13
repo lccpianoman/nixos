@@ -122,7 +122,8 @@ router forwards only 80/443.
 | Backups | nightly 04:00 to `/srv/backups/minecraft`, 14 days, plus sanoid snapshots |
 
 Mods: Fabric API, Carpet, Carpet Extra, Carpet TIS Addition, Servux, Lithium,
-FerriteCore, C2ME, VMP, Krypton, Chunky, spark. Whitelist and operators come
+FerriteCore, C2ME, Async (alpha, on trial), VMP, Krypton, Chunky, spark.
+Whitelist and operators come
 from `common/minecraft-players.nix`, shared with nixcraft.
 
 - **Carpet Extra is a fork** (`vvcDaDa/carpet-extra`): upstream has no 26.3
@@ -131,7 +132,8 @@ from `common/minecraft-players.nix`, shared with nixcraft.
 - **No ScalableLux or Moonrise.** Both are Starlight-based, which reorders
   light updates and breaks light suppression. C2ME alone still provides the
   multicore chunk generation.
-- C2ME and VMP are alpha/beta devbuilds; keep backups current.
+- C2ME, Async and VMP are alpha/beta devbuilds; keep backups current. Async
+  can be flipped live with `async config toggle` for A/B profiling.
 
 Pre-generate before anyone explores, then measure before tuning:
 
