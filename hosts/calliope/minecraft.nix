@@ -10,6 +10,10 @@
 { config, pkgs, lib, ... }:
 
 let
+  # Parked after testing: false = no start at boot and no nightly backup timer.
+  # Everything else stays declared; `systemctl start` still works for a one-off.
+  active = false;
+
   serverName = "survival";
   dataDir    = "/srv/minecraft";
   serverDir  = "${dataDir}/${serverName}";
@@ -102,6 +106,7 @@ in
 
     servers.${serverName} = {
       enable = true;
+      autoStart = active;
       openFirewall = true;
 
       # Same Java 25 override as nixcraft; see the pins table in docs/operations.md.
@@ -229,6 +234,8 @@ in
   };
 
   systemd.timers."minecraft-backup-${serverName}" = {
+    # enable = false masks the timer, so a rebuild stops it rather than leaving it armed.
+    enable = active;
     description = "Nightly ${serverName} world snapshot";
     wantedBy = [ "timers.target" ];
     timerConfig = {

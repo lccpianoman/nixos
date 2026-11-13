@@ -112,6 +112,11 @@ A test Fabric 26.3 server, managed by nix-minecraft like
 moves here. Fresh world, LAN-only: port 25565 is open in the firewall but the
 router forwards only 80/443.
 
+**Currently parked:** `active = false` at the top of `minecraft.nix` keeps it
+from starting at boot and masks the nightly backup timer. The world, config
+and old backups stay put; set `active = true` and rebuild to bring it back, or
+`sudo systemctl start minecraft-server-survival` for a one-off session.
+
 | | |
 |---|---|
 | Address | `192.168.0.10:25565` |
