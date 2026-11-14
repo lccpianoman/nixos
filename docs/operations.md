@@ -62,7 +62,7 @@ happens.
 | Pin | Where | Remove when |
 |---|---|---|
 | NVIDIA `595.99.02` | `hosts/nixnotdix/configuration.nix` (`hardware.nvidia.package`) | nixpkgs `nvidiaPackages.stable >= 595.99.02` |
-| CloneHero `1.1.0.6142` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6142` |
+| CloneHero `1.1.0.6161` | `hosts/nixnotdix/configuration.nix` overlay + `hosts/nixnotdix/pkgs/clonehero.nix` | nixpkgs `clonehero >= 1.1.0.6161` |
 | SwayFX `0.6` + scenefx `0.5` | `hosts/nixnotdix/configuration.nix` overlay | nixpkgs `swayfx-unwrapped >= 0.6` and `scenefx >= 0.5` |
 | Minecraft Java 25 override | `hosts/nixcraft/minecraft/server.nix`, `hosts/calliope/minecraft.nix` (`jre_headless = pkgs.jdk25_headless`) | nix-minecraft's `mkTextileServer` picks its JRE from `java_versions` (it still takes nixpkgs' default `jre_headless`, Java 21, and MC 26.x needs 25) |
 | Carpet Extra fork | `hosts/calliope/minecraft.nix` (`mods.carpet-extra`, from `vvcDaDa/carpet-extra`) | `gnembon/carpet-extra` publishes a 26.3 build (on Modrinth as `carpet-extra`) |
