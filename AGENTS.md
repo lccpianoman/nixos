@@ -87,9 +87,13 @@ nix eval --impure --expr 'let f = builtins.getFlake (toString ./.); p = f.inputs
   NixOS-only.
 - `calliope`'s media services (`hosts/calliope/{caddy,plex,qbittorrent,
   prowlarr,radarr,sonarr,seerr,immich,dashboard}.nix`) are localhost-only
-  behind Caddy except Plex; the Caddy vhosts other than request.jukeluke.com
-  carry a `remote_ip` LAN guard that must never be removed, because 80/443 are
-  forwarded from the router. qBittorrent's `qBittorrent.conf` is fully
+  behind Caddy except Plex; the Caddy vhosts other than Seerr's two public
+  names carry a `remote_ip` LAN guard that must never be removed, because
+  80/443 are forwarded from the router. `request.jukeluke.com` runs a
+  `forward_auth` past `seerr-gate` (`seerr.nix`), a prank that 502s one
+  Seerr user there so only the second domain works for them; it must keep
+  failing open (`handle_errors 502` in `caddy.nix`) so a dead gate never
+  takes Seerr down for everyone. qBittorrent's `qBittorrent.conf` is fully
   declarative (rewritten every start) and only that service is routed through
   the `wg-qb` tunnel, by a `uidrange` policy rule plus a per-uid kill switch;
   details in `docs/calliope-media.md`. Do not "simplify" that to an fwmark

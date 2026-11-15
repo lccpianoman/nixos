@@ -1,18 +1,19 @@
 { config, pkgs, lib, ... }:
 
-# The only module on this host that exposes anything. One public vhost
-# (request.jukeluke.com, Cloudflare-proxied like vault on nixvps) and a set of
-# LAN-only vhosts for the admin UIs, all proxying to localhost services.
+# The only module on this host that exposes anything. Two public vhosts for
+# Seerr (request.jukeluke.com and a second domain, Cloudflare-proxied like
+# vault on nixvps) and a set of LAN-only vhosts for the admin UIs, all
+# proxying to localhost services.
 #
 # Certificates come from Let's Encrypt via DNS-01 (`acme_dns cloudflare`),
 # because the LAN-only names resolve to 192.168.0.10 and can never answer an
 # HTTP-01 challenge from the internet. That needs two things set up by hand,
 # both described in docs/calliope-media.md "One-time setup":
-#   - DNS: request.jukeluke.com proxied (orange) to the home IP; dash/qb/
-#     radarr/sonarr/prowlarr/photos.jukeluke.com unproxied (grey) A records
-#     to 192.168.0.10.
+#   - DNS: request.jukeluke.com and the second domain's apex proxied
+#     (orange) to the home IP; dash/qb/radarr/sonarr/prowlarr/
+#     photos.jukeluke.com unproxied (grey) A records to 192.168.0.10.
 #   - secrets/calliope/cloudflare.env holding a real CLOUDFLARE_API_TOKEN
-#     (Zone:DNS:Edit on jukeluke.com). The committed file is an encrypted
+#     (Zone:DNS:Edit on all zones). The committed file is an encrypted
 #     REPLACE_ME placeholder so the config evaluates before the token exists;
 #     cert issuance just fails until it is real.
 
@@ -40,6 +41,41 @@ let
     abort @wan
     ${securityHeaders}
     reverse_proxy ${upstream}
+  '';
+
+  # Public, via Cloudflare. The matcher drops anything that reaches the
+  # forwarded port directly instead of through Cloudflare's edge, using the
+  # same ranges the global trusted_proxies uses. `route` keeps written
+  # order: left to Caddy's sorting, forward_auth would run before the abort.
+  #
+  # With `gated`, seerr-gate (seerr.nix) is asked about every request and its
+  # 502 goes straight back to the client. That 502 is a response; a gate
+  # that cannot be reached at all is an error, which handle_errors answers by
+  # proxying anyway. So a dead gate lets everyone in instead of locking
+  # everyone out.
+  seerrProxy = ''
+    ${securityHeaders}
+    reverse_proxy 127.0.0.1:5055 {
+      header_up X-Real-IP {client_ip}
+    }
+  '';
+
+  seerr = gated: ''
+    @direct not remote_ip ${cloudflareRanges}
+    route {
+      abort @direct
+      ${lib.optionalString gated ''
+        forward_auth 127.0.0.1:5056 {
+          uri /
+        }
+      ''}
+      ${seerrProxy}
+    }
+    ${lib.optionalString gated ''
+      handle_errors 502 {
+        ${seerrProxy}
+      }
+    ''}
   '';
 in
 {
@@ -75,17 +111,11 @@ in
       }
     '';
 
-    # Public, via Cloudflare. The matcher drops anything that reaches the
-    # forwarded port directly instead of through Cloudflare's edge, using the
-    # same ranges the global trusted_proxies uses.
-    virtualHosts."request.jukeluke.com".extraConfig = ''
-      @direct not remote_ip ${cloudflareRanges}
-      abort @direct
-      ${securityHeaders}
-      reverse_proxy 127.0.0.1:5055 {
-        header_up X-Real-IP {client_ip}
-      }
-    '';
+    # Seerr under two names. The normal one is gated, so the one user
+    # seerr-gate blocks sees a dead origin there; the second domain is the
+    # same Seerr with no gate, and so the only name that works for them.
+    virtualHosts."request.jukeluke.com".extraConfig = seerr true;
+    virtualHosts."michaelakabedwargodlovestosuckcockandsipcum.com".extraConfig = seerr false;
 
     # LAN-only. homepage-dashboard has no auth of its own, and the *arr UIs
     # and qBittorrent are admin surfaces. None of these may answer the WAN.

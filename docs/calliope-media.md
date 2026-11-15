@@ -6,7 +6,8 @@ exposes anything. The exception is Plex, which clients talk to directly.
 
 | Service | Module | Listens | Reached at |
 |---|---|---|---|
-| Seerr (requests) | `seerr.nix` | `127.0.0.1:5055` | `https://request.jukeluke.com` (**public**, Cloudflare-proxied) |
+| Seerr (requests) | `seerr.nix` | `127.0.0.1:5055` | `https://request.jukeluke.com` and `https://michaelakabedwargodlovestosuckcockandsipcum.com` (**public**, Cloudflare-proxied) |
+| seerr-gate | `seerr.nix` | `127.0.0.1:5056` | Caddy only (`forward_auth` on `request.jukeluke.com`) |
 | homepage dashboard | `dashboard.nix` | `127.0.0.1:8082` | `https://dash.jukeluke.com` (LAN only) |
 | fanctl | `fans.nix` | `127.0.0.1:8085` | `https://dash.jukeluke.com/fans/` (LAN only) |
 | qBittorrent | `qbittorrent.nix` | `127.0.0.1:8090` | `https://qb.jukeluke.com` (LAN only) |
@@ -37,9 +38,9 @@ Ports 80/443 are forwarded from the router to calliope so Cloudflare can
 reach Seerr. That forwarding is why "LAN only" cannot be left to DNS: anyone
 can connect to the home IP with the right SNI, so every non-public vhost
 carries a `remote_ip` guard (the socket address, which is unspoofable, unlike
-headers) and the public vhost accepts only Cloudflare's edge ranges
-(`common/cloudflare-ranges.nix`, shared with nixvps). **Never remove those
-guards.**
+headers) and the public vhosts (Seerr's two names) accept only Cloudflare's
+edge ranges (`common/cloudflare-ranges.nix`, shared with nixvps). **Never
+remove those guards.**
 
 Certificates come from Let's Encrypt over **DNS-01** (`acme_dns cloudflare`)
 because names that resolve to `192.168.0.10` can never answer an HTTP-01
@@ -56,10 +57,13 @@ it) stays down by design.
 
 1. **Cloudflare DNS**: `request` proxied (orange cloud) to the home IP;
    `dash`, `qb`, `radarr`, `sonarr`, `prowlarr`, `photos` as **unproxied**
-   (grey) A records to `192.168.0.10`.
+   (grey) A records to `192.168.0.10`. Seerr's second domain is its own
+   zone: apex A record proxied to the home IP, SSL/TLS mode Full (strict).
 2. **API token**: create a Cloudflare token scoped to Zone → DNS → Edit on
-   jukeluke.com, then `sops secrets/calliope/cloudflare.env` and replace the
-   placeholder value of `CLOUDFLARE_API_TOKEN`.
+   all zones (it has to cover jukeluke.com and Seerr's second domain), then
+   `sops secrets/calliope/cloudflare.env` and replace the placeholder value
+   of `CLOUDFLARE_API_TOKEN`. Changing an existing token's zones keeps its
+   value, so that needs no secret edit.
 3. **WireGuard tunnel**: `sops secrets/calliope/wg-qb.conf` and paste the
    TorGuard config with **two edits to `[Interface]`**:
    - **Add `Table = off`.** Without it, `AllowedIPs = 0.0.0.0/0` makes
@@ -210,6 +214,31 @@ group for read access to the library tree.
 Media requests for Plex users, and the one deliberately public service.
 Runs as a `DynamicUser` sandbox and talks to Plex, Radarr and Sonarr over
 localhost HTTP, so it needs no media group and no mounts.
+
+### The second domain and seerr-gate
+
+Seerr answers on two names, and the second exists for a prank on one user:
+for them `request.jukeluke.com` looks like a dead origin and only the second
+domain works. Everyone else can use either.
+
+- `request.jukeluke.com` runs every request past `seerr-gate`
+  (`hosts/calliope/seerr/gate.py`) with Caddy's `forward_auth`. The gate
+  hands the request's cookies to Seerr's `/api/v1/auth/me` and answers 502
+  when the session belongs to a user id in `blocked` (`seerr.nix`), which
+  Caddy returns as is. It keys on the account, not an address or a cookie,
+  so a new device, a new network or cleared cookies change nothing.
+- Logged-out visitors pass, so the login page still loads there; the block
+  lands on the first request after signing in.
+- The gate fails open twice over. Anything but a clean answer from Seerr
+  allows the request, and if the gate itself is unreachable Caddy's
+  `handle_errors 502` proxies to Seerr anyway. A broken gate must never take
+  the normal name down for everyone; keep both halves.
+- The second domain's vhost is the same proxy with no gate. To end the
+  prank, replace its `extraConfig` with a `redir` and empty `blocked`, or
+  the user is left with no working name at all.
+
+`journalctl -u seerr-gate` shows a `blocking user N` line whenever a fresh
+verdict blocks someone (at most once a minute per session).
 
 ## Immich
 
