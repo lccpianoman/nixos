@@ -9,6 +9,7 @@ rec {
     WormPro        = "4cd5441f-94b7-4bbf-a809-7578eb6bd5b4";
     coolrunnings22 = "72ec6d21-f772-4db3-9e8f-fffc45fa4c76";
     Golden_Wraith  = "5e584a8e-c3da-4c99-ad04-ea1696334cf5";
+    AutoTFC        = "2b301496-6f61-4d84-8209-2991ae35f238";
   };
 
   operators = {
