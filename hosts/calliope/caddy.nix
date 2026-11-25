@@ -1,6 +1,7 @@
 { config, pkgs, lib, ... }:
 
-# The only module on this host that exposes anything. Two public vhosts for
+# The only module of the media stack that exposes anything (the one other
+# public listener on this host is minecraft.nix). Two public vhosts for
 # Seerr (request.jukeluke.com and a second domain, Cloudflare-proxied like
 # vault on nixvps) and a set of LAN-only vhosts for the admin UIs, all
 # proxying to localhost services.

@@ -15,8 +15,8 @@ in
     ./nfs.nix
     ./fans.nix
     # Media stack; see docs/calliope-media.md. caddy.nix is the only
-    # module that exposes anything; the rest bind to localhost and are
-    # reached through it.
+    # module of these that exposes anything; the rest bind to localhost and
+    # are reached through it.
     ./caddy.nix
     ./plex.nix
     ./qbittorrent.nix
@@ -27,7 +27,8 @@ in
     ./seerr.nix
     ./immich.nix
     ./dashboard.nix
-    # Test Fabric server, LAN-only; see docs/calliope.md.
+    # Test Fabric server, public on 25565 (raw TCP, not via Caddy); see
+    # docs/calliope.md.
     ./minecraft.nix
   ];
 

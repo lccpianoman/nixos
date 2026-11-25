@@ -19,7 +19,7 @@ The host is split into one module per concern under `hosts/calliope/`:
 | `ixgbe-bidi.nix` + `.patch` | Kernel patch that makes the fibre link work |
 | `zfs.nix`, `nfs.nix` | The `storage` pool and its export; see [Storage](calliope-storage.md) |
 | `fans.nix` + `fans/` | iDRAC fan control and temperatures |
-| `minecraft.nix` | Test Fabric server, LAN-only; see [Minecraft](#minecraft) |
+| `minecraft.nix` | Test Fabric server, public on 25565; see [Minecraft](#minecraft) |
 | `caddy.nix`, `plex.nix`, `qbittorrent.nix`, `prowlarr.nix`, `radarr.nix`, `sonarr.nix`, `recyclarr.nix`, `seerr.nix`, `immich.nix`, `dashboard.nix` | The media stack; see [Media services](calliope-media.md) |
 
 Claude Code and the GitHub Copilot CLI are installed so this repo can be
@@ -109,17 +109,35 @@ sudo ipmitool raw 0x30 0xce 0x00 0x16 0x05 0x00 0x00 0x00 0x05 0x00 0x01 0x00 0x
 
 A test Fabric 26.3 server, managed by nix-minecraft like
 [nixcraft](nixcraft.md), to see how the R730xd handles it before anything
-moves here. Fresh world, LAN-only: port 25565 is open in the firewall but the
-router forwards only 80/443.
+moves here. It is public, and reached directly rather than through Caddy.
 
-**Currently parked:** `active = false` at the top of `minecraft.nix` keeps it
-from starting at boot and masks the nightly backup timer. The world, config
-and old backups stay put; set `active = true` and rebuild to bring it back, or
-`sudo systemctl start minecraft-server-survival` for a one-off session.
+To park it, set `active = false` at the top of `minecraft.nix` and rebuild:
+that keeps it from starting at boot and masks the nightly backup timer. The
+world, config and old backups stay put, and
+`sudo systemctl start minecraft-server-survival` still works for a one-off
+session.
+
+Two things outside this repo make it reachable:
+
+1. **Cloudflare DNS**: in the zone of Seerr's second domain, an A record
+   `mc` to the home IP, **unproxied** (grey cloud). Cloudflare's proxy
+   carries HTTP only, so an orange record here would resolve but never
+   connect. No SRV record is needed on the default port.
+2. **Router**: forward TCP 25565 to `192.168.0.10`. The host firewall
+   already has the port open (`openFirewall`).
+
+A grey record publishes the home IP to anyone who looks the name up, which
+Seerr's proxied names do not. The web side is unaffected: the public vhosts
+still accept only Cloudflare's edge and the rest only the LAN. The
+record does not follow the home IP: when the ISP changes it, update `mc`
+along with the proxied records.
+
+Anyone can now reach the port, so the whitelist is the access control:
+`white-list`, `enforce-whitelist` and `online-mode` must stay on.
 
 | | |
 |---|---|
-| Address | `192.168.0.10:25565` |
+| Address | `mc.michaelakabedwargodlovestosuckcockandsipcum.com` (`192.168.0.10:25565` on the LAN if the router has no NAT loopback) |
 | Data | `/srv/minecraft/survival` (NVMe root, not the pool) |
 | Heap | fixed 10 GB, ZGC |
 | Pinning | socket 0 only (`NUMAPolicy=bind`, `NUMAMask=0`, `CPUAffinity=numa`) |

@@ -2,17 +2,21 @@
 # follows hosts/nixcraft/minecraft/; the differences are the version, the
 # multicore chunk mods, ZGC, NUMA pinning, and backups landing on the pool.
 #
-# LAN-only: the firewall port is open but the router forwards only 80/443.
-# Going public later is a router forward, nothing here.
+# Public at mc.michaelakabedwargodlovestosuckcockandsipcum.com: an unproxied
+# (grey) A record to the home IP plus a router forward of TCP 25565, both set
+# up by hand; see docs/calliope.md. Cloudflare's proxy carries HTTP only, so
+# unlike Seerr's names this one cannot be orange and it publishes the home IP.
+# Nothing passes through Caddy. The whitelist is what keeps strangers out:
+# never turn off white-list, enforce-whitelist or online-mode.
 #
 # The world lives on the NVMe (/srv/minecraft on root), not the raidz2 pool:
 # region-file writes are small and random, which spindles are worst at.
 { config, pkgs, lib, ... }:
 
 let
-  # Parked after testing: false = no start at boot and no nightly backup timer.
-  # Everything else stays declared; `systemctl start` still works for a one-off.
-  active = false;
+  # false parks it: no start at boot and no nightly backup timer. Everything
+  # else stays declared; `systemctl start` still works for a one-off.
+  active = true;
 
   serverName = "survival";
   dataDir    = "/srv/minecraft";
